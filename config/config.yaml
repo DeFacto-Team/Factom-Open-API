@@ -1,0 +1,16 @@
+loglevel: 4
+gziplevel: -1
+api:
+  httpport: 8081
+  logging: true
+store:
+  host: "localhost"
+  port: 5433
+  user: "postgres"
+  password: "postgres"
+  dbname: "postgres"
+factom:
+  url: ""
+  user: ""
+  password: ""
+  esaddress: ""
