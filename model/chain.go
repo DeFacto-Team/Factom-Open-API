@@ -16,19 +16,32 @@ func (chain *Chain) ConvertToEntryModel() *Entry {
 	entry := &Entry{}
 	entry.ExtIDs = chain.ExtIDs
 	entry.Content = chain.Content
+	if chain.ChainID != "" {
+		entry.ChainID = chain.ChainID
+	}
 	return entry
 
 }
 
 func (chain *Chain) ConvertToFactomModel() *factom.Chain {
 
-	fc := &factom.Chain{}
-	fc.ChainID = chain.ChainID
-	fc.FirstEntry.ChainID = chain.ChainID
-	fc.FirstEntry.Content = []byte(chain.Content)
-	for _, i := range chain.ExtIDs {
-		fc.FirstEntry.ExtIDs = append(fc.FirstEntry.ExtIDs, []byte(i))
-	}
+	fe := chain.ConvertToEntryModel().ConvertToFactomModel()
+
+	fc := factom.NewChain(fe)
 	return fc
+
+}
+
+func (chain *Chain) ID() string {
+
+	fc := chain.ConvertToFactomModel()
+	return fc.ChainID
+
+}
+
+func (chain *Chain) FirstEntryHash() string {
+
+	entry := chain.ConvertToEntryModel()
+	return entry.Hash()
 
 }
