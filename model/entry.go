@@ -8,10 +8,6 @@ import (
 
 const (
 	MaxEntrySize = 10240
-	// Entry statuses
-	StatusCompleted  = "completed"
-	StatusProcessing = "processing"
-	StatusQueue      = "queue"
 )
 
 // swagger:model

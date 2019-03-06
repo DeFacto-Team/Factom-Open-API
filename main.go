@@ -16,6 +16,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	// Statuses
+	StatusCompleted  = "completed"
+	StatusProcessing = "processing"
+	StatusQueue      = "queue"
+)
+
 func main() {
 
 	var err error
