@@ -33,7 +33,15 @@ CREATE TABLE entries(
     constraint entry_pk primary key(id)
 );
 
+CREATE TABLE chains(
+    chainid VARCHAR(64) UNIQUE NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    content TEXT NOT NULL,
+    extids jsonb NOT NULL
+);
+
 -- +migrate Down
 DROP TABLE users;
 DROP TABLE queue;
 DROP TABLE entries;
+DROP TABLE chains;
