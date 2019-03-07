@@ -12,7 +12,7 @@ import (
 
 type EntryService interface {
 	//GetEntry(id int) (*model.Entry, error)
-	CreateEntry(category *model.Entry) (*int, error)
+	CreateEntry(entry *model.Entry) (*int, error)
 }
 
 func NewEntryService(store store.Store, wallet wallet.Wallet) EntryService {
