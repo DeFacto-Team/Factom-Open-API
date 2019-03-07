@@ -30,6 +30,7 @@ type Api struct {
 	Http     *echo.Echo
 	conf     *config.Config
 	es       service.EntryService
+	cs       service.ChainService
 	us       service.UserService
 	apiInfo  ApiInfo
 	validate *validator.Validate
@@ -57,7 +58,13 @@ type EntryResponse struct {
 	Links  []string `json:"links" form:"links" query:"links" validate:""`
 }
 
-func NewApi(conf *config.Config, es service.EntryService, us service.UserService) *Api {
+type ChainResponse struct {
+	*model.Chain
+	Status string   `json:"status" form:"status" query:"status" validate:"oneof=queue processing completed"`
+	Links  []string `json:"links" form:"links" query:"links" validate:""`
+}
+
+func NewApi(conf *config.Config, es service.EntryService, cs service.ChainService, us service.UserService) *Api {
 
 	api := &Api{}
 
@@ -65,6 +72,7 @@ func NewApi(conf *config.Config, es service.EntryService, us service.UserService
 
 	api.conf = conf
 	api.es = es
+	api.cs = cs
 	api.us = us
 
 	api.Http = echo.New()
@@ -100,6 +108,7 @@ func NewApi(conf *config.Config, es service.EntryService, us service.UserService
 	api.Http.Static("/v1/spec", "spec")
 
 	// Chains
+	api.Http.POST("/v1/chains", api.createChain)
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
@@ -146,6 +155,84 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 }
 
 // API functions
+
+func (api *Api) createChain(c echo.Context) error {
+
+	// Open API Chain struct
+	req := &model.Chain{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	// validate ExtIDs, Content
+	if err := api.validate.StructExcept(req, "ChainID"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	// check if first entry of chain fits into 10KB
+	_, err := req.ConvertToEntryModel().Fit10KB()
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	// calculate chainID
+	req.ChainID = req.ID()
+
+	// extend Chain
+	resp := &ChainResponse{Chain: req}
+
+	// calculate entryhash of the first entry
+	resp.Links = append(resp.Links, "/chains/"+req.ChainID+"/entries/"+req.FirstEntryHash())
+
+	// check for chain into local DB
+	localChain, err := api.cs.GetChain(req)
+	if err != nil {
+		return err
+	}
+
+	// flag
+	checkChainExistence := false
+
+	// if chain doesn't exists in local DB
+	if localChain == nil {
+		// Create chain
+		_, err = api.cs.CreateChain(req)
+		if err != nil {
+			return err
+		}
+		// need to check chain existence — set flag to true
+		checkChainExistence = true
+		// Just created chain has status "queue"
+		resp.Status = model.ChainQueue
+	} else {
+		// Chain status is not completed
+		if localChain.Status != model.ChainCompleted {
+			checkChainExistence = true
+		}
+		resp.Status = localChain.Status
+	}
+
+	// if need to check chain existence
+	if checkChainExistence == true {
+		if req.Exists() == false {
+			// if chain doesn't exist on the blockchain — add it to queue
+			log.Info("ADD TO QUEUE")
+		} else {
+			// if chain exists on the blockchain - get it's status
+			resp.Status = req.GetStatusFromFactom()
+		}
+	}
+
+	// If we are here, so no errors occured and we force bind chain to API user
+	err = api.cs.BindChainToUser(req, api.user)
+	if err != nil {
+		return err
+	}
+
+	return api.SuccessResponse(resp, c)
+}
 
 // swagger:operation POST /entries createEntry
 // ---

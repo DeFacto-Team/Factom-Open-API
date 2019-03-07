@@ -20,6 +20,10 @@ type Store interface {
 	GetUserByAccessToken(tx *sql.Tx, token string) (*model.User, error)
 	UpdateUser(tx *sql.Tx, user *model.User) error
 
+	GetChain(tx *sql.Tx, chain *model.Chain) (*model.Chain, error)
+	CreateChain(tx *sql.Tx, chain *model.Chain) (*string, error)
+	CreateRelationUserChain(tx *sql.Tx, user *model.User, chain *model.Chain) (*string, error)
+
 	CreateEntry(tx *sql.Tx, entry *model.Entry) (*int, error)
 }
 
@@ -126,6 +130,61 @@ func (c *StoreContext) UpdateUser(tx *sql.Tx, user *model.User) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+// Get chain by ChainID
+func (c *StoreContext) GetChain(tx *sql.Tx, chain *model.Chain) (*model.Chain, error) {
+	var query = "SELECT chainid, content, extids, status FROM chains WHERE chainid=$1;"
+	var row *sql.Row
+	if tx != nil {
+		row = tx.QueryRow(query, chain.ChainID)
+	} else {
+		row = c.db.QueryRow(query, chain.ChainID)
+	}
+	var extids string
+	res := &model.Chain{}
+	if err := row.Scan(&res.ChainID, &res.Content, &extids, &res.Status); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, err
+		} else {
+			return nil, nil
+		}
+	}
+	json.Unmarshal([]byte(extids), &res.ExtIDs)
+	return res, nil
+}
+
+// Create chain
+func (c *StoreContext) CreateChain(tx *sql.Tx, chain *model.Chain) (*string, error) {
+	var query = "INSERT INTO chains (chainid, content, extids) VALUES($1, $2, $3) ON CONFLICT (chainid) DO UPDATE SET chainid = $1 RETURNING chainid;"
+	extids, _ := json.Marshal(chain.ExtIDs)
+	var chainid string
+	var err error
+	if tx != nil {
+		err = tx.QueryRow(query, chain.ChainID, chain.Content, extids).Scan(&chainid)
+	} else {
+		err = c.db.QueryRow(query, chain.ChainID, chain.Content, extids).Scan(&chainid)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &chainid, nil
+}
+
+// Create user-chain relation
+func (c *StoreContext) CreateRelationUserChain(tx *sql.Tx, user *model.User, chain *model.Chain) (*string, error) {
+	var query = "INSERT INTO users_chains (user_id, chainid) VALUES($1, $2) ON CONFLICT (user_id, chainid) DO UPDATE SET user_id = $1, chainid = $2 RETURNING chainid;"
+	var chainid string
+	var err error
+	if tx != nil {
+		err = tx.QueryRow(query, user.ID, chain.ChainID).Scan(&chainid)
+	} else {
+		err = c.db.QueryRow(query, user.ID, chain.ChainID).Scan(&chainid)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &chainid, nil
 }
 
 // Create entry

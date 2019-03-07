@@ -16,13 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	// Statuses
-	StatusCompleted  = "completed"
-	StatusProcessing = "processing"
-	StatusQueue      = "queue"
-)
-
 func main() {
 
 	var err error
@@ -79,11 +72,12 @@ func main() {
 
 	// Create services
 	es := service.NewEntryService(store, wallet)
+	cs := service.NewChainService(store, wallet)
 	us := service.NewUserService(store)
 	log.Info("Services created successfully")
 
 	// Start API
-	api := api.NewApi(conf, es, us)
+	api := api.NewApi(conf, es, cs, us)
 	log.WithField("address", api.GetApiInfo().Address).
 		WithField("mw", api.GetApiInfo().MW).
 		Info("Starting api")

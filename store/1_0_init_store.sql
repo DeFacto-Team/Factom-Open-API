@@ -40,8 +40,15 @@ CREATE TABLE chains(
     extids jsonb NOT NULL
 );
 
+CREATE TABLE users_chains(
+    chainid VARCHAR(64) NOT NULL,
+    user_id int8 NOT NULL,
+    constraint users_chains_pk primary key (chainid, user_id)
+);
+
 -- +migrate Down
 DROP TABLE users;
 DROP TABLE queue;
 DROP TABLE entries;
 DROP TABLE chains;
+DROP TABLE users_chains;
