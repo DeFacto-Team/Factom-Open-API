@@ -8,9 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	ChainECCost = 10
+)
+
 type Wallet interface {
 	GetEC() *factom.ECAddress
 	CommitRevealEntry(entry *factom.Entry) (*factom.Entry, error)
+	CommitRevealChain(chain *factom.Chain) (*factom.Chain, error)
 }
 
 type WalletContext struct {
@@ -64,20 +69,38 @@ func (c *WalletContext) CommitRevealEntry(entry *factom.Entry) (*factom.Entry, e
 		return nil, fmt.Errorf("Not enough Entry Credits to create entry")
 	}
 
-	// commit entry
-	commitResult, err := factom.CommitEntry(entry, c.GetEC())
+	// commit+reveal entry
+	_, err = factom.CommitEntry(entry, c.GetEC())
+	_, err = factom.RevealEntry(entry)
 	if err != nil {
 		return nil, err
 	}
-	log.Info("Commit: ", commitResult)
-
-	// reveal entry
-	revealResult, err := factom.RevealEntry(entry)
-	if err != nil {
-		return nil, err
-	}
-	log.Info("Reveal: ", revealResult)
 
 	return entry, nil
+
+}
+
+func (c *WalletContext) CommitRevealChain(chain *factom.Chain) (*factom.Chain, error) {
+
+	// calculate entry cost
+	cost, err := factom.EntryCost(chain.FirstEntry)
+	if err != nil {
+		err := fmt.Errorf("Can not calculate Entry Cost")
+		return nil, err
+	}
+
+	// check if EC balance enought for tx
+	if res := c.checkBalance(cost + ChainECCost); res == false {
+		return nil, fmt.Errorf("Not enough Entry Credits to create chain")
+	}
+
+	// commit chain
+	_, err = factom.CommitChain(chain, c.GetEC())
+	_, err = factom.RevealChain(chain)
+	if err != nil {
+		return nil, err
+	}
+
+	return chain, nil
 
 }
