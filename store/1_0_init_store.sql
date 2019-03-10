@@ -11,6 +11,9 @@ CREATE TABLE users(
   constraint users_pk primary key(id)
 );
 
+-- test API user
+INSERT INTO users(name, access_token) VALUES('test', 'test');
+
 CREATE TABLE queue(
     id		 SERIAL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP,
