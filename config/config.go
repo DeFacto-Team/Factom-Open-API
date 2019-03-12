@@ -22,8 +22,8 @@ type Config struct {
 	}
 	Factom struct {
 		URL       string `required:"true"`
-		User      string `default:"", required:"true"`
-		Password  string `default:"", required:"true"`
+		User      string `default:"",required:"true"`
+		Password  string `default:"",required:"true"`
 		EsAddress string `required:"true"`
 	}
 }

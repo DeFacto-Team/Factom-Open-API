@@ -14,6 +14,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -54,14 +55,12 @@ type SuccessResponse struct {
 
 type EntryResponse struct {
 	*model.Entry
-	Status string   `json:"status" form:"status" query:"status" validate:"oneof=queue processing completed"`
-	Links  []string `json:"links" form:"links" query:"links" validate:""`
+	Links []string `json:"links" form:"links" query:"links" validate:""`
 }
 
 type ChainResponse struct {
 	*model.Chain
-	Status string   `json:"status" form:"status" query:"status" validate:"oneof=queue processing completed"`
-	Links  []string `json:"links" form:"links" query:"links" validate:""`
+	Links []string `json:"links" form:"links" query:"links" validate:""`
 }
 
 func NewApi(conf *config.Config, es service.EntryService, cs service.ChainService, us service.UserService) *Api {
@@ -109,6 +108,7 @@ func NewApi(conf *config.Config, es service.EntryService, cs service.ChainServic
 
 	// Chains
 	api.Http.POST("/v1/chains", api.createChain)
+	api.Http.GET("/v1/chains/:chainid", api.getChain)
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
@@ -156,6 +156,58 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 
 // API functions
 
+func (api *Api) getChain(c echo.Context) error {
+
+	req := &model.Chain{ChainID: c.Param("chainid")}
+	resp := &ChainResponse{Chain: req}
+
+	// validate ExtIDs, Content
+	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	// search for chain into local db "chains"
+	chain, err := api.cs.GetChain(req)
+	if err != nil {
+		return err
+	}
+
+	// if chain not found in local db, check on the blockchain
+	if chain == nil {
+		if !req.Exists() {
+			err := fmt.Errorf("Chain %s does not exist", req.ChainID)
+			return api.ErrorResponse(err, c)
+		}
+	}
+
+	// if chain not found in local db (but found on blockchain!)
+	// start goroutine to parse all entries
+	if chain == nil {
+		go api.cs.ParseAllChainEntries(req)
+	}
+
+	// if chain not found in local db (but found on blockchain!) OR status != completed
+	// check current status on the blockchain and update in local db
+	if chain == nil || chain.Status != model.ChainCompleted {
+		resp.Status, _ = req.GetStatusFromFactom()
+		req.Status = resp.Status
+		req.Sync = model.ChainSyncProcessing
+
+		_, err = api.cs.CreateChain(req)
+		if err != nil {
+			return err
+		}
+
+		err = api.cs.BindChainToUser(req, api.user)
+		if err != nil {
+			return err
+		}
+	}
+
+	return api.SuccessResponse(resp, c)
+
+}
+
 func (api *Api) createChain(c echo.Context) error {
 
 	// Open API Chain struct
@@ -181,7 +233,7 @@ func (api *Api) createChain(c echo.Context) error {
 	req.ChainID = req.ID()
 
 	// extend Chain
-	resp := &ChainResponse{Chain: req}
+	resp := &ChainResponse{}
 
 	// calculate entryhash of the first entry
 	resp.Links = append(resp.Links, "/chains/"+req.ChainID+"/entries/"+req.FirstEntryHash())
@@ -197,6 +249,8 @@ func (api *Api) createChain(c echo.Context) error {
 
 	// if chain doesn't exists in local DB
 	if localChain == nil {
+		// Just created chain has status "queue"
+		req.Status = model.ChainQueue
 		// Create chain
 		_, err = api.cs.CreateChain(req)
 		if err != nil {
@@ -204,14 +258,12 @@ func (api *Api) createChain(c echo.Context) error {
 		}
 		// need to check chain existence — set flag to true
 		checkChainExistence = true
-		// Just created chain has status "queue"
-		resp.Status = model.ChainQueue
 	} else {
 		// Chain status is not completed
 		if localChain.Status != model.ChainCompleted {
 			checkChainExistence = true
 		}
-		resp.Status = localChain.Status
+		req.Status = localChain.Status
 	}
 
 	// if need to check chain existence
@@ -221,9 +273,11 @@ func (api *Api) createChain(c echo.Context) error {
 			log.Info("ADD TO QUEUE")
 		} else {
 			// if chain exists on the blockchain - get it's status
-			resp.Status = req.GetStatusFromFactom()
+			req.Status, _ = req.GetStatusFromFactom()
 		}
 	}
+
+	resp.Chain = req
 
 	// If we are here, so no errors occured and we force bind chain to API user
 	err = api.cs.BindChainToUser(req, api.user)

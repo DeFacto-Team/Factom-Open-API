@@ -33,6 +33,7 @@ CREATE TABLE entries(
     created_at timestamp DEFAULT CURRENT_TIMESTAMP,
     entryhash VARCHAR(64) UNIQUE NOT NULL,
     entrydata jsonb,
+    status VARCHAR(32),
     constraint entry_pk primary key(id)
 );
 
@@ -40,7 +41,9 @@ CREATE TABLE chains(
     chainid VARCHAR(64) UNIQUE NOT NULL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP,
     content TEXT NOT NULL,
-    extids jsonb NOT NULL
+    extids jsonb NOT NULL,
+    status VARCHAR(32),
+    sync VARCHAR(32)
 );
 
 CREATE TABLE users_chains(

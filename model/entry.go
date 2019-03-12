@@ -20,6 +20,20 @@ type Entry struct {
 	ChainID   string   `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
 	ExtIDs    []string `json:"extids" form:"extids" query:"extids" validate:""`
 	Content   string   `json:"content" form:"content" query:"content" validate:"required"`
+	Status    string   `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
+}
+
+func NewEntryFromFactomModel(fe *factom.Entry) *Entry {
+
+	entry := Entry{}
+	entry.ChainID = fe.ChainID
+	entry.Content = string(entry.Content)
+	for _, i := range fe.ExtIDs {
+		entry.ExtIDs = append(entry.ExtIDs, string(i))
+	}
+	entry.EntryHash = entry.Hash()
+	return &entry
+
 }
 
 func (entry *Entry) ConvertToFactomModel() *factom.Entry {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
+	//	log "github.com/sirupsen/logrus"
 )
 
 type Store interface {
@@ -156,14 +157,14 @@ func (c *StoreContext) GetChain(tx *sql.Tx, chain *model.Chain) (*model.Chain, e
 
 // Create chain
 func (c *StoreContext) CreateChain(tx *sql.Tx, chain *model.Chain) (*string, error) {
-	var query = "INSERT INTO chains (chainid, content, extids) VALUES($1, $2, $3) ON CONFLICT (chainid) DO UPDATE SET chainid = $1 RETURNING chainid;"
+	var query = "INSERT INTO chains (chainid, content, extids, status, sync) VALUES($1, $2, $3, $4, $5) ON CONFLICT (chainid) DO UPDATE SET chainid = $1, status = $4 RETURNING chainid;"
 	extids, _ := json.Marshal(chain.ExtIDs)
 	var chainid string
 	var err error
 	if tx != nil {
-		err = tx.QueryRow(query, chain.ChainID, chain.Content, extids).Scan(&chainid)
+		err = tx.QueryRow(query, chain.ChainID, chain.Content, extids, chain.Status, chain.Sync).Scan(&chainid)
 	} else {
-		err = c.db.QueryRow(query, chain.ChainID, chain.Content, extids).Scan(&chainid)
+		err = c.db.QueryRow(query, chain.ChainID, chain.Content, extids, chain.Status, chain.Sync).Scan(&chainid)
 	}
 	if err != nil {
 		return nil, err
@@ -189,14 +190,14 @@ func (c *StoreContext) CreateRelationUserChain(tx *sql.Tx, user *model.User, cha
 
 // Create entry
 func (c *StoreContext) CreateEntry(tx *sql.Tx, entry *model.Entry) (*int, error) {
-	var query = "INSERT INTO entries (entryhash, entrydata) VALUES($1, $2) ON CONFLICT (entryhash) DO UPDATE SET entrydata = $2 RETURNING id;"
-	entrydata, _ := json.Marshal(entry)
+	var query = "INSERT INTO entries (entryhash) VALUES($1) ON CONFLICT (entryhash) DO UPDATE SET entryhash = $1 RETURNING id;"
+	//	entrydata, _ := json.Marshal(entry)
 	var id int
 	var err error
 	if tx != nil {
-		err = tx.QueryRow(query, entry.EntryHash, entrydata).Scan(&id)
+		err = tx.QueryRow(query, entry.EntryHash).Scan(&id)
 	} else {
-		err = c.db.QueryRow(query, entry.EntryHash, entrydata).Scan(&id)
+		err = c.db.QueryRow(query, entry.EntryHash).Scan(&id)
 	}
 	if err != nil {
 		return nil, err

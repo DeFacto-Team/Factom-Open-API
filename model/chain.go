@@ -12,6 +12,7 @@ type Chain struct {
 	ExtIDs  []string `json:"extids" form:"extids" query:"extids" validate:"required"`
 	Content string   `json:"content" form:"content" query:"content" validate:"required"`
 	Status  string   `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
+	Sync    string   `json:"sync" form:"sync" query:"sync" validate:"oneof=processing completed"`
 }
 
 const (
@@ -19,6 +20,9 @@ const (
 	ChainCompleted  = "completed"
 	ChainProcessing = "processing"
 	ChainQueue      = "queue"
+	// Sync states
+	ChainSyncCompleted  = "completed"
+	ChainSyncProcessing = "processing"
 )
 
 func (chain *Chain) ConvertToEntryModel() *Entry {
@@ -62,17 +66,17 @@ func (chain *Chain) Exists() bool {
 
 }
 
-func (chain *Chain) GetStatusFromFactom() string {
+func (chain *Chain) GetStatusFromFactom() (string, string) {
 
 	status, err := factom.GetChainHeadAndStatus(chain.ChainID)
 	if err != nil {
-		return ChainQueue
+		return ChainQueue, ""
 	}
 
 	if status.ChainInProcessList == true {
-		return ChainProcessing
+		return ChainProcessing, status.ChainHead
 	}
 
-	return ChainCompleted
+	return ChainCompleted, status.ChainHead
 
 }
