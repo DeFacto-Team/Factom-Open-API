@@ -12,7 +12,7 @@ type Chain struct {
 	ExtIDs  []string `json:"extids" form:"extids" query:"extids" validate:"required"`
 	Content string   `json:"content" form:"content" query:"content" validate:"required"`
 	Status  string   `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
-	Sync    string   `json:"sync" form:"sync" query:"sync" validate:"oneof=processing completed"`
+	Sync    string   `json:"sync" form:"sync" query:"sync" validate:"omitempty,oneof=processing completed"`
 }
 
 const (
