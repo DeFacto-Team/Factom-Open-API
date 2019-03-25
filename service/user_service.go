@@ -7,8 +7,8 @@ import (
 )
 
 type UserService interface {
-	CreateUser(user *model.User) (*model.User, error)
-	GetUserByAccessToken(token string) (*model.User, error)
+	CreateUser(user *model.User) error
+	GetUserByAccessToken(token string) *model.User
 	UpdateUser(user *model.User) error
 }
 
@@ -20,42 +20,36 @@ type UserServiceContext struct {
 	store store.Store
 }
 
-func (c *UserServiceContext) CreateUser(user *model.User) (*model.User, error) {
+func (c *UserServiceContext) CreateUser(user *model.User) error {
 
-	tx, err := c.store.Begin()
+	err := c.store.CreateUser(user)
+	if err != nil {
+		return err
+	}
 
-	if err != nil {
-		return nil, err
-	}
-	created, err := c.store.CreateUser(tx, user)
-	if err != nil {
-		c.store.Rollback(tx)
-		return nil, err
-	}
-	if err = c.store.Commit(tx); err != nil {
-		return nil, err
-	}
-	return created, nil
+	return nil
 }
 
-func (c *UserServiceContext) GetUserByAccessToken(token string) (*model.User, error) {
-	return c.store.GetUserByAccessToken(nil, token)
+func (c *UserServiceContext) GetUserByAccessToken(token string) *model.User {
+	return c.store.GetUserByAccessToken(token)
 }
 
 func (c *UserServiceContext) UpdateUser(user *model.User) error {
 
-	tx, err := c.store.Begin()
-	if err != nil {
-		return err
-	}
-	err = c.store.UpdateUser(tx, user)
-	if err != nil {
-		c.store.Rollback(tx)
-		return err
-	}
-	if err = c.store.Commit(tx); err != nil {
-		return err
-	}
+	/*
+		tx, err := c.store.Begin()
+		if err != nil {
+			return err
+		}
+		err = c.store.UpdateUser(tx, user)
+		if err != nil {
+			c.store.Rollback(tx)
+			return err
+		}
+		if err = c.store.Commit(tx); err != nil {
+			return err
+		}
+	*/
 	return nil
 
 }

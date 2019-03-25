@@ -32,27 +32,34 @@ func (esc *EntryServiceContext) GetEntry(id int) (*model.Entry, error) {
 
 func (c *EntryServiceContext) CreateEntry(entry *model.Entry) (*int, error) {
 
-	tx, err := c.store.Begin()
-	if err != nil {
-		return nil, err
-	}
+	/*
+		tx, err := c.store.Begin()
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	fe := entry.ConvertToFactomModel()
 
-	_, err = c.wallet.CommitRevealEntry(fe)
+	_, err := c.wallet.CommitRevealEntry(fe)
 	if err != nil {
 		log.Error(err)
 	}
 
-	// Insert entry into "entries"
-	resEntry, err := c.store.CreateEntry(tx, entry)
-	if err != nil {
-		c.store.Rollback(tx)
-		return nil, err
-	}
-	if err = c.store.Commit(tx); err != nil {
-		return nil, err
-	}
+	/*
+		// Insert entry into "entries"
+		resEntry, err := c.store.CreateEntry(tx, entry)
+		if err != nil {
+			c.store.Rollback(tx)
+			return nil, err
+		}
+		if err = c.store.Commit(tx); err != nil {
+			return nil, err
+		}
+	*/
+
+	test := 1
+	resEntry := &test
 
 	return resEntry, nil
 }

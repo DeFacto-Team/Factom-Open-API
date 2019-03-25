@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/FactomProject/factom"
+	"github.com/lib/pq"
+	"time"
 )
 
 const (
@@ -16,18 +18,24 @@ const (
 
 // swagger:model
 type Entry struct {
-	EntryHash string   `json:"entryhash" form:"entryhash" query:"entryhash" validate:"required,hexadecimal,len=64"`
-	ChainID   string   `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
-	ExtIDs    []string `json:"extids" form:"extids" query:"extids" validate:""`
-	Content   string   `json:"content" form:"content" query:"content" validate:"required"`
-	Status    string   `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
+	// gorm.Model without ID
+	CreatedAt time.Time  `json:"-" form:"-" query:"-"`
+	UpdatedAt time.Time  `json:"-" form:"-" query:"-"`
+	DeletedAt *time.Time `json:"-" form:"-" query:"-"`
+	// model
+	EntryHash  string         `json:"entryhash" form:"entryhash" query:"entryhash" validate:"required,hexadecimal,len=64" gorm:"primary_key;unique;not null"`
+	ChainID    string         `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
+	ExtIDs     pq.StringArray `json:"extids" form:"extids" query:"extids" validate:""`
+	Content    string         `json:"content" form:"content" query:"content" validate:"required"`
+	Status     string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed" gorm:"not null;default:'queue'"`
+	EntryBlock string         `json:"-" form:"-" query:"-"`
 }
 
 func NewEntryFromFactomModel(fe *factom.Entry) *Entry {
 
 	entry := Entry{}
 	entry.ChainID = fe.ChainID
-	entry.Content = string(entry.Content)
+	entry.Content = string(fe.Content)
 	for _, i := range fe.ExtIDs {
 		entry.ExtIDs = append(entry.ExtIDs, string(i))
 	}

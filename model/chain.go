@@ -1,28 +1,41 @@
 package model
 
 import (
+	"github.com/lib/pq"
+	"time"
+	//	"encoding/json"
 	//	"encoding/hex"
+
 	"github.com/FactomProject/factom"
 	//log "github.com/sirupsen/logrus"
 )
 
 // swagger:model
 type Chain struct {
-	ChainID string   `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
-	ExtIDs  []string `json:"extids" form:"extids" query:"extids" validate:"required"`
-	Content string   `json:"content" form:"content" query:"content" validate:"required"`
-	Status  string   `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
-	Sync    string   `json:"sync" form:"sync" query:"sync" validate:"omitempty,oneof=processing completed"`
+	// gorm.Model without ID
+	CreatedAt time.Time  `json:"-" form:"-" query:"-"`
+	UpdatedAt time.Time  `json:"-" form:"-" query:"-"`
+	DeletedAt *time.Time `json:"-" form:"-" query:"-"`
+	// model
+	ChainID            string         `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64" gorm:"primary_key;unique;not null"`
+	ExtIDs             pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"required"`
+	Content            string         `json:"content" form:"content" query:"content" validate:"required"`
+	Status             string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
+	Synced             bool           `json:"synced" form:"synced" query:"synced" gorm:"not null;default:false"`
+	EarliestEntryBlock string         `json:"-" form:"-" query:"-"`
+	LatestEntryBlock   string         `json:"-" form:"-" query:"-"`
+	Entries            []Entry        `json:"-" form:"-" query:"-" gorm:"foreignkey:chain_id"`
+}
+
+type ChainWithLinks struct {
+	*Chain
+	Links []string `json:"links" form:"links" query:"links" validate:""`
 }
 
 const (
-	// Statuses
 	ChainCompleted  = "completed"
 	ChainProcessing = "processing"
 	ChainQueue      = "queue"
-	// Sync states
-	ChainSyncCompleted  = "completed"
-	ChainSyncProcessing = "processing"
 )
 
 func (chain *Chain) ConvertToEntryModel() *Entry {
@@ -33,6 +46,7 @@ func (chain *Chain) ConvertToEntryModel() *Entry {
 	if chain.ChainID != "" {
 		entry.ChainID = chain.ChainID
 	}
+	entry.EntryHash = entry.Hash()
 	return entry
 
 }

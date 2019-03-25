@@ -1,59 +1,173 @@
 package store
 
 import (
-	"database/sql"
-	"encoding/json"
-	"errors"
+	//"database/sql"
+	//"encoding/json"
+	//"errors"
 	"fmt"
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
-	//	log "github.com/sirupsen/logrus"
+
+	"github.com/jinzhu/gorm"
+	//	_ "github.com/jinzhu/gorm/dialects/postgres"
+	//log "github.com/sirupsen/logrus"
 )
 
 type Store interface {
 	Close() error
-	Begin() (*sql.Tx, error)
-	Commit(tx *sql.Tx) error
-	Rollback(tx *sql.Tx) error
 
-	CreateUser(tx *sql.Tx, user *model.User) (*model.User, error)
-	GetUserByAccessToken(tx *sql.Tx, token string) (*model.User, error)
-	UpdateUser(tx *sql.Tx, user *model.User) error
+	CreateUser(user *model.User) error
+	GetUserByAccessToken(token string) *model.User
 
-	GetChain(tx *sql.Tx, chain *model.Chain) (*model.Chain, error)
-	CreateChain(tx *sql.Tx, chain *model.Chain) (*string, error)
-	CreateRelationUserChain(tx *sql.Tx, user *model.User, chain *model.Chain) (*string, error)
+	GetChain(chain *model.Chain) *model.Chain
+	GetChainEntries(chain *model.Chain) []model.Entry
+	CreateChain(chain *model.Chain) error
+	UpdateChain(chain *model.Chain) error
+	BindChainToUser(chain *model.Chain, user *model.User) error
 
-	CreateEntry(tx *sql.Tx, entry *model.Entry) (*int, error)
+	CreateEntry(entry *model.Entry) error
+	CreateEBlock(eblock *model.EBlock) error
+
+	/*
+		Begin() (*sql.Tx, error)
+		Commit(tx *sql.Tx) error
+		Rollback(tx *sql.Tx) error
+
+		CreateUser(tx *sql.Tx, user *model.User) (*model.User, error)
+		GetUserByAccessToken(tx *sql.Tx, token string) (*model.User, error)
+		UpdateUser(tx *sql.Tx, user *model.User) error
+
+		GetChain(tx *sql.Tx, chain *model.Chain) (*model.Chain, error)
+		CreateChain(tx *sql.Tx, chain *model.Chain) (*string, error)
+		CreateRelationUserChain(tx *sql.Tx, user *model.User, chain *model.Chain) (*string, error)
+
+		CreateEntry(tx *sql.Tx, entry *model.Entry) (*int, error)
+	*/
 }
 
 // Контекст стореджа
 type StoreContext struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
 // Create new store
 func NewStore(conf *config.Config) (Store, error) {
+
 	storeConfig := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		conf.Store.Host, conf.Store.Port, conf.Store.User, conf.Store.Password, conf.Store.Dbname,
 	)
-	db, err := sql.Open("postgres", storeConfig)
+
+	db, err := gorm.Open("postgres", storeConfig)
 	if err != nil {
 		return nil, err
 	}
-	err = db.Ping()
-	if err != nil {
-		return nil, err
+
+	if conf.Api.Logging && conf.LogLevel == 5 {
+		db.LogMode(true)
 	}
+
 	return &StoreContext{db}, nil
+
 }
 
 // Close store
 func (c *StoreContext) Close() error {
+
 	return c.db.Close()
+
 }
 
+func (c *StoreContext) CreateUser(user *model.User) error {
+
+	if c.db.Create(&user).RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("Creating user failed")
+
+}
+
+func (c *StoreContext) GetUserByAccessToken(token string) *model.User {
+
+	user := &model.User{AccessToken: token}
+
+	if c.db.First(&user, user).RecordNotFound() {
+		return nil
+	}
+	return user
+
+}
+
+func (c *StoreContext) GetChain(chain *model.Chain) *model.Chain {
+
+	res := &model.Chain{}
+	if c.db.First(&res, chain).RecordNotFound() {
+		return nil
+	}
+	return res
+
+}
+
+func (c *StoreContext) CreateChain(chain *model.Chain) error {
+
+	if c.db.Create(&chain).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Creating chain failed")
+
+}
+
+func (c *StoreContext) CreateEntry(entry *model.Entry) error {
+
+	if c.db.Create(&entry).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Creating entry failed")
+
+}
+
+func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
+
+	if c.db.Create(&eblock).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Creating entryblock failed")
+
+}
+
+func (c *StoreContext) UpdateChain(chain *model.Chain) error {
+
+	if c.db.Model(&chain).Updates(chain).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Updating chain failed")
+
+}
+
+func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) error {
+
+	c.db.Model(user).Association("Chains").Append(chain)
+
+	if c.db.Model(user).Related(&chain, "Chains").RecordNotFound() {
+		return fmt.Errorf("DB: Binding chain to user failed")
+	}
+
+	return nil
+
+}
+
+func (c *StoreContext) GetChainEntries(chain *model.Chain) []model.Entry {
+
+	entries := []model.Entry{}
+
+	c.db.Model(chain).Related(&entries, "Entries")
+
+	return entries
+
+}
+
+/*
 // Begin SQL tx
 func (c *StoreContext) Begin() (*sql.Tx, error) {
 	return c.db.Begin()
@@ -204,3 +318,4 @@ func (c *StoreContext) CreateEntry(tx *sql.Tx, entry *model.Entry) (*int, error)
 	}
 	return &id, nil
 }
+*/

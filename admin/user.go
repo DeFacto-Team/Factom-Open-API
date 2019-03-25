@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	//	"github.com/DeFacto-Team/Factom-Open-API/api"
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
@@ -38,23 +37,23 @@ func main() {
 	defer store.Close()
 
 	user := &model.User{}
-	user.AccessToken = GenerateApiKey(32)
+	user.AccessToken = generateAPIKey(32)
 	user.Name = *name
 
 	us := service.NewUserService(store)
 
-	created, err := us.CreateUser(user)
+	err = us.CreateUser(user)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	user_json, _ := json.Marshal(created)
+	userJSON, _ := json.Marshal(user)
 
-	fmt.Printf(string(user_json) + "\n")
+	fmt.Printf(string(userJSON) + "\n")
 
 }
 
-func GenerateApiKey(n int) string {
+func generateAPIKey(n int) string {
 	b := make([]rune, n)
 	rand.Seed(time.Now().UnixNano())
 	for i := range b {

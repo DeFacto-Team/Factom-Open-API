@@ -86,12 +86,12 @@ func NewApi(conf *config.Config, es service.EntryService, cs service.ChainServic
 	}
 
 	api.Http.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
-		user, err := api.us.GetUserByAccessToken(key)
-		if user != nil && err == nil {
+		user := api.us.GetUserByAccessToken(key)
+		if user != nil && user.Status == 1 {
 			api.user = user
 			return true, nil
 		}
-		return false, err
+		return false, fmt.Errorf("User not found")
 	}))
 
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
@@ -115,6 +115,7 @@ func NewApi(conf *config.Config, es service.EntryService, cs service.ChainServic
 	//api.Http.GET("/v1/entries/:entryhash", api.getEntry)
 
 	// User
+	api.Http.GET("/v1/user", api.getUser)
 
 	return api
 }
@@ -127,6 +128,11 @@ func (api *Api) Start() error {
 // Returns API information
 func (api *Api) GetApiInfo() ApiInfo {
 	return api.apiInfo
+}
+
+// Returns API user info
+func (api *Api) getUser(c echo.Context) error {
+	return c.JSON(http.StatusOK, &api.user)
 }
 
 // Returns API specification (Swagger)
@@ -150,6 +156,7 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 		Code:   http.StatusBadRequest,
 		Error:  err.Error(),
 	}
+	log.Error(err.Error())
 	api.Http.Logger.Error(resp.Error)
 	return c.JSON(resp.Code, resp)
 }
@@ -183,7 +190,7 @@ func (api *Api) getChain(c echo.Context) error {
 	// if chain not found in local db (but found on blockchain!)
 	// start goroutine to parse all entries
 	if chain == nil {
-		go api.cs.ParseAllChainEntries(req)
+		//go api.cs.ParseAllChainEntries(req)
 	}
 
 	// if chain not found in local db (but found on blockchain!) OR status != completed
@@ -191,17 +198,17 @@ func (api *Api) getChain(c echo.Context) error {
 	if chain == nil || chain.Status != model.ChainCompleted {
 		resp.Status, _ = req.GetStatusFromFactom()
 		req.Status = resp.Status
-		req.Sync = model.ChainSyncProcessing
+		//		req.Synced =
 
-		_, err = api.cs.CreateChain(req)
+		_, err = api.cs.CreateChain(req, api.user)
 		if err != nil {
 			return err
 		}
 
-		err = api.cs.BindChainToUser(req, api.user)
-		if err != nil {
-			return err
-		}
+		//		err = api.cs.BindChainToUser(req, api.user)
+		//		if err != nil {
+		//			return err
+		//		}
 	}
 
 	return api.SuccessResponse(resp, c)
@@ -218,71 +225,17 @@ func (api *Api) createChain(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
+	log.Debug("Validating input data")
+
 	// validate ExtIDs, Content
 	if err := api.validate.StructExcept(req, "ChainID"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	// check if first entry of chain fits into 10KB
-	_, err := req.ConvertToEntryModel().Fit10KB()
+	resp, err := api.cs.CreateChain(req, api.user)
+
 	if err != nil {
 		return api.ErrorResponse(err, c)
-	}
-
-	// calculate chainID
-	req.ChainID = req.ID()
-
-	// extend Chain
-	resp := &ChainResponse{}
-
-	// calculate entryhash of the first entry
-	resp.Links = append(resp.Links, "/chains/"+req.ChainID+"/entries/"+req.FirstEntryHash())
-
-	// check for chain into local DB
-	localChain, err := api.cs.GetChain(req)
-	if err != nil {
-		return err
-	}
-
-	// flag
-	checkChainExistence := false
-
-	// if chain doesn't exists in local DB
-	if localChain == nil {
-		// Just created chain has status "queue"
-		req.Status = model.ChainQueue
-		// Create chain
-		_, err = api.cs.CreateChain(req)
-		if err != nil {
-			return err
-		}
-		// need to check chain existence — set flag to true
-		checkChainExistence = true
-	} else {
-		// Chain status is not completed
-		if localChain.Status != model.ChainCompleted {
-			checkChainExistence = true
-		}
-		req.Status = localChain.Status
-	}
-
-	// if need to check chain existence
-	if checkChainExistence == true {
-		if req.Exists() == false {
-			// if chain doesn't exist on the blockchain — add it to queue
-			log.Info("ADD TO QUEUE")
-		} else {
-			// if chain exists on the blockchain - get it's status
-			req.Status, _ = req.GetStatusFromFactom()
-		}
-	}
-
-	resp.Chain = req
-
-	// If we are here, so no errors occured and we force bind chain to API user
-	err = api.cs.BindChainToUser(req, api.user)
-	if err != nil {
-		return err
 	}
 
 	return api.SuccessResponse(resp, c)
