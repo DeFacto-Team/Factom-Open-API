@@ -19,7 +19,7 @@ type Chain struct {
 	// model
 	ChainID            string         `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64" gorm:"primary_key;unique;not null"`
 	ExtIDs             pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"required"`
-	Content            string         `json:"content" form:"content" query:"content" validate:"required"`
+	Content            string         `json:"-" form:"-" query:"-" sql:"-" validate:"required"`
 	Status             string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
 	Synced             bool           `json:"synced" form:"synced" query:"synced" gorm:"not null;default:false"`
 	EarliestEntryBlock string         `json:"-" form:"-" query:"-"`

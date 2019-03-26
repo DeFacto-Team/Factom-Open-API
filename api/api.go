@@ -30,9 +30,7 @@ import (
 type Api struct {
 	Http     *echo.Echo
 	conf     *config.Config
-	es       service.EntryService
-	cs       service.ChainService
-	us       service.UserService
+	service  service.Service
 	apiInfo  ApiInfo
 	validate *validator.Validate
 	user     *model.User
@@ -53,26 +51,14 @@ type SuccessResponse struct {
 	Result interface{} `json:"result"`
 }
 
-type EntryResponse struct {
-	*model.Entry
-	Links []string `json:"links" form:"links" query:"links" validate:""`
-}
-
-type ChainResponse struct {
-	*model.Chain
-	Links []string `json:"links" form:"links" query:"links" validate:""`
-}
-
-func NewApi(conf *config.Config, es service.EntryService, cs service.ChainService, us service.UserService) *Api {
+func NewApi(conf *config.Config, s service.Service) *Api {
 
 	api := &Api{}
 
 	api.validate = validator.New()
 
 	api.conf = conf
-	api.es = es
-	api.cs = cs
-	api.us = us
+	api.service = s
 
 	api.Http = echo.New()
 	api.Http.Logger.SetLevel(log.Lvl(conf.LogLevel))
@@ -86,7 +72,7 @@ func NewApi(conf *config.Config, es service.EntryService, cs service.ChainServic
 	}
 
 	api.Http.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
-		user := api.us.GetUserByAccessToken(key)
+		user := api.service.GetUserByAccessToken(key)
 		if user != nil && user.Status == 1 {
 			api.user = user
 			return true, nil
@@ -112,7 +98,7 @@ func NewApi(conf *config.Config, es service.EntryService, cs service.ChainServic
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
-	//api.Http.GET("/v1/entries/:entryhash", api.getEntry)
+	api.Http.GET("/v1/entries/:entryhash", api.getEntry)
 
 	// User
 	api.Http.GET("/v1/user", api.getUser)
@@ -166,49 +152,18 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 func (api *Api) getChain(c echo.Context) error {
 
 	req := &model.Chain{ChainID: c.Param("chainid")}
-	resp := &ChainResponse{Chain: req}
+
+	log.Debug("Validating input data")
 
 	// validate ExtIDs, Content
 	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	// search for chain into local db "chains"
-	chain, err := api.cs.GetChain(req)
-	if err != nil {
-		return err
-	}
+	resp := api.service.GetChain(req, api.user)
 
-	// if chain not found in local db, check on the blockchain
-	if chain == nil {
-		if !req.Exists() {
-			err := fmt.Errorf("Chain %s does not exist", req.ChainID)
-			return api.ErrorResponse(err, c)
-		}
-	}
-
-	// if chain not found in local db (but found on blockchain!)
-	// start goroutine to parse all entries
-	if chain == nil {
-		//go api.cs.ParseAllChainEntries(req)
-	}
-
-	// if chain not found in local db (but found on blockchain!) OR status != completed
-	// check current status on the blockchain and update in local db
-	if chain == nil || chain.Status != model.ChainCompleted {
-		resp.Status, _ = req.GetStatusFromFactom()
-		req.Status = resp.Status
-		//		req.Synced =
-
-		_, err = api.cs.CreateChain(req, api.user)
-		if err != nil {
-			return err
-		}
-
-		//		err = api.cs.BindChainToUser(req, api.user)
-		//		if err != nil {
-		//			return err
-		//		}
+	if resp == nil {
+		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
 	}
 
 	return api.SuccessResponse(resp, c)
@@ -219,6 +174,8 @@ func (api *Api) createChain(c echo.Context) error {
 
 	// Open API Chain struct
 	req := &model.Chain{}
+
+	req.Content = c.FormValue("content")
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
@@ -232,7 +189,7 @@ func (api *Api) createChain(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp, err := api.cs.CreateChain(req, api.user)
+	resp, err := api.service.CreateChain(req, api.user)
 
 	if err != nil {
 		return api.ErrorResponse(err, c)
@@ -270,54 +227,40 @@ func (api *Api) createEntry(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
+	log.Debug("Validating input data")
+
 	// validate ChainID, ExtID (if exists), Content
 	if err := api.validate.StructExcept(req, "EntryHash"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	// check if entry fits into 10KB
-	_, err := req.Fit10KB()
+	// Create entry
+	resp, err := api.service.CreateEntry(req)
+
 	if err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	// extend Entry
-	resp := &EntryResponse{Entry: req}
-
-	// calculate entryhash
-	resp.EntryHash = req.Hash()
-	resp.Status = "completed"
-
-	// Create entry
-	_, err = api.es.CreateEntry(req)
-	if err != nil {
-		return err
-	}
-
-	// send to factomd
-	//	factom.ComposeTransaction()
-
-	// increase user's usage
-	api.user.Usage += 1
-	api.us.UpdateUser(api.user)
-	//	log.Info(api.user)
-
 	return api.SuccessResponse(resp, c)
 }
 
-/*
 func (api *Api) getEntry(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param `id`")
+
+	req := &model.Entry{EntryHash: c.Param("entryhash")}
+
+	log.Debug("Validating input data")
+
+	// validate ExtIDs, Content
+	if err := api.validate.StructPartial(req, "EntryHash"); err != nil {
+		return api.ErrorResponse(err, c)
 	}
-	cat, err := api.es.GetEntry(id)
-	if err != nil {
-		return err
+
+	resp := api.service.GetEntry(req)
+
+	if resp == nil {
+		return api.ErrorResponse(fmt.Errorf("Entry %s does not exist", req.EntryHash), c)
 	}
-	if cat == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Category `id` = ", id, " not found")
-	}
-	return c.JSON(http.StatusOK, cat)
+
+	return api.SuccessResponse(resp, c)
+
 }
-*/

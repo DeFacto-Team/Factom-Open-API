@@ -26,6 +26,7 @@ type Store interface {
 	UpdateChain(chain *model.Chain) error
 	BindChainToUser(chain *model.Chain, user *model.User) error
 
+	GetEntry(entry *model.Entry) *model.Entry
 	CreateEntry(entry *model.Entry) error
 	CreateEBlock(eblock *model.EBlock) error
 
@@ -115,6 +116,16 @@ func (c *StoreContext) CreateChain(chain *model.Chain) error {
 		return nil
 	}
 	return fmt.Errorf("DB: Creating chain failed")
+
+}
+
+func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
+
+	res := &model.Entry{}
+	if c.db.First(&res, entry).RecordNotFound() {
+		return nil
+	}
+	return res
 
 }
 

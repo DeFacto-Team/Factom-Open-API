@@ -19,7 +19,6 @@ import (
 func main() {
 
 	var err error
-	//	log.SetFormatter(&log.JSONFormatter{})
 
 	// Get config flag if exists
 	configFile := flag.String("c", "config/config.yaml", "Path to config file")
@@ -38,6 +37,7 @@ func main() {
 	// Create store
 	store, err := store.NewStore(conf)
 	if err != nil {
+		log.Error("Database connection FAILED")
 		log.Fatal(err)
 	}
 	defer store.Close()
@@ -71,13 +71,11 @@ func main() {
 	}
 
 	// Create services
-	es := service.NewEntryService(store, wallet)
-	cs := service.NewChainService(store, wallet)
-	us := service.NewUserService(store)
+	s := service.NewService(store, wallet)
 	log.Info("Services created successfully")
 
 	// Start API
-	api := api.NewApi(conf, es, cs, us)
+	api := api.NewApi(conf, s)
 	log.WithField("address", api.GetApiInfo().Address).
 		WithField("mw", api.GetApiInfo().MW).
 		Info("Starting api")

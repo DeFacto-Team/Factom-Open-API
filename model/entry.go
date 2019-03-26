@@ -96,3 +96,14 @@ func (entry *Entry) Fit10KB() (bool, error) {
 	return false, fmt.Errorf("Entry cannot be larger than 10KB")
 
 }
+
+func (entry *Entry) FillModelFromFactom() (*Entry, error) {
+
+	fe, err := factom.GetEntry(entry.EntryHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewEntryFromFactomModel(fe), nil
+
+}

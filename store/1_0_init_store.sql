@@ -32,7 +32,7 @@ CREATE TABLE queue(
 
 CREATE TABLE chains(
     chain_id VARCHAR(64) UNIQUE NOT NULL,
-    content TEXT,
+    -- content TEXT,
     ext_ids _TEXT,
     status VARCHAR(32),
     synced BOOLEAN NOT NULL DEFAULT FALSE,
@@ -65,8 +65,8 @@ CREATE TABLE entries(
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
     CONSTRAINT entries_entry_hash_key PRIMARY KEY(entry_hash),
-    CONSTRAINT entries_chain_id_fkey FOREIGN KEY(chain_id) REFERENCES chains(chain_id),
-    CONSTRAINT entries_entry_block_fkey FOREIGN KEY(entry_block) REFERENCES e_blocks(key_mr)
+    CONSTRAINT entries_chain_id_fkey FOREIGN KEY(chain_id) REFERENCES chains(chain_id)
+--    CONSTRAINT entries_entry_block_fkey FOREIGN KEY(entry_block) REFERENCES e_blocks(key_mr)
 );
 
 CREATE TABLE users_chains(
