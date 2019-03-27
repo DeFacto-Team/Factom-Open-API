@@ -14,7 +14,9 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/FactomProject/factom"
 	"net/http"
 	"strconv"
 
@@ -102,6 +104,9 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 
 	// User
 	api.Http.GET("/v1/user", api.getUser)
+
+	// Direct factomd call
+	api.Http.POST("/v1/factomd/:method", api.factomd)
 
 	return api
 }
@@ -262,5 +267,32 @@ func (api *Api) getEntry(c echo.Context) error {
 	}
 
 	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *Api) factomd(c echo.Context) error {
+
+	var params interface{}
+
+	if c.FormValue("params") != "" {
+		log.Info(c.FormValue("params"))
+		err := json.Unmarshal([]byte(c.FormValue("params")), &params)
+		if err != nil {
+			return api.ErrorResponse(err, c)
+		}
+	}
+
+	request := factom.NewJSON2Request(c.Param("method"), 0, params)
+
+	resp, err := factom.SendFactomdRequest(request)
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	if resp.Error != nil {
+		return api.ErrorResponse(resp.Error, c)
+	}
+
+	return api.SuccessResponse(resp.Result, c)
 
 }
