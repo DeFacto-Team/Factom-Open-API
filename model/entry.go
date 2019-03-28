@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"github.com/FactomProject/factom"
@@ -25,8 +26,8 @@ type Entry struct {
 	// model
 	EntryHash  string         `json:"entryhash" form:"entryhash" query:"entryhash" validate:"required,hexadecimal,len=64" gorm:"primary_key;unique;not null"`
 	ChainID    string         `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
-	ExtIDs     pq.StringArray `json:"extids" form:"extids" query:"extids" validate:""`
-	Content    string         `json:"content" form:"content" query:"content" validate:"required"`
+	ExtIDs     pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"dive,base64"`
+	Content    string         `json:"content" form:"content" query:"content" validate:"required,base64"`
 	Status     string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed" gorm:"not null;default:'queue'"`
 	EntryBlock string         `json:"-" form:"-" query:"-"`
 }
@@ -41,6 +42,41 @@ func NewEntryFromFactomModel(fe *factom.Entry) *Entry {
 	}
 	entry.EntryHash = entry.Hash()
 	return &entry
+
+}
+
+func (entry *Entry) Base64Decode() *Entry {
+
+	content, _ := base64.StdEncoding.DecodeString(entry.Content)
+	entry.Content = string(content)
+
+	var extID []byte
+	var extIDs []string
+
+	for _, i := range entry.ExtIDs {
+		extID, _ = base64.StdEncoding.DecodeString(i)
+		extIDs = append(extIDs, string(extID))
+	}
+
+	entry.ExtIDs = extIDs
+
+	return entry
+
+}
+
+func (entry *Entry) Base64Encode() *Entry {
+
+	entry.Content = base64.StdEncoding.EncodeToString([]byte(entry.Content))
+
+	var extIDs []string
+
+	for _, i := range entry.ExtIDs {
+		extIDs = append(extIDs, base64.StdEncoding.EncodeToString([]byte(i)))
+	}
+
+	entry.ExtIDs = extIDs
+
+	return entry
 
 }
 
