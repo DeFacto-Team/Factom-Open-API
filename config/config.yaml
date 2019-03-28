@@ -10,7 +10,7 @@ store:
   password: "postgres"
   dbname: "postgres"
 factom:
-  url: ""
+  url: "https://api.factomd.net"
   user: ""
   password: ""
   esaddress: ""

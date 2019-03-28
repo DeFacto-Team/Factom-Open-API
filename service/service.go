@@ -17,8 +17,8 @@ type Service interface {
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
 
-	GetEntry(entry *model.Entry) *model.Entry
-	CreateEntry(entry *model.Entry) (*model.Entry, error)
+	GetEntry(entry *model.Entry, user *model.User) *model.Entry
+	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 
 	parseBackChainEntries(chain *model.Chain) error
 	parseBackChainEntriesFromEBlock(eblock string) error
@@ -58,7 +58,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 
 	if localChain != nil {
 		log.Debug("Chain " + chain.ChainID + " found into local DB")
-		resp.Chain = localChain
+		resp.Chain = localChain.Base64Encode()
 		return resp
 	}
 
@@ -66,10 +66,11 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 	log.Debug("Search for chain on the blockchain")
 
 	if chain.Exists() {
+		chain = chain.Base64Encode()
 		log.Debug("Chain " + chain.ChainID + " found on the blockchain")
 
 		log.Debug("Getting chain status from the blockchain")
-		chain.Status, _ = chain.GetStatusFromFactom()
+		chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
 		resp.Chain = chain
 
 		log.Debug("Creating chain into local DB")
@@ -95,6 +96,8 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 }
 
 func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error) {
+
+	chain = chain.Base64Decode()
 
 	log.Debug("Checking if first entry of chain fits into 10KB")
 	_, err := chain.ConvertToEntryModel().Fit10KB()
@@ -128,13 +131,13 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 	log.Debug("Chain ", chain.ChainID, " not found both on Factom & into local DB")
 
 	log.Debug("Creating chain into local DB")
-	err = c.store.CreateChain(chain)
+	err = c.store.CreateChain(chain.Base64Encode())
 	if err != nil {
 		log.Error(err)
 	}
 
 	log.Debug("Creating entry into local DB")
-	err = c.store.CreateEntry(chain.ConvertToEntryModel())
+	err = c.store.CreateEntry(chain.ConvertToEntryModel().Base64Encode())
 	if err != nil {
 		log.Error(err)
 	}
@@ -148,13 +151,13 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 		log.Error(err)
 	}
 
-	resp.Chain = chain
+	resp.Chain = chain.Base64Encode()
 
 	return resp, nil
 
 }
 
-func (c *ServiceContext) GetEntry(entry *model.Entry) *model.Entry {
+func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.Entry {
 
 	log.Debug("Search for entry into local DB")
 
@@ -163,6 +166,7 @@ func (c *ServiceContext) GetEntry(entry *model.Entry) *model.Entry {
 
 	if localentry != nil {
 		log.Debug("Entry " + entry.EntryHash + " found into local DB")
+		// localentry already base64 encoded
 		return localentry
 	}
 
@@ -170,50 +174,52 @@ func (c *ServiceContext) GetEntry(entry *model.Entry) *model.Entry {
 	log.Debug("Search for entry on the blockchain")
 
 	resp, err := entry.FillModelFromFactom()
-	resp.Status = model.EntryCompleted
 
-	if err != nil {
-		log.Error(err)
-	}
+	if err == nil {
+		log.Debug("Entry " + entry.EntryHash + " found on Factom")
+		resp.Status = model.EntryCompleted
 
-	log.Debug("Creating entry into local DB")
-	err = c.store.CreateEntry(resp)
-	if err != nil {
-		log.Error(err)
-	}
+		// search for chain.ChainID into local DB
+		localChain := c.store.GetChain(resp.GetChain())
 
-	/*
-		if chain.Exists() {
-			log.Debug("Chain " + chain.ChainID + " found on the blockchain")
-
-			log.Debug("Getting chain status from the blockchain")
-			chain.Status, _ = chain.GetStatusFromFactom()
-			resp.Chain = chain
-
+		if localChain == nil {
+			log.Debug("Chain " + resp.ChainID + " not found into local DB")
 			log.Debug("Creating chain into local DB")
-			err := c.store.CreateChain(chain)
+
+			chain := resp.GetChain()
+			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
+
+			err = c.store.CreateChain(chain)
 			if err != nil {
 				log.Error(err)
 			}
 
 			log.Debug("Start fetching chain entries into local DB")
-			go c.parseBackChainEntries(chain)
-
-			// If we are here, so no errors occured and we force bind chain to API user
-			log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
-			err = c.store.BindChainToUser(chain, user)
-			if err != nil {
-				log.Error(err)
-			}
-
-			return resp
+			go c.parseBackChainEntries(resp.GetChain())
 		}
-	*/
 
-	return resp
+		log.Debug("Force binding chain ", resp.ChainID, " to user ", user.Name)
+		err = c.store.BindChainToUser(resp.GetChain(), user)
+		if err != nil {
+			log.Error(err)
+		}
+
+		log.Debug("Creating entry into local DB")
+		err = c.store.CreateEntry(resp.Base64Encode())
+		if err != nil {
+			log.Error(err)
+		}
+
+		return resp.Base64Encode()
+	}
+
+	return nil
+
 }
 
-func (c *ServiceContext) CreateEntry(entry *model.Entry) (*model.Entry, error) {
+func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
+
+	entry = entry.Base64Decode()
 
 	log.Debug("Checking if entry fits into 10KB")
 	_, err := entry.Fit10KB()
@@ -224,13 +230,58 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry) (*model.Entry, error) {
 
 	entry.EntryHash = entry.Hash()
 
-	// default entry status for new entries
-	entry.Status = model.EntryQueue
+	localChain := c.store.GetChain(entry.GetChain())
+	if localChain == nil {
 
-	err = c.store.CreateEntry(entry)
+		log.Debug("Chain " + entry.ChainID + " not found into local DB")
+		log.Debug("Checking if chain exists on Factom")
+
+		if !entry.GetChain().Exists() {
+			log.Error("Chain " + entry.ChainID + " not found on Factom")
+			return nil, fmt.Errorf("Chain " + entry.ChainID + " not found")
+		}
+
+		log.Debug("Creating chain into local DB")
+
+		chain := entry.GetChain()
+		chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
+		err = c.store.CreateChain(chain)
+		if err != nil {
+			log.Error(err)
+		}
+
+		log.Debug("Start fetching chain entries into local DB")
+		go c.parseBackChainEntries(chain)
+
+	}
+
+	localEntry := c.store.GetEntry(&model.Entry{EntryHash: entry.EntryHash})
+
+	if localEntry == nil {
+		log.Debug("Entry " + entry.EntryHash + " not found into local DB")
+		log.Debug("Creating entry into local DB")
+
+		// new entry status queue
+		entry.Status = model.EntryQueue
+
+		err = c.store.CreateEntry(entry.Base64Encode())
+		if err != nil {
+			log.Error(err)
+			return nil, fmt.Errorf(err.Error())
+		}
+	} else {
+		log.Debug("Entry " + entry.EntryHash + " found into local DB")
+		// use entry status from local db
+		entry.Status = localEntry.Status
+	}
+
+	log.Debug("Adding 'create-entry' into queue")
+
+	// If we are here, so no errors occured and we force bind chain to API user
+	log.Debug("Force binding chain ", entry.ChainID, " to user ", user.Name)
+	err = c.store.BindChainToUser(entry.GetChain(), user)
 	if err != nil {
 		log.Error(err)
-		return nil, fmt.Errorf(err.Error())
 	}
 
 	return entry, nil
@@ -296,7 +347,7 @@ func (c *ServiceContext) parseBackChainEntriesFromEBlock(eblock string) error {
 			log.Debug("Fetching Entry " + entry.EntryHash)
 			entry.Status = model.EntryCompleted
 			entry.EntryBlock = ebhash
-			err = c.store.CreateEntry(entry)
+			err = c.store.CreateEntry(entry.Base64Encode())
 			if err != nil {
 				log.Error(err)
 			}
@@ -310,7 +361,7 @@ func (c *ServiceContext) parseBackChainEntriesFromEBlock(eblock string) error {
 
 		// set synced=true on last iteration
 		if ebhash == factom.ZeroHash {
-			err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: true})
+			err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: true, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
 		}
 
 	}

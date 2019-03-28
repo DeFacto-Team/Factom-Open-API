@@ -80,6 +80,14 @@ func (entry *Entry) Base64Encode() *Entry {
 
 }
 
+func (entry *Entry) GetChain() *Chain {
+
+	chain := &Chain{ChainID: entry.ChainID}
+
+	return chain
+
+}
+
 func (entry *Entry) ConvertToFactomModel() *factom.Entry {
 
 	fe := &factom.Entry{}

@@ -240,7 +240,7 @@ func (api *Api) createEntry(c echo.Context) error {
 	}
 
 	// Create entry
-	resp, err := api.service.CreateEntry(req)
+	resp, err := api.service.CreateEntry(req, api.user)
 
 	if err != nil {
 		return api.ErrorResponse(err, c)
@@ -260,7 +260,7 @@ func (api *Api) getEntry(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp := api.service.GetEntry(req)
+	resp := api.service.GetEntry(req, api.user)
 
 	if resp == nil {
 		return api.ErrorResponse(fmt.Errorf("Entry %s does not exist", req.EntryHash), c)
