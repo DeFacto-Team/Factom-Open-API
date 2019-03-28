@@ -48,6 +48,7 @@ func (chain *Chain) ConvertToEntryModel() *Entry {
 		entry.ChainID = chain.ChainID
 	}
 	entry.EntryHash = entry.Hash()
+	entry.Status = chain.Status
 	return entry
 
 }
@@ -123,8 +124,8 @@ func (chain *Chain) GetStatusFromFactom() (string, string) {
 		return ChainQueue, ""
 	}
 
-	if status.ChainInProcessList == true {
-		return ChainProcessing, status.ChainHead
+	if status.ChainHead == "" {
+		return ChainProcessing, ""
 	}
 
 	return ChainCompleted, status.ChainHead
