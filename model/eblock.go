@@ -6,7 +6,7 @@ import (
 
 // swagger:model
 type EBlock struct {
-	KeyMR               string `json:"keymr"`
+	KeyMR               string `json:"keymr" gorm:"primary_key;unique;not null"`
 	BlockSequenceNumber int64  `json:"blocksequencenumber"`
 	ChainID             string `json:"chainid"`
 	PrevKeyMR           string `json:"prevkeymr"`
