@@ -112,10 +112,10 @@ func (c *StoreContext) GetChain(chain *model.Chain) *model.Chain {
 
 func (c *StoreContext) CreateChain(chain *model.Chain) error {
 
-	if c.db.Create(&chain).RowsAffected > 0 {
-		return nil
+	if err := c.db.Assign(&chain).FirstOrCreate(&chain).Error; err != nil {
+		return err
 	}
-	return fmt.Errorf("DB: Creating chain failed")
+	return nil
 
 }
 
@@ -131,19 +131,19 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 
 func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
-	if c.db.Create(&entry).RowsAffected > 0 {
-		return nil
+	if err := c.db.Assign(&entry).FirstOrCreate(&entry).Error; err != nil {
+		return err
 	}
-	return fmt.Errorf("DB: Creating entry failed")
+	return nil
 
 }
 
 func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
 
-	if c.db.Create(&eblock).RowsAffected > 0 {
-		return nil
+	if err := c.db.Assign(&eblock).FirstOrCreate(&eblock).Error; err != nil {
+		return err
 	}
-	return fmt.Errorf("DB: Creating entryblock failed")
+	return nil
 
 }
 
