@@ -112,7 +112,7 @@ func (c *StoreContext) GetChain(chain *model.Chain) *model.Chain {
 
 func (c *StoreContext) CreateChain(chain *model.Chain) error {
 
-	if err := c.db.Assign(&chain).FirstOrCreate(&chain).Error; err != nil {
+	if err := c.db.FirstOrCreate(&chain).Error; err != nil {
 		return err
 	}
 	return nil
@@ -131,7 +131,7 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 
 func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
-	if err := c.db.Assign(&entry).FirstOrCreate(&entry).Error; err != nil {
+	if err := c.db.Assign(model.Entry{EntryBlock: entry.EntryBlock, Status: entry.Status}).FirstOrCreate(&entry).Error; err != nil {
 		return err
 	}
 	return nil
@@ -140,7 +140,7 @@ func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
 func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
 
-	if err := c.db.Assign(&eblock).FirstOrCreate(&eblock).Error; err != nil {
+	if err := c.db.FirstOrCreate(&eblock).Error; err != nil {
 		return err
 	}
 	return nil
