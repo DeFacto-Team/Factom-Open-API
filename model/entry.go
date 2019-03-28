@@ -26,8 +26,8 @@ type Entry struct {
 	// model
 	EntryHash  string         `json:"entryhash" form:"entryhash" query:"entryhash" validate:"required,hexadecimal,len=64" gorm:"primary_key;unique;not null"`
 	ChainID    string         `json:"chainid" form:"chainid" query:"chainid" validate:"required,hexadecimal,len=64"`
-	ExtIDs     pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"dive,base64"`
-	Content    string         `json:"content" form:"content" query:"content" validate:"required,base64"`
+	ExtIDs     pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"omitempty,dive,base64"`
+	Content    string         `json:"content" form:"content" query:"content" validate:"omitempty,base64"`
 	Status     string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed" gorm:"not null;default:'queue'"`
 	EntryBlock string         `json:"-" form:"-" query:"-"`
 }
