@@ -75,6 +75,7 @@ func main() {
 	log.Info("Services created successfully")
 
 	go fetchChainUpdates(s)
+	go fetchUnsyncedChains(s)
 
 	// Start API
 	api := api.NewApi(conf, s)
@@ -89,5 +90,13 @@ func fetchChainUpdates(s service.Service) {
 	chains := s.GetChains(&model.Chain{Status: model.ChainCompleted})
 	for _, c := range chains {
 		s.ParseNewChainEntries(c)
+	}
+}
+
+func fetchUnsyncedChains(s service.Service) {
+	t := false
+	chains := s.GetChains(&model.Chain{Synced: &t})
+	for _, c := range chains {
+		s.ParseAllChainEntries(c)
 	}
 }

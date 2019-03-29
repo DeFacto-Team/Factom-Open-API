@@ -341,7 +341,9 @@ func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
 		return fmt.Errorf("Chain has not processed on Factom yet")
 	}
 
-	if chain.Synced == true {
+	t := true
+
+	if chain.Synced == &t {
 		return fmt.Errorf("Chain already parsed")
 	}
 
@@ -417,7 +419,8 @@ func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock
 
 	// if we parsed earliest block, set synced=true & update extIDs
 	if eb.Header.PrevKeyMR == factom.ZeroHash {
-		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: true, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
+		t := true
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
 		if err != nil {
 			return "", err
 		}

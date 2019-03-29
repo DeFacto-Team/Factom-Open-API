@@ -22,7 +22,7 @@ type Chain struct {
 	ExtIDs             pq.StringArray `json:"extids" form:"extids" query:"extids" validate:"required,dive,base64"`
 	Content            string         `json:"-" form:"-" query:"-" sql:"-" validate:"required,base64"`
 	Status             string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed"`
-	Synced             bool           `json:"synced" form:"synced" query:"synced" gorm:"not null;default:false"`
+	Synced             *bool          `json:"synced" form:"synced" query:"synced" gorm:"not null;default:false"`
 	EarliestEntryBlock string         `json:"-" form:"-" query:"-"`
 	LatestEntryBlock   string         `json:"-" form:"-" query:"-"`
 	Entries            []Entry        `json:"-" form:"-" query:"-" gorm:"foreignkey:chain_id"`
