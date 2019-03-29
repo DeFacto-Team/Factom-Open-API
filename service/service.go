@@ -15,13 +15,13 @@ type Service interface {
 	GetUserByAccessToken(token string) *model.User
 
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
+	GetChains(chain *model.Chain) []*model.Chain
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
+	ParseAllChainEntries(chain *model.Chain) error
+	ParseNewChainEntries(chain *model.Chain) error
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
-
-	parseBackChainEntries(chain *model.Chain) error
-	parseBackChainEntriesFromEBlock(eblock string) error
 }
 
 func NewService(store store.Store, wallet wallet.Wallet) Service {
@@ -80,7 +80,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 		}
 
 		log.Debug("Start fetching chain entries into local DB")
-		go c.parseBackChainEntries(chain)
+		go c.ParseAllChainEntries(chain)
 
 		// If we are here, so no errors occured and we force bind chain to API user
 		log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
@@ -93,6 +93,12 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 	}
 
 	return nil
+}
+
+func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
+
+	return c.store.GetChains(chain)
+
 }
 
 func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error) {
@@ -195,7 +201,7 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 			}
 
 			log.Debug("Start fetching chain entries into local DB")
-			go c.parseBackChainEntries(resp.GetChain())
+			go c.ParseAllChainEntries(resp.GetChain())
 		}
 
 		log.Debug("Force binding chain ", resp.ChainID, " to user ", user.Name)
@@ -251,7 +257,7 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 		}
 
 		log.Debug("Start fetching chain entries into local DB")
-		go c.parseBackChainEntries(chain)
+		go c.ParseAllChainEntries(chain)
 
 	}
 
@@ -287,86 +293,137 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 	return entry, nil
 }
 
-func (c *ServiceContext) parseBackChainEntries(chain *model.Chain) error {
-
-	log.Debug("Parsing entries of chain " + chain.ChainID)
+func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
 
 	var parse_from string
+	var parse_to string
 
-	if chain.EarliestEntryBlock != "" {
-		parse_from = chain.EarliestEntryBlock
-	} else {
-		head, err := factom.GetChainHeadAndStatus(chain.ChainID)
+	log.Debug("Checking chain " + chain.ChainID + " for updates")
 
-		if err != nil {
-			return err
-		}
+	status, chainhead := chain.GetStatusFromFactom()
 
-		if head.ChainHead == "" && head.ChainInProcessList {
-			return fmt.Errorf("Chain not yet included in a Directory Block")
-		}
-
-		parse_from = head.ChainHead
+	// if chain has not processed on Factom, don't touch it
+	if status != model.ChainCompleted {
+		return fmt.Errorf("Chain has not processed on Factom yet")
 	}
 
-	log.Debug("Parsing back from eblock: " + parse_from)
-
-	err := c.parseBackChainEntriesFromEBlock(parse_from)
-	if err != nil {
-		return err
+	// parse new entries if new blocks appeared
+	if chain.LatestEntryBlock != chainhead {
+		log.Debug("Chain " + chain.ChainID + " updated, parsing new entries")
+		parse_from = chainhead
+		parse_to = chain.LatestEntryBlock
+		err := c.parseEntryBlocks(parse_from, parse_to, false)
+		if err == nil {
+			err = c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead})
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		log.Debug("No new entries found")
 	}
 
 	return nil
 
 }
 
-func (c *ServiceContext) parseBackChainEntriesFromEBlock(eblock string) error {
+func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
 
-	for ebhash := eblock; ebhash != factom.ZeroHash; {
+	var parseFrom string
+	var parseTo string
 
-		log.Debug("Fetching EntryBlock " + ebhash)
+	log.Debug("Checking chain " + chain.ChainID)
 
-		eb, err := factom.GetEBlock(ebhash)
+	status, chainhead := chain.GetStatusFromFactom()
+
+	// if chain has not processed on Factom, don't touch it
+	if status != model.ChainCompleted {
+		return fmt.Errorf("Chain has not processed on Factom yet")
+	}
+
+	if chain.Synced == true {
+		return fmt.Errorf("Chain already parsed")
+	}
+
+	// by default, parse from chainhead
+	parseFrom = chainhead
+
+	log.Debug("Chain " + chain.ChainID + " not synced, parsing all entries")
+	parseTo = factom.ZeroHash
+
+	// if some entryblocks already parsed, start from the latest parsed
+	if chain.EarliestEntryBlock != "" {
+		log.Debug("Start parsing from EntryBlock " + chain.EarliestEntryBlock)
+		parseFrom = chain.EarliestEntryBlock
+	}
+
+	c.parseEntryBlocks(parseFrom, parseTo, true)
+
+	return nil
+
+}
+
+func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, updateEarliestEntryBlock bool) error {
+
+	for ebhash := parseFrom; ebhash != parseTo; {
+		var err error
+		ebhash, err = c.parseEntryBlock(ebhash, updateEarliestEntryBlock)
 		if err != nil {
-			return err
+			return fmt.Errorf(err.Error())
 		}
-		entryblock := model.NewEBlockFromFactomModel(ebhash, eb)
-		err = c.store.CreateEBlock(entryblock)
-		if err != nil {
-			return err
-		}
-		s, err := factom.GetAllEBlockEntries(ebhash)
-		if err != nil {
-			return err
-		}
-
-		var entry *model.Entry
-
-		for _, fe := range s {
-			entry = model.NewEntryFromFactomModel(fe)
-			log.Debug("Fetching Entry " + entry.EntryHash)
-			entry.Status = model.EntryCompleted
-			entry.EntryBlock = ebhash
-			err = c.store.CreateEntry(entry.Base64Encode())
-			if err != nil {
-				log.Error(err)
-			}
-		}
-
-		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, EarliestEntryBlock: ebhash})
-		if err != nil {
-			return err
-		}
-		ebhash = eb.Header.PrevKeyMR
-
-		// set synced=true on last iteration
-		if ebhash == factom.ZeroHash {
-			err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: true, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
-		}
-
 	}
 
 	return nil
+
+}
+
+func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
+
+	log.Debug("Fetching EntryBlock " + ebhash)
+
+	eb, err := factom.GetEBlock(ebhash)
+	if err != nil {
+		return "", err
+	}
+	entryblock := model.NewEBlockFromFactomModel(ebhash, eb)
+	err = c.store.CreateEBlock(entryblock)
+	if err != nil {
+		return "", err
+	}
+	s, err := factom.GetAllEBlockEntries(ebhash)
+	if err != nil {
+		return "", err
+	}
+
+	var entry *model.Entry
+
+	for _, fe := range s {
+		entry = model.NewEntryFromFactomModel(fe)
+		log.Debug("Fetching Entry " + entry.EntryHash)
+		entry.Status = model.EntryCompleted
+		entry.EntryBlock = ebhash
+		err = c.store.CreateEntry(entry.Base64Encode())
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
+	if updateEarliestEntryBlock == true {
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, EarliestEntryBlock: ebhash})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// if we parsed earliest block, set synced=true & update extIDs
+	if eb.Header.PrevKeyMR == factom.ZeroHash {
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: true, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return eb.Header.PrevKeyMR, nil
 
 }
 
