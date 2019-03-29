@@ -58,7 +58,8 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 
 	if localChain != nil {
 		log.Debug("Chain " + chain.ChainID + " found into local DB")
-		resp.Chain = localChain.Base64Encode()
+		// localChain already base64 encoded
+		resp.Chain = localChain
 		return resp
 	}
 
@@ -428,8 +429,4 @@ func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock
 
 	return eb.Header.PrevKeyMR, nil
 
-}
-
-func (c *ServiceContext) getChainFromLocalDB(chain *model.Chain) *model.Chain {
-	return c.store.GetChain(chain)
 }
