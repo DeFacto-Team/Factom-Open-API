@@ -3,12 +3,12 @@ CREATE TABLE users(
   id		 SERIAL,
   name VARCHAR(128) UNIQUE NOT NULL,
   access_token VARCHAR(128) UNIQUE NOT NULL,
-  status int4 NOT NULL DEFAULT 1,
-  usage int8 NOT NULL DEFAULT 0,
-  usage_limit int8 NOT NULL DEFAULT 0,
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP,
-  deleted_at TIMESTAMP,
+  status INT4 NOT NULL DEFAULT 1,
+  usage INT8 NOT NULL DEFAULT 0,
+  usage_limit INT8 NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ,
   CONSTRAINT users_id_key PRIMARY KEY(id)
 );
 
@@ -17,17 +17,18 @@ INSERT INTO users(name, access_token) VALUES('test', 'test');
 
 CREATE TABLE queue(
     id		 SERIAL,
-    created_at TIMESTAMP,
-    processed_at TIMESTAMP,
-    deleted_at TIMESTAMP,
-    params jsonb,
-    user_id int4 NOT NULL,
-    action varchar NOT NULL,
-    error jsonb,
-    result jsonb,
-    next_try_at int8,
-    try_count int8,
-    CONSTRAINT queue_pk PRIMARY KEY(id)
+    user_id INT4 NOT NULL,
+    action VARCHAR(32) NOT NULL,
+    params BYTEA,
+    error TEXT,
+    result VARCHAR(64),
+    processed_at TIMESTAMPTZ,
+    next_try_at TIMESTAMPTZ,
+    try_count INT4,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT queue_id_key PRIMARY KEY(id)
 );
 
 CREATE TABLE chains(
@@ -38,9 +39,9 @@ CREATE TABLE chains(
     synced BOOLEAN NOT NULL DEFAULT FALSE,
     earliest_entry_block VARCHAR(64),
     latest_entry_block VARCHAR(64),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chains_chain_id_key PRIMARY KEY (chain_id)
 );
 
@@ -61,9 +62,9 @@ CREATE TABLE entries(
     ext_ids _TEXT,
     status VARCHAR(32),
     entry_block VARCHAR(64),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT entries_entry_hash_key PRIMARY KEY(entry_hash),
     CONSTRAINT entries_chain_id_fkey FOREIGN KEY(chain_id) REFERENCES chains(chain_id)
 --    CONSTRAINT entries_entry_block_fkey FOREIGN KEY(entry_block) REFERENCES e_blocks(key_mr)

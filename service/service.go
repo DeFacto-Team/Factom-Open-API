@@ -1,11 +1,14 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/store"
 	"github.com/DeFacto-Team/Factom-Open-API/wallet"
 	"github.com/FactomProject/factom"
+	"github.com/jinzhu/copier"
+	"time"
 	//factom "github.com/ilzheev/factom"
 	log "github.com/sirupsen/logrus"
 )
@@ -22,6 +25,10 @@ type Service interface {
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
+
+	GetQueue(queue *model.Queue) []*model.Queue
+	GetQueueToProcess() []*model.Queue
+	ProcessQueue(queue *model.Queue) error
 }
 
 func NewService(store store.Store, wallet wallet.Wallet) Service {
@@ -149,7 +156,10 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 		log.Error(err)
 	}
 
-	log.Debug("Adding 'create-chain' into queue")
+	err = c.addToQueue(chain.ConvertToQueueParams(), model.QueueActionChain, user)
+	if err != nil {
+		log.Error(err)
+	}
 
 	// If we are here, so no errors occured and we force bind chain to API user
 	log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
@@ -282,7 +292,10 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 		entry.Status = localEntry.Status
 	}
 
-	log.Debug("Adding 'create-entry' into queue")
+	err = c.addToQueue(entry.ConvertToQueueParams(), model.QueueActionEntry, user)
+	if err != nil {
+		log.Error(err)
+	}
 
 	// If we are here, so no errors occured and we force bind chain to API user
 	log.Debug("Force binding chain ", entry.ChainID, " to user ", user.Name)
@@ -291,7 +304,103 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 		log.Error(err)
 	}
 
-	return entry, nil
+	return entry.Base64Encode(), nil
+}
+
+func (c *ServiceContext) addToQueue(params *model.QueueParams, action string, user *model.User) error {
+
+	log.Debug("Adding to queue: " + action)
+
+	queue := &model.Queue{}
+	queue.Params, _ = json.Marshal(params)
+	queue.Action = action
+	queue.UserID = user.ID
+
+	log.Info(queue.Params)
+
+	err := c.store.CreateQueue(queue)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (c *ServiceContext) GetQueue(queue *model.Queue) []*model.Queue {
+
+	return c.store.GetQueue(queue)
+
+}
+
+func (c *ServiceContext) GetQueueToProcess() []*model.Queue {
+
+	return c.store.GetQueueToProcess()
+
+}
+
+func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
+
+	params := &model.QueueParams{}
+	err := json.Unmarshal(queue.Params, &params)
+	if err != nil {
+		log.Error(err)
+	}
+
+	debugMessage := fmt.Sprintf("Queue processing: ID=%d, action=%s, try=%d", queue.ID, queue.Action, queue.TryCount)
+
+	var processingIsSuccess bool
+	var resp string
+
+	switch queue.Action {
+	case model.QueueActionChain:
+		log.Debug(debugMessage)
+		chain := &model.Chain{}
+		copier.Copy(chain, params)
+		resp, err = c.wallet.CommitRevealChain(chain.ConvertToFactomModel())
+		if err != nil {
+			processingIsSuccess = false
+		} else {
+			processingIsSuccess = true
+		}
+	case model.QueueActionEntry:
+		log.Debug(debugMessage)
+		entry := &model.Entry{}
+		copier.Copy(entry, params)
+		resp, err = c.wallet.CommitRevealEntry(entry.ConvertToFactomModel())
+		if err != nil {
+			processingIsSuccess = false
+		} else {
+			processingIsSuccess = true
+		}
+	default:
+		err := fmt.Errorf("Queue processing: action=%s not implemented")
+		log.Error(err)
+		return err
+	}
+
+	if processingIsSuccess == true {
+		log.Info("Wallet: create " + queue.Action + " success " + resp)
+		queue.Result = resp
+		processedAt := time.Now()
+		queue.ProcessedAt = &processedAt
+	} else {
+		log.Error("Wallet: create " + queue.Action + " FAILED")
+		queue.TryCount++
+		queue.Error = err.Error()
+		nextTryAt := time.Now().Add(time.Second * time.Duration(30*queue.TryCount*queue.TryCount*queue.TryCount))
+		queue.NextTryAt = &nextTryAt
+	}
+
+	err = c.store.UpdateQueue(queue)
+
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+
 }
 
 func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {

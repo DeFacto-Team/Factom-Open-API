@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/api"
 	"github.com/DeFacto-Team/Factom-Open-API/config"
@@ -14,6 +15,10 @@ import (
 
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	MinutesInBlock = 10
 )
 
 func main() {
@@ -76,6 +81,7 @@ func main() {
 
 	go fetchChainUpdates(s)
 	go fetchUnsyncedChains(s)
+	go processQueue(s)
 
 	// Start API
 	api := api.NewApi(conf, s)
@@ -84,6 +90,17 @@ func main() {
 		Info("Starting api")
 	log.Fatal(api.Start())
 
+}
+
+func processQueue(s service.Service) {
+	for {
+		log.Info("Processing queue")
+		queue := s.GetQueueToProcess()
+		for _, q := range queue {
+			s.ProcessQueue(q)
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func fetchChainUpdates(s service.Service) {

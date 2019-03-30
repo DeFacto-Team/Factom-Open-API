@@ -26,6 +26,11 @@ type Store interface {
 	GetEntry(entry *model.Entry) *model.Entry
 	CreateEntry(entry *model.Entry) error
 	CreateEBlock(eblock *model.EBlock) error
+
+	GetQueue(queue *model.Queue) []*model.Queue
+	GetQueueToProcess() []*model.Queue
+	CreateQueue(queue *model.Queue) error
+	UpdateQueue(queue *model.Queue) error
 }
 
 // Контекст стореджа
@@ -149,10 +154,6 @@ func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) err
 
 	c.db.Model(user).Association("Chains").Append(chain)
 
-	if c.db.Model(user).Related(&chain, "Chains").RecordNotFound() {
-		return fmt.Errorf("DB: Binding chain to user failed")
-	}
-
 	return nil
 
 }
@@ -164,5 +165,40 @@ func (c *StoreContext) GetChainEntries(chain *model.Chain) []*model.Entry {
 	c.db.Model(chain).Related(&entries, "Entries")
 
 	return entries
+
+}
+
+func (c *StoreContext) GetQueue(queue *model.Queue) []*model.Queue {
+
+	res := []*model.Queue{}
+	c.db.Where(queue).Find(&res)
+	return res
+
+}
+
+func (c *StoreContext) GetQueueToProcess() []*model.Queue {
+
+	res := []*model.Queue{}
+	c.db.Where("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())").Find(&res)
+	return res
+
+}
+
+func (c *StoreContext) CreateQueue(queue *model.Queue) error {
+
+	if c.db.Create(&queue).RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("Creating queue failed")
+
+}
+
+func (c *StoreContext) UpdateQueue(queue *model.Queue) error {
+
+	if c.db.Model(&queue).Updates(queue).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Updating queue failed")
 
 }

@@ -8,7 +8,8 @@ import (
 	//	"encoding/hex"
 
 	"github.com/FactomProject/factom"
-	//log "github.com/sirupsen/logrus"
+	"github.com/jinzhu/copier"
+	//	log "github.com/sirupsen/logrus"
 )
 
 // swagger:model
@@ -53,10 +54,21 @@ func (chain *Chain) ConvertToEntryModel() *Entry {
 
 }
 
+func (chain *Chain) ConvertToQueueParams() *QueueParams {
+
+	params := &QueueParams{}
+	copier.Copy(params, chain)
+	return params
+
+}
+
 func (chain *Chain) Base64Decode() *Chain {
 
+	chainDecoded := &Chain{}
+	copier.Copy(chainDecoded, chain)
+
 	content, _ := base64.StdEncoding.DecodeString(chain.Content)
-	chain.Content = string(content)
+	chainDecoded.Content = string(content)
 
 	var extID []byte
 	var extIDs []string
@@ -66,15 +78,18 @@ func (chain *Chain) Base64Decode() *Chain {
 		extIDs = append(extIDs, string(extID))
 	}
 
-	chain.ExtIDs = extIDs
+	chainDecoded.ExtIDs = extIDs
 
-	return chain
+	return chainDecoded
 
 }
 
 func (chain *Chain) Base64Encode() *Chain {
 
-	chain.Content = base64.StdEncoding.EncodeToString([]byte(chain.Content))
+	chainEncoded := &Chain{}
+	copier.Copy(chainEncoded, chain)
+
+	chainEncoded.Content = base64.StdEncoding.EncodeToString([]byte(chain.Content))
 
 	var extIDs []string
 
@@ -82,9 +97,9 @@ func (chain *Chain) Base64Encode() *Chain {
 		extIDs = append(extIDs, base64.StdEncoding.EncodeToString([]byte(i)))
 	}
 
-	chain.ExtIDs = extIDs
+	chainEncoded.ExtIDs = extIDs
 
-	return chain
+	return chainEncoded
 
 }
 

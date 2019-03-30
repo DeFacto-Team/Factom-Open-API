@@ -14,8 +14,8 @@ const (
 
 type Wallet interface {
 	GetEC() *factom.ECAddress
-	CommitRevealEntry(entry *factom.Entry) (*factom.Entry, error)
-	CommitRevealChain(chain *factom.Chain) (*factom.Chain, error)
+	CommitRevealEntry(entry *factom.Entry) (string, error)
+	CommitRevealChain(chain *factom.Chain) (string, error)
 }
 
 type WalletContext struct {
@@ -55,52 +55,62 @@ func (c *WalletContext) checkBalance(cost int8) bool {
 
 }
 
-func (c *WalletContext) CommitRevealEntry(entry *factom.Entry) (*factom.Entry, error) {
+func (c *WalletContext) CommitRevealEntry(entry *factom.Entry) (string, error) {
 
 	// calculate entry cost
 	cost, err := factom.EntryCost(entry)
 	if err != nil {
-		err := fmt.Errorf("Can not calculate Entry Cost")
-		return nil, err
+		log.Error("Can not calculate Entry Cost")
+		return "", err
 	}
 
 	// check if EC balance enought for tx
 	if res := c.checkBalance(cost); res == false {
-		return nil, fmt.Errorf("Not enough Entry Credits to create entry")
+		err = fmt.Errorf("Not enough Entry Credits to create entry")
+		log.Error(err)
+		return "", err
 	}
 
 	// commit+reveal entry
 	_, err = factom.CommitEntry(entry, c.GetEC())
-	_, err = factom.RevealEntry(entry)
 	if err != nil {
-		return nil, err
+		log.Error(err)
+		return "", err
+	}
+	resp, err := factom.RevealEntry(entry)
+	if err != nil {
+		log.Error(err)
+		return "", err
 	}
 
-	return entry, nil
+	return resp, nil
 
 }
 
-func (c *WalletContext) CommitRevealChain(chain *factom.Chain) (*factom.Chain, error) {
+func (c *WalletContext) CommitRevealChain(chain *factom.Chain) (string, error) {
 
 	// calculate entry cost
 	cost, err := factom.EntryCost(chain.FirstEntry)
 	if err != nil {
-		err := fmt.Errorf("Can not calculate Entry Cost")
-		return nil, err
+		log.Error("Can not calculate Entry Cost")
+		return "", err
 	}
 
 	// check if EC balance enought for tx
 	if res := c.checkBalance(cost + ChainECCost); res == false {
-		return nil, fmt.Errorf("Not enough Entry Credits to create chain")
+		err = fmt.Errorf("Not enough Entry Credits to create chain")
+		log.Error(err)
+		return "", err
 	}
 
 	// commit chain
 	_, err = factom.CommitChain(chain, c.GetEC())
-	_, err = factom.RevealChain(chain)
+	resp, err := factom.RevealChain(chain)
 	if err != nil {
-		return nil, err
+		log.Error(err)
+		return "", err
 	}
 
-	return chain, nil
+	return resp, nil
 
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/FactomProject/factom"
+	"github.com/jinzhu/copier"
 	"github.com/lib/pq"
 	"time"
 )
@@ -45,10 +46,21 @@ func NewEntryFromFactomModel(fe *factom.Entry) *Entry {
 
 }
 
+func (entry *Entry) ConvertToQueueParams() *QueueParams {
+
+	params := &QueueParams{}
+	copier.Copy(params, entry)
+	return params
+
+}
+
 func (entry *Entry) Base64Decode() *Entry {
 
+	entryDecoded := &Entry{}
+	copier.Copy(entryDecoded, entry)
+
 	content, _ := base64.StdEncoding.DecodeString(entry.Content)
-	entry.Content = string(content)
+	entryDecoded.Content = string(content)
 
 	var extID []byte
 	var extIDs []string
@@ -58,15 +70,18 @@ func (entry *Entry) Base64Decode() *Entry {
 		extIDs = append(extIDs, string(extID))
 	}
 
-	entry.ExtIDs = extIDs
+	entryDecoded.ExtIDs = extIDs
 
-	return entry
+	return entryDecoded
 
 }
 
 func (entry *Entry) Base64Encode() *Entry {
 
-	entry.Content = base64.StdEncoding.EncodeToString([]byte(entry.Content))
+	entryEncoded := &Entry{}
+	copier.Copy(entryEncoded, entry)
+
+	entryEncoded.Content = base64.StdEncoding.EncodeToString([]byte(entry.Content))
 
 	var extIDs []string
 
@@ -74,9 +89,9 @@ func (entry *Entry) Base64Encode() *Entry {
 		extIDs = append(extIDs, base64.StdEncoding.EncodeToString([]byte(i)))
 	}
 
-	entry.ExtIDs = extIDs
+	entryEncoded.ExtIDs = extIDs
 
-	return entry
+	return entryEncoded
 
 }
 
