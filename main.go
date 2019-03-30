@@ -119,7 +119,10 @@ func processQueue(s service.Service) {
 		log.Info("Processing queue")
 		queue := s.GetQueueToProcess()
 		for _, q := range queue {
-			s.ProcessQueue(q)
+			err := s.ProcessQueue(q)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 		time.Sleep(5 * time.Second)
 	}

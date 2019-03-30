@@ -350,7 +350,7 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 	params := &model.QueueParams{}
 	err := json.Unmarshal(queue.Params, &params)
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 
 	debugMessage := fmt.Sprintf("Queue processing: ID=%d, action=%s, try=%d", queue.ID, queue.Action, queue.TryCount)
@@ -370,12 +370,10 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 			processingIsSuccess = true
 			err = c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, Status: model.ChainProcessing})
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 			err = c.store.UpdateEntry(&model.Entry{EntryHash: resp, Status: model.EntryProcessing})
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 		}
@@ -390,13 +388,11 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 			processingIsSuccess = true
 			err = c.store.UpdateEntry(&model.Entry{EntryHash: resp, Status: model.EntryProcessing})
 			if err != nil {
-				log.Error(err)
 				return err
 			}
 		}
 	default:
 		err := fmt.Errorf("Queue processing: action=%s not implemented")
-		log.Error(err)
 		return err
 	}
 
@@ -416,7 +412,6 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 	err = c.store.UpdateQueue(queue)
 
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 
