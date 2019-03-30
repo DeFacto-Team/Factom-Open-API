@@ -28,7 +28,7 @@ type Store interface {
 	CreateEBlock(eblock *model.EBlock) error
 
 	GetQueue(queue *model.Queue) []*model.Queue
-	GetQueueToProcess() []*model.Queue
+	GetQueueRaw(sql string) []*model.Queue
 	CreateQueue(queue *model.Queue) error
 	UpdateQueue(queue *model.Queue) error
 }
@@ -176,10 +176,10 @@ func (c *StoreContext) GetQueue(queue *model.Queue) []*model.Queue {
 
 }
 
-func (c *StoreContext) GetQueueToProcess() []*model.Queue {
+func (c *StoreContext) GetQueueRaw(sql string) []*model.Queue {
 
 	res := []*model.Queue{}
-	c.db.Where("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())").Find(&res)
+	c.db.Where(sql).Find(&res)
 	return res
 
 }

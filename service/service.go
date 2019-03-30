@@ -28,6 +28,7 @@ type Service interface {
 
 	GetQueue(queue *model.Queue) []*model.Queue
 	GetQueueToProcess() []*model.Queue
+	GetQueueToClear() []*model.Queue
 	ProcessQueue(queue *model.Queue) error
 }
 
@@ -335,7 +336,13 @@ func (c *ServiceContext) GetQueue(queue *model.Queue) []*model.Queue {
 
 func (c *ServiceContext) GetQueueToProcess() []*model.Queue {
 
-	return c.store.GetQueueToProcess()
+	return c.store.GetQueueRaw("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())")
+
+}
+
+func (c *ServiceContext) GetQueueToClear() []*model.Queue {
+
+	return c.store.GetQueueRaw("processed_at IS NOT NULL AND result IS NOT NULL")
 
 }
 
