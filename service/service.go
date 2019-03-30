@@ -30,6 +30,7 @@ type Service interface {
 	GetQueueToProcess() []*model.Queue
 	GetQueueToClear() []*model.Queue
 	ProcessQueue(queue *model.Queue) error
+	ClearQueue(queue *model.Queue) error
 }
 
 func NewService(store store.Store, wallet wallet.Wallet) Service {
@@ -317,8 +318,6 @@ func (c *ServiceContext) addToQueue(params *model.QueueParams, action string, us
 	queue.Action = action
 	queue.UserID = user.ID
 
-	log.Info(queue.Params)
-
 	err := c.store.CreateQueue(queue)
 	if err != nil {
 		return err
@@ -364,21 +363,34 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 		log.Debug(debugMessage)
 		chain := &model.Chain{}
 		copier.Copy(chain, params)
+		chain.Status = model.ChainProcessing
 		resp, err = c.wallet.CommitRevealChain(chain.ConvertToFactomModel())
 		if err != nil {
 			processingIsSuccess = false
 		} else {
 			processingIsSuccess = true
+			err = c.store.UpdateChain(chain.Base64Encode())
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	case model.QueueActionEntry:
 		log.Debug(debugMessage)
 		entry := &model.Entry{}
 		copier.Copy(entry, params)
+		entry.EntryHash = entry.Hash()
+		entry.Status = model.EntryProcessing
 		resp, err = c.wallet.CommitRevealEntry(entry.ConvertToFactomModel())
 		if err != nil {
 			processingIsSuccess = false
 		} else {
 			processingIsSuccess = true
+			err = c.store.UpdateEntry(entry.Base64Encode())
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	default:
 		err := fmt.Errorf("Queue processing: action=%s not implemented")
@@ -400,6 +412,19 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 	}
 
 	err = c.store.UpdateQueue(queue)
+
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+
+}
+
+func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
+
+	err := c.store.DeleteQueue(queue)
 
 	if err != nil {
 		log.Error(err)

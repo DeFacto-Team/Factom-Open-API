@@ -25,12 +25,14 @@ type Store interface {
 
 	GetEntry(entry *model.Entry) *model.Entry
 	CreateEntry(entry *model.Entry) error
+	UpdateEntry(entry *model.Entry) error
 	CreateEBlock(eblock *model.EBlock) error
 
 	GetQueue(queue *model.Queue) []*model.Queue
 	GetQueueRaw(sql string) []*model.Queue
 	CreateQueue(queue *model.Queue) error
 	UpdateQueue(queue *model.Queue) error
+	DeleteQueue(queue *model.Queue) error
 }
 
 // Контекст стореджа
@@ -132,6 +134,15 @@ func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
 }
 
+func (c *StoreContext) UpdateEntry(entry *model.Entry) error {
+
+	if c.db.Model(&entry).Updates(entry).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Updating entry failed")
+
+}
+
 func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
 
 	if err := c.db.FirstOrCreate(&eblock).Error; err != nil {
@@ -200,5 +211,14 @@ func (c *StoreContext) UpdateQueue(queue *model.Queue) error {
 		return nil
 	}
 	return fmt.Errorf("DB: Updating queue failed")
+
+}
+
+func (c *StoreContext) DeleteQueue(queue *model.Queue) error {
+
+	if c.db.Delete(&queue).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Deletion queue failed")
 
 }
