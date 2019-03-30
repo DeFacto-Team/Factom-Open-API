@@ -363,13 +363,17 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 		log.Debug(debugMessage)
 		chain := &model.Chain{}
 		copier.Copy(chain, params)
-		chain.Status = model.ChainProcessing
 		resp, err = c.wallet.CommitRevealChain(chain.ConvertToFactomModel())
 		if err != nil {
 			processingIsSuccess = false
 		} else {
 			processingIsSuccess = true
-			err = c.store.UpdateChain(chain.Base64Encode())
+			err = c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, Status: model.ChainProcessing})
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = c.store.UpdateEntry(&model.Entry{EntryHash: resp, Status: model.EntryProcessing})
 			if err != nil {
 				log.Error(err)
 				return err
@@ -379,14 +383,12 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 		log.Debug(debugMessage)
 		entry := &model.Entry{}
 		copier.Copy(entry, params)
-		entry.EntryHash = entry.Hash()
-		entry.Status = model.EntryProcessing
 		resp, err = c.wallet.CommitRevealEntry(entry.ConvertToFactomModel())
 		if err != nil {
 			processingIsSuccess = false
 		} else {
 			processingIsSuccess = true
-			err = c.store.UpdateEntry(entry.Base64Encode())
+			err = c.store.UpdateEntry(&model.Entry{EntryHash: resp, Status: model.EntryProcessing})
 			if err != nil {
 				log.Error(err)
 				return err
@@ -500,6 +502,8 @@ func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
 		log.Debug("Start parsing from EntryBlock " + chain.EarliestEntryBlock)
 		parseFrom = chain.EarliestEntryBlock
 	}
+
+	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, Status: status})
 
 	c.parseEntryBlocks(parseFrom, parseTo, true)
 

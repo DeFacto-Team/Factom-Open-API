@@ -19,7 +19,7 @@ type Queue struct {
 	// model
 	ID          int `gorm:"primary_key;unique;not null"`
 	UserID      int
-	Action      string `validate:"oneof=newchain,newentry"`
+	Action      string
 	Params      []byte
 	Error       string
 	Result      string

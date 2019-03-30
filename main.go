@@ -82,6 +82,7 @@ func main() {
 	go fetchChainUpdates(s)
 	go fetchUnsyncedChains(s)
 	go processQueue(s)
+	go clearQueue(s)
 
 	// Start API
 	api := api.NewApi(conf, s)
@@ -90,6 +91,27 @@ func main() {
 		Info("Starting api")
 	log.Fatal(api.Start())
 
+}
+
+func fetchChainUpdates(s service.Service) {
+	chains := s.GetChains(&model.Chain{Status: model.ChainCompleted})
+	for _, c := range chains {
+		err := s.ParseNewChainEntries(c)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+func fetchUnsyncedChains(s service.Service) {
+	t := false
+	chains := s.GetChains(&model.Chain{Synced: &t})
+	for _, c := range chains {
+		err := s.ParseAllChainEntries(c)
+		if err != nil {
+			log.Error(err)
+		}
+	}
 }
 
 func processQueue(s service.Service) {
@@ -103,17 +125,13 @@ func processQueue(s service.Service) {
 	}
 }
 
-func fetchChainUpdates(s service.Service) {
-	chains := s.GetChains(&model.Chain{Status: model.ChainCompleted})
-	for _, c := range chains {
-		s.ParseNewChainEntries(c)
-	}
-}
-
-func fetchUnsyncedChains(s service.Service) {
-	t := false
-	chains := s.GetChains(&model.Chain{Synced: &t})
-	for _, c := range chains {
-		s.ParseAllChainEntries(c)
+func clearQueue(s service.Service) {
+	for {
+		log.Info("Clearing queue")
+		queue := s.GetQueueToClear()
+		for _, q := range queue {
+			s.ClearQueue(q)
+		}
+		time.Sleep(60 * time.Second)
 	}
 }
