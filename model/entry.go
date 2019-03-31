@@ -7,6 +7,7 @@ import (
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
 	"github.com/lib/pq"
+	//	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -15,7 +16,14 @@ const (
 	EntryCompleted  = "completed"
 	EntryProcessing = "processing"
 	EntryQueue      = "queue"
-	MaxEntrySize    = 10240
+
+	// Factom Statuses
+	FactomEntryUnknown         = "Unknown"
+	FactomEntryNotConfirmed    = "NotConfirmed"
+	FactomEntryTransactionACK  = "TransactionACK"
+	FactomEntryDBlockConfirmed = "DBlockConfirmed"
+
+	MaxEntrySize = 10240
 )
 
 // swagger:model
@@ -164,5 +172,21 @@ func (entry *Entry) FillModelFromFactom() (*Entry, error) {
 	}
 
 	return NewEntryFromFactomModel(fe), nil
+
+}
+
+func (entry *Entry) GetStatusFromFactom() string {
+
+	status, _ := factom.EntryRevealACK(entry.EntryHash, "", factom.ZeroHash)
+
+	if status.EntryData.Status == FactomEntryDBlockConfirmed {
+		return EntryCompleted
+	}
+
+	if status.EntryData.Status == FactomEntryTransactionACK {
+		return EntryProcessing
+	}
+
+	return EntryQueue
 
 }

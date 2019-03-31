@@ -421,11 +421,29 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 
 func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
 
-	err := c.store.DeleteQueue(queue)
+	debugMessage := fmt.Sprintf("Queue clearing: ID=%d", queue.ID)
+	log.Debug(debugMessage)
 
+	params := &model.QueueParams{}
+	err := json.Unmarshal(queue.Params, &params)
 	if err != nil {
-		log.Error(err)
 		return err
+	}
+
+	entry := &model.Entry{EntryHash: queue.Result}
+
+	log.Debug("Checking entry " + entry.EntryHash + " status")
+	entry.Status = entry.GetStatusFromFactom()
+
+	log.Debug("Entry status: " + entry.Status)
+
+	if entry.Status == model.EntryCompleted {
+		log.Debug("Soft delete row from queue table")
+		err := c.store.DeleteQueue(queue)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	return nil
