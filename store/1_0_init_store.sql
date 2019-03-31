@@ -28,7 +28,8 @@ CREATE TABLE queue(
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
-    CONSTRAINT queue_id_key PRIMARY KEY(id)
+    CONSTRAINT queue_id_key PRIMARY KEY(id),
+    CONSTRAINT queue_user_id_fkey FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 CREATE TABLE chains(
