@@ -405,7 +405,7 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 		log.Error("Queue processing: create " + queue.Action + " FAILED")
 		queue.TryCount++
 		queue.Error = err.Error()
-		nextTryAt := time.Now().Add(time.Second * time.Duration(30*queue.TryCount*queue.TryCount*queue.TryCount))
+		nextTryAt := time.Now().Add(time.Minute)
 		queue.NextTryAt = &nextTryAt
 	}
 
