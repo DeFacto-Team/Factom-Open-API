@@ -540,7 +540,7 @@ func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, upda
 
 func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
 
-	log.Debug("History parse: Fetching EntryBlock " + ebhash)
+	log.Debug("Fetching EntryBlock " + ebhash)
 
 	eb, err := factom.GetEBlock(ebhash)
 	if err != nil {
