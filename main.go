@@ -73,7 +73,7 @@ func main() {
 	// initialize wallet
 	wallet, err := wallet.NewWallet(conf)
 	if err != nil {
-		log.Error(err)
+		log.Fatal(err)
 	}
 
 	// Create services
