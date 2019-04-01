@@ -62,13 +62,19 @@ CREATE TABLE entries(
     content TEXT,
     ext_ids _TEXT,
     status VARCHAR(32),
-    entry_block VARCHAR(64),
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT entries_entry_hash_key PRIMARY KEY(entry_hash),
     CONSTRAINT entries_chain_id_fkey FOREIGN KEY(chain_id) REFERENCES chains(chain_id)
---    CONSTRAINT entries_entry_block_fkey FOREIGN KEY(entry_block) REFERENCES e_blocks(key_mr)
+);
+
+CREATE TABLE entries_e_blocks(
+    entry_entry_hash VARCHAR(64) NOT NULL,
+    e_block_key_mr VARCHAR(64) NOT NULL,
+    CONSTRAINT entries_e_blocks_pk PRIMARY KEY (entry_entry_hash, e_block_key_mr),
+    CONSTRAINT entries_e_blocks_entry_hash_fkey FOREIGN KEY (entry_entry_hash) REFERENCES entries(entry_hash),
+    CONSTRAINT entries_e_blocks_key_mr_fkey FOREIGN KEY (e_block_key_mr) REFERENCES e_blocks(key_mr)
 );
 
 CREATE TABLE users_chains(

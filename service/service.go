@@ -574,8 +574,11 @@ func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock
 		entry = model.NewEntryFromFactomModel(fe)
 		log.Debug("Fetching Entry " + entry.EntryHash)
 		entry.Status = model.EntryCompleted
-		entry.EntryBlock = ebhash
 		err = c.store.CreateEntry(entry.Base64Encode())
+		if err != nil {
+			log.Error(err)
+		}
+		err = c.store.BindEntryToEBlock(entry, entryblock)
 		if err != nil {
 			log.Error(err)
 		}

@@ -6,12 +6,13 @@ import (
 
 // swagger:model
 type EBlock struct {
-	KeyMR               string `json:"keymr" gorm:"primary_key;unique;not null"`
-	BlockSequenceNumber int64  `json:"blocksequencenumber"`
-	ChainID             string `json:"chainid"`
-	PrevKeyMR           string `json:"prevkeymr"`
-	Timestamp           int64  `json:"timestamp"`
-	DBHeight            int64  `json:"dbheight"`
+	KeyMR               string   `json:"keymr" gorm:"primary_key;unique;not null"`
+	BlockSequenceNumber int64    `json:"blocksequencenumber"`
+	ChainID             string   `json:"chainid"`
+	PrevKeyMR           string   `json:"prevkeymr"`
+	Timestamp           int64    `json:"timestamp"`
+	DBHeight            int64    `json:"dbheight"`
+	Entries             []*Entry `json:"-" form:"-" query:"-" gorm:"many2many:entries_e_blocks;"`
 }
 
 func NewEBlockFromFactomModel(ebhash string, fe *factom.EBlock) *EBlock {

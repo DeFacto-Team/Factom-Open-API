@@ -27,6 +27,7 @@ type Store interface {
 	CreateEntry(entry *model.Entry) error
 	UpdateEntry(entry *model.Entry) error
 	CreateEBlock(eblock *model.EBlock) error
+	BindEntryToEBlock(entry *model.Entry, eblock *model.EBlock) error
 
 	GetQueue(queue *model.Queue) []*model.Queue
 	GetQueueRaw(sql string) []*model.Queue
@@ -127,7 +128,7 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 
 func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
-	if err := c.db.Assign(model.Entry{EntryBlock: entry.EntryBlock, Status: entry.Status}).FirstOrCreate(&entry).Error; err != nil {
+	if err := c.db.Assign(model.Entry{Status: entry.Status}).FirstOrCreate(&entry).Error; err != nil {
 		return err
 	}
 	return nil
@@ -164,6 +165,14 @@ func (c *StoreContext) UpdateChain(chain *model.Chain) error {
 func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) error {
 
 	c.db.Model(user).Association("Chains").Append(chain)
+
+	return nil
+
+}
+
+func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBlock) error {
+
+	c.db.Model(eblock).Association("Entries").Append(entry)
 
 	return nil
 
