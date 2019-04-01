@@ -196,7 +196,7 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 
 	if err == nil {
 		log.Debug("Entry " + entry.EntryHash + " found on Factom")
-		resp.Status = model.EntryCompleted
+		resp.Status = resp.GetStatusFromFactom()
 
 		// search for chain.ChainID into local DB
 		localChain := c.store.GetChain(resp.GetChain())
