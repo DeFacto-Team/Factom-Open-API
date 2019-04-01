@@ -101,13 +101,17 @@ func fetchChainUpdates(s service.Service) {
 	var currentDBlock int    // current dblock
 	var latestDBlock int     // latest fetched dblock
 	var sleepFor int         // sleep timer
+	var err error
 
 	for {
 
 		log.Info("Updates parser: Iteration started")
 
 		// get current minute & dblock from Factom
-		currentMinute, currentDBlock = getMinuteAndHeight()
+		currentMinute, currentDBlock, err = getMinuteAndHeight()
+		if err != nil {
+			continue
+		}
 		log.Info("Updates parser: currentMinute=", currentMinute, ", currentDBlock=", currentDBlock)
 
 		// if current dblock <= latest fetched dblock, then elections should occur and need to sleep 1 minute before next try
@@ -115,7 +119,7 @@ func fetchChainUpdates(s service.Service) {
 		for currentDBlock <= latestDBlock {
 			log.Info("Updates parser: Sleeping for 1 minute / currentDBlock=", currentDBlock, ", latestDBlock=", latestDBlock)
 			time.Sleep(1 * time.Minute)
-			currentMinute, currentDBlock = getMinuteAndHeight()
+			currentMinute, currentDBlock, err = getMinuteAndHeight()
 			log.Info("Updates parser: currentMinute=", currentMinute, ", currentDBlock=", currentDBlock)
 		}
 
@@ -133,7 +137,7 @@ func fetchChainUpdates(s service.Service) {
 		latestDBlock = currentDBlock
 
 		// parsing may spend time, so check current minute
-		currentMinuteEnd, _ = getMinuteAndHeight()
+		currentMinuteEnd, _, err = getMinuteAndHeight()
 		log.Debug("Updates parser: currentMinute=", currentMinuteEnd)
 
 		// if current minute was {8|9} and becomes {0|1|2|3…}, i.e. new block appeared during the parsing
@@ -195,7 +199,7 @@ func clearQueue(s service.Service) {
 	}
 }
 
-func getMinuteAndHeight() (int, int) {
+func getMinuteAndHeight() (int, int, error) {
 
 	var currentMinute float64
 	var dBlockHeight float64
@@ -206,16 +210,18 @@ func getMinuteAndHeight() (int, int) {
 	resp, err := factom.SendFactomdRequest(request)
 	if err != nil {
 		log.Error(err)
+		return 0, 0, nil
 	}
 
 	if err = json.Unmarshal(resp.JSONResult(), &i); err != nil {
 		log.Error(err)
+		return 0, 0, nil
 	}
 
 	m, _ := i.(map[string]interface{})
 	currentMinute = m["minute"].(float64)
 	dBlockHeight = m["directoryblockheight"].(float64)
 
-	return int(currentMinute), int(dBlockHeight)
+	return int(currentMinute), int(dBlockHeight), nil
 
 }
