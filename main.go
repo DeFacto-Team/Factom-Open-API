@@ -82,8 +82,8 @@ func main() {
 
 	go fetchChainUpdates(s)
 	//go fetchUnsyncedChains(s)
-	//go processQueue(s)
-	//go clearQueue(s)
+	go processQueue(s)
+	go clearQueue(s)
 
 	// Start API
 	api := api.NewApi(conf, s)
@@ -113,9 +113,10 @@ func fetchChainUpdates(s service.Service) {
 		// if current dblock <= latest fetched dblock, then elections should occur and need to sleep 1 minute before next try
 		// on the first iteration latestDblock = 0, so this code won't run & new updates will be fetched when API started
 		for currentDBlock <= latestDBlock {
-			log.Info("Updates parser: Sleeping for 1 minute / currentDBlock=", currentDBlock, "latestDBlock=", latestDBlock)
+			log.Info("Updates parser: Sleeping for 1 minute / currentDBlock=", currentDBlock, ", latestDBlock=", latestDBlock)
 			time.Sleep(1 * time.Minute)
 			currentMinute, currentDBlock = getMinuteAndHeight()
+			log.Info("Updates parser: currentMinute=", currentMinute, ", currentDBlock=", currentDBlock)
 		}
 
 		// if we are here, then latestDBlock > currentDBlock (i.e. new dblock appeared)
@@ -153,7 +154,7 @@ func fetchChainUpdates(s service.Service) {
 
 		}
 
-		log.Info("Updates parser: Sleeping for ", sleepFor, " minutes")
+		log.Info("Updates parser: Sleeping for ", sleepFor, " minute(s)")
 		time.Sleep(time.Duration(sleepFor) * time.Minute)
 	}
 }
@@ -171,7 +172,7 @@ func fetchUnsyncedChains(s service.Service) {
 
 func processQueue(s service.Service) {
 	for {
-		log.Info("Processing queue")
+		log.Info("Processing queue: iteration started")
 		queue := s.GetQueueToProcess()
 		for _, q := range queue {
 			err := s.ProcessQueue(q)
@@ -185,7 +186,7 @@ func processQueue(s service.Service) {
 
 func clearQueue(s service.Service) {
 	for {
-		log.Info("Clearing queue")
+		log.Info("Clearing queue: iteration started")
 		queue := s.GetQueueToClear()
 		for _, q := range queue {
 			s.ClearQueue(q)

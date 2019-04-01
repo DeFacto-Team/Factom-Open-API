@@ -397,12 +397,12 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 	}
 
 	if processingIsSuccess == true {
-		log.Info("Wallet: create " + queue.Action + " success " + resp)
+		log.Info("Queue processing: create " + queue.Action + " success " + resp)
 		queue.Result = resp
 		processedAt := time.Now()
 		queue.ProcessedAt = &processedAt
 	} else {
-		log.Error("Wallet: create " + queue.Action + " FAILED")
+		log.Error("Queue processing: create " + queue.Action + " FAILED")
 		queue.TryCount++
 		queue.Error = err.Error()
 		nextTryAt := time.Now().Add(time.Second * time.Duration(30*queue.TryCount*queue.TryCount*queue.TryCount))
@@ -432,13 +432,13 @@ func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
 
 	entry := &model.Entry{EntryHash: queue.Result}
 
-	log.Debug("Checking entry " + entry.EntryHash + " status")
+	log.Debug("Queue clearing: Checking entry " + entry.EntryHash + " status")
 	entry.Status = entry.GetStatusFromFactom()
 
-	log.Debug("Entry status: " + entry.Status)
+	log.Debug("Queue clearing: Entry status=" + entry.Status)
 
 	if entry.Status == model.EntryCompleted {
-		log.Debug("Soft delete row from queue table")
+		log.Debug("Queue clearing: Soft delete row from queue table")
 		err := c.store.DeleteQueue(queue)
 		if err != nil {
 			log.Error(err)
@@ -489,30 +489,30 @@ func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
 	var parseFrom string
 	var parseTo string
 
-	log.Debug("Checking chain " + chain.ChainID)
+	log.Debug("History parse: Checking chain " + chain.ChainID)
 
 	status, chainhead := chain.GetStatusFromFactom()
 
 	// if chain has not processed on Factom, don't touch it
 	if status != model.ChainCompleted {
-		return fmt.Errorf("Chain has not processed on Factom yet")
+		return fmt.Errorf("History parse: Chain has not processed on Factom yet")
 	}
 
 	t := true
 
 	if chain.Synced == &t {
-		return fmt.Errorf("Chain already parsed")
+		return fmt.Errorf("History parse: Chain already parsed")
 	}
 
 	// by default, parse from chainhead
 	parseFrom = chainhead
 
-	log.Debug("Chain " + chain.ChainID + " not synced, parsing all entries")
+	log.Debug("History parse: Chain " + chain.ChainID + " not synced, parsing all entries")
 	parseTo = factom.ZeroHash
 
 	// if some entryblocks already parsed, start from the latest parsed
 	if chain.EarliestEntryBlock != "" {
-		log.Debug("Start parsing from EntryBlock " + chain.EarliestEntryBlock)
+		log.Debug("History parse: Start parsing from EntryBlock " + chain.EarliestEntryBlock)
 		parseFrom = chain.EarliestEntryBlock
 	}
 
@@ -540,7 +540,7 @@ func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, upda
 
 func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
 
-	log.Debug("Fetching EntryBlock " + ebhash)
+	log.Debug("History parse: Fetching EntryBlock " + ebhash)
 
 	eb, err := factom.GetEBlock(ebhash)
 	if err != nil {
