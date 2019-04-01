@@ -88,6 +88,8 @@ CREATE TABLE users_chains(
 -- +migrate Down
 DROP TABLE users;
 DROP TABLE queue;
-DROP TABLE entries;
 DROP TABLE chains;
+DROP TABLE e_blocks;
+DROP TABLE entries;
+DROP TABLE entries_e_blocks;
 DROP TABLE users_chains;
