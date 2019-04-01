@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"time"
 
@@ -80,9 +81,9 @@ func main() {
 	log.Info("Services created successfully")
 
 	go fetchChainUpdates(s)
-	go fetchUnsyncedChains(s)
-	go processQueue(s)
-	go clearQueue(s)
+	//go fetchUnsyncedChains(s)
+	//go processQueue(s)
+	//go clearQueue(s)
 
 	// Start API
 	api := api.NewApi(conf, s)
@@ -94,12 +95,66 @@ func main() {
 }
 
 func fetchChainUpdates(s service.Service) {
-	chains := s.GetChains(&model.Chain{Status: model.ChainCompleted})
-	for _, c := range chains {
-		err := s.ParseNewChainEntries(c)
-		if err != nil {
-			log.Error(err)
+
+	var currentMinute int    // current minute
+	var currentMinuteEnd int // current minute after parsing ended
+	var currentDBlock int    // current dblock
+	var latestDBlock int     // latest fetched dblock
+	var sleepFor int         // sleep timer
+
+	for {
+
+		log.Info("Updates parser: Iteration started")
+
+		// get current minute & dblock from Factom
+		currentMinute, currentDBlock = getMinuteAndHeight()
+		log.Info("Updates parser: currentMinute=", currentMinute, ", currentDBlock=", currentDBlock)
+
+		// if current dblock <= latest fetched dblock, then elections should occur and need to sleep 1 minute before next try
+		// on the first iteration latestDblock = 0, so this code won't run & new updates will be fetched when API started
+		for currentDBlock <= latestDBlock {
+			log.Info("Updates parser: Sleeping for 1 minute / currentDBlock=", currentDBlock, "latestDBlock=", latestDBlock)
+			time.Sleep(1 * time.Minute)
+			currentMinute, currentDBlock = getMinuteAndHeight()
 		}
+
+		// if we are here, then latestDBlock > currentDBlock (i.e. new dblock appeared)
+		// parsing chains updates
+		chains := s.GetChains(&model.Chain{Status: model.ChainCompleted})
+		for _, c := range chains {
+			err := s.ParseNewChainEntries(c)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+
+		// updating latest parsed dblock
+		latestDBlock = currentDBlock
+
+		// parsing may spend time, so check current minute
+		currentMinuteEnd, _ = getMinuteAndHeight()
+		log.Debug("Updates parser: currentMinute=", currentMinuteEnd)
+
+		// if current minute was {8|9} and becomes {0|1|2|3…}, i.e. new block appeared during the parsing
+		// then no sleep in the end
+		if currentMinuteEnd < currentMinute {
+
+			sleepFor = 0
+
+		} else {
+			// else calculate sleep minutes before next block
+
+			// workaround: if minute == 0, then sleep for 1 minute instead of 11
+			if currentMinute == 0 {
+				currentMinute = 10
+			}
+			// + 1 needed for sleeping at least 1 minute
+			sleepFor = MinutesInBlock - currentMinute + 1
+
+		}
+
+		log.Info("Updates parser: Sleeping for ", sleepFor, " minutes")
+		time.Sleep(time.Duration(sleepFor) * time.Minute)
 	}
 }
 
@@ -137,4 +192,29 @@ func clearQueue(s service.Service) {
 		}
 		time.Sleep(60 * time.Second)
 	}
+}
+
+func getMinuteAndHeight() (int, int) {
+
+	var currentMinute float64
+	var dBlockHeight float64
+	var i interface{}
+
+	request := factom.NewJSON2Request("current-minute", 0, nil)
+
+	resp, err := factom.SendFactomdRequest(request)
+	if err != nil {
+		log.Error(err)
+	}
+
+	if err = json.Unmarshal(resp.JSONResult(), &i); err != nil {
+		log.Error(err)
+	}
+
+	m, _ := i.(map[string]interface{})
+	currentMinute = m["minute"].(float64)
+	dBlockHeight = m["directoryblockheight"].(float64)
+
+	return int(currentMinute), int(dBlockHeight)
+
 }

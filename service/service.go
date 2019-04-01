@@ -455,18 +455,18 @@ func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
 	var parse_from string
 	var parse_to string
 
-	log.Debug("Checking chain " + chain.ChainID + " for updates")
+	log.Debug("Updates parser: Checking chain " + chain.ChainID)
 
 	status, chainhead := chain.GetStatusFromFactom()
 
 	// if chain has not processed on Factom, don't touch it
 	if status != model.ChainCompleted {
-		return fmt.Errorf("Chain has not processed on Factom yet")
+		return fmt.Errorf("Updates parser: Chain has not processed on Factom yet")
 	}
 
 	// parse new entries if new blocks appeared
 	if chain.LatestEntryBlock != chainhead {
-		log.Debug("Chain " + chain.ChainID + " updated, parsing new entries")
+		log.Debug("Updates parser: Chain " + chain.ChainID + " updated, parsing new entries")
 		parse_from = chainhead
 		parse_to = chain.LatestEntryBlock
 		err := c.parseEntryBlocks(parse_from, parse_to, false)
@@ -477,7 +477,7 @@ func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
 			}
 		}
 	} else {
-		log.Debug("No new entries found")
+		log.Debug("Updates parser: No new entries found")
 	}
 
 	return nil
