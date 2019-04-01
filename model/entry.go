@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
+	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
-	//	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -188,5 +188,22 @@ func (entry *Entry) GetStatusFromFactom() string {
 	}
 
 	return EntryQueue
+
+}
+
+func (entry *Entry) BeforeUpdate(scope *gorm.Scope) error {
+
+	dbEntry := &Entry{}
+
+	// check entry on the local db
+	scope.DB().First(&dbEntry, &Entry{EntryHash: entry.EntryHash})
+
+	// this is fix for double creation of entry in the chain — queue processed and entry status should change to processing
+	// but if entry already marked as completed, don't change it's status to processing (keep it completed)
+	if dbEntry.Status == EntryCompleted {
+		scope.SetColumn("Status", EntryCompleted)
+	}
+
+	return nil
 
 }
