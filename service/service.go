@@ -341,7 +341,7 @@ func (c *ServiceContext) GetQueueToProcess() []*model.Queue {
 
 func (c *ServiceContext) GetQueueToClear() []*model.Queue {
 
-	return c.store.GetQueueRaw("processed_at IS NOT NULL AND result IS NOT NULL")
+	return c.store.GetQueueRaw("result IS NOT NULL AND processed_at IS NOT NULL AND processed_at < NOW() - INTERVAL '1 hour'")
 
 }
 
@@ -440,6 +440,18 @@ func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
 	if entry.Status == model.EntryCompleted {
 		log.Debug("Queue clearing: Soft delete row from queue table")
 		err := c.store.DeleteQueue(queue)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		log.Debug("Queue clearing: Force processing this task again")
+		err := c.ProcessQueue(queue)
+		if err != nil {
+			log.Error(err)
+		}
+		processedAt := time.Now()
+		err = c.store.UpdateQueue(&model.Queue{ID: queue.ID, ProcessedAt: &processedAt})
 		if err != nil {
 			log.Error(err)
 			return err
