@@ -1,7 +1,9 @@
 package model
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -36,4 +38,21 @@ type QueueParams struct {
 
 func (Queue) TableName() string {
 	return "queue"
+}
+
+func (queue *Queue) AfterCreate(db *gorm.DB) {
+
+	user := &User{}
+	db.First(&user, &User{ID: queue.UserID})
+
+	user.Usage++
+
+	if queue.Action == QueueActionChain {
+		user.Usage++
+	}
+
+	if db.Model(&user).Updates(user).RowsAffected == 0 {
+		log.Error("Update usage for user ", user.Name, " failed")
+	}
+
 }

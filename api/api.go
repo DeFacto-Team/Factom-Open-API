@@ -135,6 +135,25 @@ func (api *Api) spec(c echo.Context) error {
 	return c.Inline("spec/api.json", "api.json")
 }
 
+func (api *Api) checkUserLimit(action string, c echo.Context) error {
+
+	var usageCost int
+
+	switch action {
+	case model.QueueActionChain:
+		usageCost = 2
+	case model.QueueActionEntry:
+		usageCost = 1
+	}
+
+	if api.user.UsageLimit != 0 && api.user.UsageLimit-api.user.Usage < usageCost {
+		return fmt.Errorf("Writes limit (%d writes) is exceeded for API user '%s'", api.user.UsageLimit, api.user.Name)
+	}
+
+	return nil
+
+}
+
 // Success API response
 func (api *Api) SuccessResponse(res interface{}, c echo.Context) error {
 	return c.JSON(http.StatusOK, &SuccessResponse{Result: res})
@@ -176,6 +195,11 @@ func (api *Api) getChain(c echo.Context) error {
 }
 
 func (api *Api) createChain(c echo.Context) error {
+
+	// check user limits
+	if err := api.checkUserLimit(model.QueueActionChain, c); err != nil {
+		return api.ErrorResponse(err, c)
+	}
 
 	// Open API Chain struct
 	req := &model.Chain{}
@@ -223,6 +247,11 @@ func (api *Api) createChain(c echo.Context) error {
 //   required: false
 //   type: array
 func (api *Api) createEntry(c echo.Context) error {
+
+	// check user limits
+	if err := api.checkUserLimit(model.QueueActionEntry, c); err != nil {
+		return api.ErrorResponse(err, c)
+	}
 
 	// Open API Entry struct
 	req := &model.Entry{}
