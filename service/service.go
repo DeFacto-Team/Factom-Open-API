@@ -318,9 +318,13 @@ func (c *ServiceContext) addToQueue(params *model.QueueParams, action string, us
 	queue.Action = action
 	queue.UserID = user.ID
 
-	err := c.store.CreateQueue(queue)
-	if err != nil {
-		return err
+	localQueue := c.store.GetQueueItem(queue)
+
+	if localQueue == nil {
+		err := c.store.CreateQueue(queue)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

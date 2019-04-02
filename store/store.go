@@ -31,6 +31,7 @@ type Store interface {
 
 	GetQueue(queue *model.Queue) []*model.Queue
 	GetQueueRaw(sql string) []*model.Queue
+	GetQueueItem(queue *model.Queue) *model.Queue
 	CreateQueue(queue *model.Queue) error
 	UpdateQueue(queue *model.Queue) error
 	DeleteQueue(queue *model.Queue) error
@@ -200,6 +201,16 @@ func (c *StoreContext) GetQueueRaw(sql string) []*model.Queue {
 
 	res := []*model.Queue{}
 	c.db.Where(sql).Find(&res)
+	return res
+
+}
+
+func (c *StoreContext) GetQueueItem(queue *model.Queue) *model.Queue {
+
+	res := &model.Queue{}
+	if c.db.First(&res, queue).RecordNotFound() {
+		return nil
+	}
 	return res
 
 }
