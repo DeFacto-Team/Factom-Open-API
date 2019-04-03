@@ -21,6 +21,7 @@ type Store interface {
 	GetChainEntries(chain *model.Chain) []*model.Entry
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
+	UpdateChainsWhere(sql string, chain *model.Chain) error
 	BindChainToUser(chain *model.Chain, user *model.User) error
 
 	GetEntry(entry *model.Entry) *model.Entry
@@ -30,7 +31,7 @@ type Store interface {
 	BindEntryToEBlock(entry *model.Entry, eblock *model.EBlock) error
 
 	GetQueue(queue *model.Queue) []*model.Queue
-	GetQueueRaw(sql string) []*model.Queue
+	GetQueueWhere(sql string) []*model.Queue
 	GetQueueItem(queue *model.Queue) *model.Queue
 	CreateQueue(queue *model.Queue) error
 	UpdateQueue(queue *model.Queue) error
@@ -163,6 +164,14 @@ func (c *StoreContext) UpdateChain(chain *model.Chain) error {
 
 }
 
+func (c *StoreContext) UpdateChainsWhere(sql string, chain *model.Chain) error {
+
+	c.db.Model(model.Chain{}).Where(sql).Updates(chain)
+
+	return nil
+
+}
+
 func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) error {
 
 	c.db.Model(user).Association("Chains").Append(chain)
@@ -197,7 +206,7 @@ func (c *StoreContext) GetQueue(queue *model.Queue) []*model.Queue {
 
 }
 
-func (c *StoreContext) GetQueueRaw(sql string) []*model.Queue {
+func (c *StoreContext) GetQueueWhere(sql string) []*model.Queue {
 
 	res := []*model.Queue{}
 	c.db.Where(sql).Find(&res)

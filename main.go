@@ -8,6 +8,7 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/api"
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
+	"github.com/DeFacto-Team/Factom-Open-API/pool"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
 	"github.com/DeFacto-Team/Factom-Open-API/store"
 	"github.com/DeFacto-Team/Factom-Open-API/wallet"
@@ -20,6 +21,7 @@ import (
 
 const (
 	MinutesInBlock = 10
+	WorkersCount   = 4
 )
 
 func main() {
@@ -80,8 +82,12 @@ func main() {
 	s := service.NewService(store, wallet)
 	log.Info("Services created successfully")
 
+	// Initialize pool for history fetching chains
+	collector := pool.StartDispatcher(WorkersCount)
+
+	// Initialize single-thread background workers
+	go fetchUnsyncedChains(s, collector)
 	go fetchChainUpdates(s)
-	//go fetchUnsyncedChains(s)
 	go processQueue(s)
 	go clearQueue(s)
 
@@ -92,6 +98,26 @@ func main() {
 		Info("Starting api")
 	log.Fatal(api.Start())
 
+}
+
+func fetchUnsyncedChains(s service.Service, collector pool.Collector) {
+
+	log.Info("Reseting all unsynced local chains to put it into pool")
+	err := s.ResetChainsParsingAtAPIStart()
+	if err != nil {
+		log.Error(err)
+	}
+
+	for {
+		log.Info("Fetching unsynced chains: iteration started")
+		t := false
+		chains := s.GetChains(&model.Chain{Synced: &t, WorkerID: -1, SentToPool: &t})
+		for _, c := range chains {
+			s.SetChainSentToPool(c)
+			collector.Work <- pool.Work{ID: c.ChainID, Job: c, Service: s}
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func fetchChainUpdates(s service.Service) {
@@ -160,17 +186,6 @@ func fetchChainUpdates(s service.Service) {
 
 		log.Info("Updates parser: Sleeping for ", sleepFor, " minute(s)")
 		time.Sleep(time.Duration(sleepFor) * time.Minute)
-	}
-}
-
-func fetchUnsyncedChains(s service.Service) {
-	t := false
-	chains := s.GetChains(&model.Chain{Synced: &t})
-	for _, c := range chains {
-		err := s.ParseAllChainEntries(c)
-		if err != nil {
-			log.Error(err)
-		}
 	}
 }
 

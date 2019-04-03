@@ -40,6 +40,8 @@ CREATE TABLE chains(
     synced BOOLEAN NOT NULL DEFAULT FALSE,
     earliest_entry_block VARCHAR(64),
     latest_entry_block VARCHAR(64),
+    worker_id INT8 NOT NULL DEFAULT -1,
+    sent_to_pool BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,

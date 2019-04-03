@@ -27,6 +27,8 @@ type Chain struct {
 	EarliestEntryBlock string         `json:"-" form:"-" query:"-"`
 	LatestEntryBlock   string         `json:"-" form:"-" query:"-"`
 	Entries            []Entry        `json:"-" form:"-" query:"-" gorm:"foreignkey:chain_id"`
+	WorkerID           int            `json:"-" form:"-" query:"-" gorm:"not null;default:-1"`
+	SentToPool         *bool          `json:"-" form:"-" query:"-" gorm:"not null;default:false"`
 }
 
 type ChainWithLinks struct {

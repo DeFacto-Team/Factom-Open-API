@@ -19,8 +19,11 @@ type Service interface {
 
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
 	GetChains(chain *model.Chain) []*model.Chain
+	SetChainSentToPool(chain *model.Chain) error
+	ResetChainParsing(chain *model.Chain) error
+	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
-	ParseAllChainEntries(chain *model.Chain) error
+	ParseAllChainEntries(chain *model.Chain, workerID int) error
 	ParseNewChainEntries(chain *model.Chain) error
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
@@ -89,9 +92,6 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 			log.Error(err)
 		}
 
-		log.Debug("Start fetching chain entries into local DB")
-		go c.ParseAllChainEntries(chain)
-
 		// If we are here, so no errors occured and we force bind chain to API user
 		log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
 		err = c.store.BindChainToUser(chain, user)
@@ -108,6 +108,27 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
 
 	return c.store.GetChains(chain)
+
+}
+
+func (c *ServiceContext) SetChainSentToPool(chain *model.Chain) error {
+
+	t := true
+	return c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, SentToPool: &t})
+
+}
+
+func (c *ServiceContext) ResetChainParsing(chain *model.Chain) error {
+
+	t := false
+	return c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, WorkerID: -1, SentToPool: &t})
+
+}
+
+func (c *ServiceContext) ResetChainsParsingAtAPIStart() error {
+
+	t := false
+	return c.store.UpdateChainsWhere("synced IS FALSE", &model.Chain{WorkerID: -1, SentToPool: &t})
 
 }
 
@@ -213,8 +234,6 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 				log.Error(err)
 			}
 
-			log.Debug("Start fetching chain entries into local DB")
-			go c.ParseAllChainEntries(resp.GetChain())
 		}
 
 		log.Debug("Force binding chain ", resp.ChainID, " to user ", user.Name)
@@ -268,9 +287,6 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 		if err != nil {
 			log.Error(err)
 		}
-
-		log.Debug("Start fetching chain entries into local DB")
-		go c.ParseAllChainEntries(chain)
 
 	}
 
@@ -339,13 +355,13 @@ func (c *ServiceContext) GetQueue(queue *model.Queue) []*model.Queue {
 
 func (c *ServiceContext) GetQueueToProcess() []*model.Queue {
 
-	return c.store.GetQueueRaw("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())")
+	return c.store.GetQueueWhere("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())")
 
 }
 
 func (c *ServiceContext) GetQueueToClear() []*model.Queue {
 
-	return c.store.GetQueueRaw("result IS NOT NULL AND processed_at IS NOT NULL AND processed_at < NOW() - INTERVAL '1 hour'")
+	return c.store.GetQueueWhere("result IS NOT NULL AND processed_at IS NOT NULL AND processed_at < NOW() - INTERVAL '1 hour'")
 
 }
 
@@ -500,7 +516,7 @@ func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
 
 }
 
-func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
+func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain, workerID int) error {
 
 	var parseFrom string
 	var parseTo string
@@ -532,9 +548,12 @@ func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain) error {
 		parseFrom = chain.EarliestEntryBlock
 	}
 
-	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, Status: status})
+	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, Status: status, WorkerID: workerID})
 
-	c.parseEntryBlocks(parseFrom, parseTo, true)
+	err := c.parseEntryBlocks(parseFrom, parseTo, true)
+	if err != nil {
+		return err
+	}
 
 	return nil
 
@@ -546,7 +565,7 @@ func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, upda
 		var err error
 		ebhash, err = c.parseEntryBlock(ebhash, updateEarliestEntryBlock)
 		if err != nil {
-			return fmt.Errorf(err.Error())
+			return err
 		}
 	}
 
@@ -598,7 +617,7 @@ func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock
 	// if we parsed earliest block, set synced=true & update extIDs
 	if eb.Header.PrevKeyMR == factom.ZeroHash {
 		t := true
-		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs})
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs, WorkerID: -2})
 		if err != nil {
 			return "", err
 		}
