@@ -261,6 +261,12 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 
 	if localentry != nil {
 		log.Debug("Entry " + entry.EntryHash + " found into local DB")
+
+		log.Debug("Force binding chain ", localentry.ChainID, " to user ", user.Name)
+		err := c.store.BindChainToUser(localentry.GetChain(), user)
+		if err != nil {
+			log.Error(err)
+		}
 		// localentry already base64 encoded
 		return localentry
 	}
@@ -291,14 +297,14 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 
 		}
 
-		log.Debug("Force binding chain ", resp.ChainID, " to user ", user.Name)
-		err = c.store.BindChainToUser(resp.GetChain(), user)
+		log.Debug("Creating entry into local DB")
+		err = c.store.CreateEntry(resp.Base64Encode())
 		if err != nil {
 			log.Error(err)
 		}
 
-		log.Debug("Creating entry into local DB")
-		err = c.store.CreateEntry(resp.Base64Encode())
+		log.Debug("Force binding chain ", resp.ChainID, " to user ", user.Name)
+		err = c.store.BindChainToUser(resp.GetChain(), user)
 		if err != nil {
 			log.Error(err)
 		}
