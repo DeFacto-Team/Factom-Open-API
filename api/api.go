@@ -312,12 +312,19 @@ func (api *Api) factomd(c echo.Context) error {
 	var params interface{}
 
 	if c.FormValue("params") != "" {
-		log.Info(c.FormValue("params"))
 		err := json.Unmarshal([]byte(c.FormValue("params")), &params)
 		if err != nil {
 			return api.ErrorResponse(err, c)
 		}
 	}
+
+	// if JSON request, parse Content from it
+	body, err := bodyToJSON(c)
+	if err == nil {
+		params = body
+	}
+
+	log.Info(params)
 
 	request := factom.NewJSON2Request(c.Param("method"), 0, params)
 
