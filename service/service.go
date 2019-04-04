@@ -234,18 +234,18 @@ func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) (
 				log.Error(err)
 			}
 
-			// If we are here, so no errors occured and we force bind chain to API user
-			log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
-			err = c.store.BindChainToUser(chain, user)
-			if err != nil {
-				log.Error(err)
-			}
-
 		} else {
 			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
 			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
 		}
 
+	}
+
+	// If we are here, so no errors occured and we force bind chain to API user
+	log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
+	err := c.store.BindChainToUser(chain, user)
+	if err != nil {
+		log.Error(err)
 	}
 
 	return c.store.GetChainEntries(chain), nil
