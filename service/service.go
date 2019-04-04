@@ -73,6 +73,13 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 
 	if localChain != nil {
 		log.Debug("Chain " + chain.ChainID + " found into local DB")
+
+		log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
+		err := c.store.BindChainToUser(chain, user)
+		if err != nil {
+			log.Error(err)
+		}
+
 		// localChain already base64 encoded
 		resp.Chain = localChain
 		return resp
