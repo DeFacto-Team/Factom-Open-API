@@ -14,9 +14,11 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/FactomProject/factom"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -204,7 +206,13 @@ func (api *Api) createChain(c echo.Context) error {
 	// Open API Chain struct
 	req := &model.Chain{}
 
-	req.Content = c.FormValue("content")
+	// if JSON request, parse Content from it
+	body, err := bodyToJSON(c)
+	if err == nil {
+		if content, ok := body["content"].(string); ok {
+			req.Content = content
+		}
+	}
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
@@ -324,4 +332,21 @@ func (api *Api) factomd(c echo.Context) error {
 
 	return api.SuccessResponse(resp.Result, c)
 
+}
+
+func bodyToJSON(c echo.Context) (map[string]interface{}, error) {
+
+	s, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Request().Body = ioutil.NopCloser(bytes.NewBuffer(s))
+
+	var body map[string]interface{}
+	if err := json.Unmarshal(s, &body); err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
