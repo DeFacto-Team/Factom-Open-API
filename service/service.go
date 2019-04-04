@@ -158,7 +158,7 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 	resp := &model.ChainWithLinks{}
 
 	// calculate entryhash of the first entry
-	resp.Links = append(resp.Links, "/chains/"+chain.ChainID+"/entries/"+chain.FirstEntryHash())
+	resp.Links = append(resp.Links, "/entries/"+chain.FirstEntryHash())
 
 	// check if chain exists on Factom
 	if chain.Exists() == true {
