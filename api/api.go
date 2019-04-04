@@ -177,35 +177,6 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 
 // API functions
 
-func (api *Api) getChains(c echo.Context) error {
-
-	resp := api.service.GetUserChains(&model.Chain{}, api.user)
-
-	return api.SuccessResponse(resp, c)
-
-}
-
-func (api *Api) getChain(c echo.Context) error {
-
-	req := &model.Chain{ChainID: c.Param("chainid")}
-
-	log.Debug("Validating input data")
-
-	// validate ExtIDs, Content
-	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
-		return api.ErrorResponse(err, c)
-	}
-
-	resp := api.service.GetChain(req, api.user)
-
-	if resp == nil {
-		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
-	}
-
-	return api.SuccessResponse(resp, c)
-
-}
-
 func (api *Api) createChain(c echo.Context) error {
 
 	// check user limits
@@ -243,6 +214,35 @@ func (api *Api) createChain(c echo.Context) error {
 	}
 
 	return api.SuccessResponse(resp, c)
+}
+
+func (api *Api) getChains(c echo.Context) error {
+
+	resp := api.service.GetUserChains(&model.Chain{}, api.user)
+
+	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *Api) getChain(c echo.Context) error {
+
+	req := &model.Chain{ChainID: c.Param("chainid")}
+
+	log.Debug("Validating input data")
+
+	// validate ExtIDs, Content
+	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp := api.service.GetChain(req, api.user)
+
+	if resp == nil {
+		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
+	}
+
+	return api.SuccessResponse(resp, c)
+
 }
 
 // swagger:operation POST /entries createEntry
