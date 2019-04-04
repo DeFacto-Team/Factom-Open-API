@@ -24,8 +24,7 @@ type Service interface {
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
-	ParseAllChainEntries(chain *model.Chain, workerID int) error
-	ParseNewChainEntries(chain *model.Chain) error
+	GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error)
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -35,6 +34,9 @@ type Service interface {
 	GetQueueToClear() []*model.Queue
 	ProcessQueue(queue *model.Queue) error
 	ClearQueue(queue *model.Queue) error
+
+	ParseAllChainEntries(chain *model.Chain, workerID int) error
+	ParseNewChainEntries(chain *model.Chain) error
 }
 
 func NewService(store store.Store, wallet wallet.Wallet) Service {
@@ -201,6 +203,52 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 	resp.Chain = chain.Base64Encode()
 
 	return resp, nil
+
+}
+
+func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error) {
+
+	resp := &model.ChainWithLinks{}
+
+	log.Debug("Search for chain into local DB")
+
+	// search for chain.ChainID into local DB
+	localChain := c.store.GetChain(chain)
+
+	if localChain == nil {
+
+		log.Debug("Chain " + chain.ChainID + " not found into local DB")
+		log.Debug("Search for chain on the blockchain")
+
+		if chain.Exists() {
+			chain = chain.Base64Encode()
+			log.Debug("Chain " + chain.ChainID + " found on the blockchain")
+
+			log.Debug("Getting chain status from the blockchain")
+			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
+			resp.Chain = chain
+
+			log.Debug("Creating chain into local DB")
+			err := c.store.CreateChain(chain)
+			if err != nil {
+				log.Error(err)
+			}
+
+			// If we are here, so no errors occured and we force bind chain to API user
+			log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
+			err = c.store.BindChainToUser(chain, user)
+			if err != nil {
+				log.Error(err)
+			}
+
+		} else {
+			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
+			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
+		}
+
+	}
+
+	return c.store.GetChainEntries(chain), nil
 
 }
 

@@ -100,6 +100,7 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	api.Http.POST("/v1/chains", api.createChain)
 	api.Http.GET("/v1/chains", api.getChains)
 	api.Http.GET("/v1/chains/:chainid", api.getChain)
+	api.Http.GET("/v1/chains/:chainid/entries", api.getChainEntries)
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
@@ -310,6 +311,27 @@ func (api *Api) getEntry(c echo.Context) error {
 
 	if resp == nil {
 		return api.ErrorResponse(fmt.Errorf("Entry %s does not exist", req.EntryHash), c)
+	}
+
+	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *Api) getChainEntries(c echo.Context) error {
+
+	req := &model.Chain{ChainID: c.Param("chainid")}
+
+	log.Debug("Validating input data")
+
+	// validate ExtIDs, Content
+	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp, err := api.service.GetChainEntries(req, api.user)
+
+	if err != nil {
+		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
 	}
 
 	return api.SuccessResponse(resp, c)
