@@ -19,6 +19,7 @@ type Service interface {
 
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
 	GetChains(chain *model.Chain) []*model.Chain
+	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	SetChainSentToPool(chain *model.Chain) error
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
@@ -108,6 +109,12 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
 
 	return c.store.GetChains(chain)
+
+}
+
+func (c *ServiceContext) GetUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+
+	return c.store.GetUserChains(chain, user)
 
 }
 

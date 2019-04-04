@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/FactomProject/factom"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -25,6 +24,7 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
+	"github.com/FactomProject/factom"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -98,6 +98,7 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 
 	// Chains
 	api.Http.POST("/v1/chains", api.createChain)
+	api.Http.GET("/v1/chains", api.getChains)
 	api.Http.GET("/v1/chains/:chainid", api.getChain)
 
 	// Entries
@@ -174,6 +175,14 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 }
 
 // API functions
+
+func (api *Api) getChains(c echo.Context) error {
+
+	resp := api.service.GetUserChains(&model.Chain{}, api.user)
+
+	return api.SuccessResponse(resp, c)
+
+}
 
 func (api *Api) getChain(c echo.Context) error {
 

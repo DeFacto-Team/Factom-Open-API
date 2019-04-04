@@ -18,6 +18,7 @@ type Store interface {
 
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
+	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	GetChainEntries(chain *model.Chain) []*model.Entry
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
@@ -105,6 +106,14 @@ func (c *StoreContext) GetChains(chain *model.Chain) []*model.Chain {
 
 	res := []*model.Chain{}
 	c.db.Where(chain).Find(&res)
+	return res
+
+}
+
+func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+
+	res := []*model.Chain{}
+	c.db.Where(chain).Model(&user).Related(&res, "Chains")
 	return res
 
 }
