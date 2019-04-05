@@ -76,8 +76,8 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	}
 
 	api.Http.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
-		user := api.service.GetUserByAccessToken(key)
-		if user != nil && user.Status == 1 {
+		user := api.service.CheckUser(key)
+		if user != nil {
 			api.user = user
 			return true, nil
 		}

@@ -14,7 +14,11 @@ type Store interface {
 	Close() error
 
 	CreateUser(user *model.User) error
-	GetUserByAccessToken(token string) *model.User
+	GetUser(user *model.User) *model.User
+	GetUsers(user *model.User) []*model.User
+	UpdateUser(user *model.User) error
+	DeleteUser(user *model.User) error
+	DisableUserUsageLimit(chain *model.User) error
 
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
@@ -81,14 +85,49 @@ func (c *StoreContext) CreateUser(user *model.User) error {
 
 }
 
-func (c *StoreContext) GetUserByAccessToken(token string) *model.User {
+func (c *StoreContext) GetUser(user *model.User) *model.User {
 
-	user := &model.User{AccessToken: token}
-
-	if c.db.First(&user, user).RecordNotFound() {
+	res := &model.User{}
+	if c.db.First(&res, user).RecordNotFound() {
 		return nil
 	}
-	return user
+	return res
+
+}
+
+func (c *StoreContext) GetUsers(user *model.User) []*model.User {
+
+	res := []*model.User{}
+	c.db.Where(user).Find(&res)
+	return res
+
+}
+
+func (c *StoreContext) UpdateUser(user *model.User) error {
+
+	if c.db.Model(&user).Updates(user).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Updating user failed")
+
+}
+
+func (c *StoreContext) DeleteUser(user *model.User) error {
+
+	if c.db.Delete(&user).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Deletion user failed")
+
+}
+
+func (c *StoreContext) DisableUserUsageLimit(user *model.User) error {
+
+	if c.db.Model(user).Update("usage_limit", 0).RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("DB: Updating user limit failed")
 
 }
 

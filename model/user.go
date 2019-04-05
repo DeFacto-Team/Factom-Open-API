@@ -15,6 +15,6 @@ type User struct {
 	AccessToken string   `json:"accessToken" form:"accessToken" query:"accessToken" validate:"required" gorm:"unique;not null"`
 	Usage       int      `json:"usage" form:"usage" query:"usage"`
 	UsageLimit  int      `json:"usageLimit" form:"usageLimit" query:"usageLimit"`
-	Status      int      `json:"-" form:"-" query:"-"`
+	Status      int      `json:"-" form:"-" query:"-" gorm:"not null;default:1"`
 	Chains      []*Chain `json:"-" form:"-" query:"-" gorm:"many2many:users_chains;"`
 }

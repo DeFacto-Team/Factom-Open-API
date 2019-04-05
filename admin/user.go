@@ -1,15 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
-	"github.com/DeFacto-Team/Factom-Open-API/service"
 	"github.com/DeFacto-Team/Factom-Open-API/store"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -20,8 +19,8 @@ var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12
 func main() {
 
 	var err error
+	var action, name, param string
 
-	name := flag.String("name", "", "User name")
 	configFile := flag.String("c", "config/config.yaml", "Path to config file")
 	flag.Parse()
 
@@ -29,7 +28,25 @@ func main() {
 	if conf, err = config.NewConfig(*configFile); err != nil {
 		log.Fatal(err)
 	}
-	// Создаем сторедж
+
+	if len(os.Args) <= 1 {
+		log.Fatal("No params provided")
+	}
+
+	if len(os.Args) >= 2 {
+		action = os.Args[1]
+	}
+
+	if len(os.Args) >= 3 {
+		name = os.Args[2]
+	}
+
+	if len(os.Args) >= 4 {
+		param = os.Args[3]
+	}
+
+	log.Info("action=", action, ", name=", name, ", param=", param)
+
 	store, err := store.NewStore(conf)
 	if err != nil {
 		log.Fatal(err)
@@ -37,19 +54,124 @@ func main() {
 	defer store.Close()
 
 	user := &model.User{}
-	user.AccessToken = generateAPIKey(32)
-	user.Name = *name
 
-	us := service.NewUserService(store)
-
-	err = us.CreateUser(user)
-	if err != nil {
-		log.Fatal(err)
+	if action != "ls" && name == "" {
+		log.Fatal("Name can not be null for action ", action)
 	}
 
-	userJSON, _ := json.Marshal(user)
+	if name != "" && action != "create" {
+		user.Name = name
+		user = store.GetUser(user)
+		if user == nil {
+			log.Fatal("User ", name, " not found")
+		}
+	}
 
-	fmt.Printf(string(userJSON) + "\n")
+	switch action {
+	case "create":
+
+		user.Name = name
+		user.AccessToken = generateAPIKey(32)
+
+		err = store.CreateUser(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("User ", user.Name, " created, API access key: ", user.AccessToken)
+
+	case "delete":
+
+		err = store.DeleteUser(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("User ", user.Name, " deleted")
+
+	case "enable":
+
+		user.Status = 1
+
+		err = store.UpdateUser(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("User ", user.Name, " enabled")
+
+	case "disable":
+
+		user.Status = -1
+
+		err = store.UpdateUser(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("User ", user.Name, " disabled")
+
+	case "rotate-key":
+
+		user.AccessToken = generateAPIKey(32)
+
+		err = store.UpdateUser(user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Info("Access key changed for user ", user.Name, ", new API access key: ", user.AccessToken)
+
+	case "set-limit":
+
+		if param == "" {
+			log.Fatal("You have to provide a numeric param for action ", action)
+		}
+
+		var limit int
+		if limit, err = strconv.Atoi(param); err != nil {
+			log.Fatal("You have to provide a numeric param for action ", action)
+		}
+
+		user.UsageLimit = limit
+
+		if limit == 0 {
+			err = store.DisableUserUsageLimit(user)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			err = store.UpdateUser(user)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		log.Info("Usage limit for user ", user.Name, " set to ", user.UsageLimit, " write(s)")
+
+	case "ls":
+
+		users := store.GetUsers(&model.User{})
+
+		if users == nil {
+			log.Info("No users found")
+		} else {
+			for _, u := range users {
+				var status string
+				if u.Status == 1 {
+					status = "enabled"
+				} else {
+					status = "disabled"
+				}
+				log.Info("id=", u.ID, ", name=", u.Name, ", accessToken=", u.AccessToken, ", status=", status, ", usage=", u.Usage, ", usageLimit=", u.UsageLimit)
+			}
+		}
+
+	default:
+
+		log.Fatal("Incorrect action: ", action)
+
+	}
 
 }
 

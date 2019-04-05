@@ -15,7 +15,8 @@ import (
 
 type Service interface {
 	CreateUser(user *model.User) error
-	GetUserByAccessToken(token string) *model.User
+	CheckUser(token string) *model.User
+	UpdateUser(user *model.User) error
 
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
 	GetChains(chain *model.Chain) []*model.Chain
@@ -58,8 +59,18 @@ func (c *ServiceContext) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (c *ServiceContext) GetUserByAccessToken(token string) *model.User {
-	return c.store.GetUserByAccessToken(token)
+func (c *ServiceContext) CheckUser(token string) *model.User {
+	return c.store.GetUser(&model.User{AccessToken: token, Status: 1})
+}
+
+func (c *ServiceContext) UpdateUser(user *model.User) error {
+
+	err := c.store.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks {
