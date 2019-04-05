@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"math/rand"
 	"os"
 	"strconv"
@@ -55,11 +56,11 @@ func main() {
 
 	user := &model.User{}
 
-	if action != "ls" && name == "" {
+	if name == "" && action != "ls" && action != "help" {
 		log.Fatal("Name can not be null for action ", action)
 	}
 
-	if name != "" && action != "create" {
+	if name != "" && action != "create" && action != "ls" && action != "help" {
 		user.Name = name
 		user = store.GetUser(user)
 		if user == nil {
@@ -68,6 +69,18 @@ func main() {
 	}
 
 	switch action {
+	case "help":
+
+		fmt.Printf("User management tool for Factom Open API:\n")
+		fmt.Printf("user help — Show help\n")
+		fmt.Printf("user create john — Create user 'john' and generate API access key\n")
+		fmt.Printf("user disable john — Disable access to API for user 'john'\n")
+		fmt.Printf("user enable john — Enable access to API for user 'john'\n")
+		fmt.Printf("user delete john — Delete user 'john'\n")
+		fmt.Printf("user rotate-key john — Rotate API access key for user 'john'\n")
+		fmt.Printf("user set-limit john 1000 — Set writes limit for user 'john' to 1000\n")
+		fmt.Printf("user ls — Show all API users, their API keys, statuses & limits\n")
+
 	case "create":
 
 		user.Name = name
