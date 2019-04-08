@@ -226,9 +226,9 @@ func (api *Api) getChains(c echo.Context) error {
 
 	chain := &model.Chain{}
 
-	if c.QueryParam("filter") != "" {
+	if c.QueryParam("status") != "" {
 		log.Debug("Validating input data")
-		chain.Status = c.QueryParam("filter")
+		chain.Status = c.QueryParam("status")
 		// validate Status
 		if err := api.validate.StructPartial(chain, "Status"); err != nil {
 			return api.ErrorResponse(err, c)
@@ -252,7 +252,7 @@ func (api *Api) searchChains(c echo.Context) error {
 	}
 
 	log.Debug("Validating input data")
-	req.Status = c.QueryParam("filter")
+	req.Status = c.QueryParam("status")
 
 	// validate ExtIDs
 	if err := api.validate.StructPartial(req, "ExtIDs", "Status"); err != nil {
@@ -361,7 +361,7 @@ func (api *Api) getEntry(c echo.Context) error {
 func (api *Api) getChainEntries(c echo.Context) error {
 
 	req := &model.Entry{ChainID: c.Param("chainid")}
-	req.Status = c.QueryParam("filter")
+	req.Status = c.QueryParam("status")
 
 	log.Debug("Validating input data")
 
@@ -395,7 +395,7 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 	}
 
 	req.ChainID = c.Param("chainid")
-	req.Status = c.QueryParam("filter")
+	req.Status = c.QueryParam("status")
 
 	log.Debug("Validating input data")
 
