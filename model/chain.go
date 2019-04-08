@@ -33,7 +33,7 @@ type Chain struct {
 
 type ChainWithLinks struct {
 	*Chain
-	Links []string `json:"links" form:"links" query:"links" validate:""`
+	Links []Link `json:"links" form:"links" query:"links" validate:""`
 }
 
 const (
@@ -146,5 +146,24 @@ func (chain *Chain) GetStatusFromFactom() (string, string) {
 	}
 
 	return ChainCompleted, status.ChainHead
+
+}
+
+func (chain *Chain) ConvertToChainWithLinks() *ChainWithLinks {
+
+	resp := &ChainWithLinks{Chain: chain}
+
+	resp.Links = append(resp.Links, Link{Rel: "entries", Href: "/chains/" + chain.ChainID + "/entries"})
+
+	t := false
+
+	if chain.Status == ChainCompleted && chain.Synced == &t {
+		return resp
+	}
+
+	resp.Links = append(resp.Links, Link{Rel: "firstEntry", Href: "/chains/" + chain.ChainID + "/entries/first"})
+	resp.Links = append(resp.Links, Link{Rel: "lastEntry", Href: "/chains/" + chain.ChainID + "/entries/last"})
+
+	return resp
 
 }

@@ -76,8 +76,6 @@ func (c *ServiceContext) UpdateUser(user *model.User) error {
 
 func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks {
 
-	resp := &model.ChainWithLinks{}
-
 	log.Debug("Search for chain into local DB")
 
 	// search for chain.ChainID into local DB
@@ -93,8 +91,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 		}
 
 		// localChain already base64 encoded
-		resp.Chain = localChain
-		return resp
+		return localChain.ConvertToChainWithLinks()
 	}
 
 	log.Debug("Chain " + chain.ChainID + " not found into local DB")
@@ -106,7 +103,6 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 
 		log.Debug("Getting chain status from the blockchain")
 		chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
-		resp.Chain = chain
 
 		log.Debug("Creating chain into local DB")
 		err := c.store.CreateChain(chain)
@@ -121,7 +117,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 			log.Error(err)
 		}
 
-		return resp
+		return chain.ConvertToChainWithLinks()
 	}
 
 	return nil
@@ -183,7 +179,7 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 	resp := &model.ChainWithLinks{}
 
 	// calculate entryhash of the first entry
-	resp.Links = append(resp.Links, "/entries/"+chain.FirstEntryHash())
+	resp.Links = append(resp.Links, model.Link{Rel: "firstEntry", Href: "/entries/" + chain.FirstEntryHash()})
 
 	// check if chain exists on Factom
 	if chain.Exists() == true {
