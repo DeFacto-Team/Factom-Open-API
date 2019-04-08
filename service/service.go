@@ -26,7 +26,7 @@ type Service interface {
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
-	GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error)
+	GetChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
 	SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
@@ -232,11 +232,12 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 
 }
 
-func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error) {
+func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error) {
 
 	log.Debug("Search for chain into local DB")
 
 	// search for chain.ChainID into local DB
+	chain := entry.GetChain()
 	localChain := c.store.GetChain(chain)
 
 	if localChain == nil {
@@ -271,7 +272,7 @@ func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) (
 		log.Error(err)
 	}
 
-	return c.store.GetChainEntries(chain), nil
+	return c.store.GetChainEntries(entry.GetChain(), entry), nil
 
 }
 
@@ -316,7 +317,7 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 		log.Error(err)
 	}
 
-	return c.store.SearchChainEntries(&model.Chain{ChainID: entry.ChainID}, entry), nil
+	return c.store.SearchChainEntries(entry.GetChain(), entry), nil
 
 }
 

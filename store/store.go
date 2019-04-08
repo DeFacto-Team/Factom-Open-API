@@ -25,7 +25,7 @@ type Store interface {
 	GetChains(chain *model.Chain) []*model.Chain
 	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
-	GetChainEntries(chain *model.Chain) []*model.Entry
+	GetChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry
 	SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
@@ -175,7 +175,13 @@ func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User) []*mo
 func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain {
 
 	res := []*model.Chain{}
-	c.db.Where("ext_ids @> ?", chain.ExtIDs).Model(&user).Related(&res, "Chains")
+
+	where := &model.Chain{}
+	if chain.Status != "" {
+		where.Status = chain.Status
+	}
+
+	c.db.Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(&user).Related(&res, "Chains")
 	return res
 
 }
@@ -202,7 +208,13 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry {
 
 	res := []*model.Entry{}
-	c.db.Where("ext_ids @> ?", entry.ExtIDs).Model(chain).Related(&res, "Entries")
+
+	where := &model.Entry{}
+	if entry.Status != "" {
+		where.Status = entry.Status
+	}
+
+	c.db.Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
 	return res
 
 }
@@ -267,11 +279,16 @@ func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBloc
 
 }
 
-func (c *StoreContext) GetChainEntries(chain *model.Chain) []*model.Entry {
+func (c *StoreContext) GetChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry {
 
 	res := []*model.Entry{}
 
-	c.db.Model(chain).Related(&res, "Entries")
+	where := &model.Entry{}
+	if entry.Status != "" {
+		where.Status = entry.Status
+	}
+
+	c.db.Model(chain).Where(where).Related(&res, "Entries")
 
 	return res
 

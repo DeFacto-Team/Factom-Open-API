@@ -224,7 +224,18 @@ func (api *Api) createChain(c echo.Context) error {
 
 func (api *Api) getChains(c echo.Context) error {
 
-	resp := api.service.GetUserChains(&model.Chain{}, api.user)
+	chain := &model.Chain{}
+
+	if c.QueryParam("filter") != "" {
+		log.Debug("Validating input data")
+		chain.Status = c.QueryParam("filter")
+		// validate Status
+		if err := api.validate.StructPartial(chain, "Status"); err != nil {
+			return api.ErrorResponse(err, c)
+		}
+	}
+
+	resp := api.service.GetUserChains(chain, api.user)
 
 	return api.SuccessResponse(resp, c)
 
@@ -241,9 +252,10 @@ func (api *Api) searchChains(c echo.Context) error {
 	}
 
 	log.Debug("Validating input data")
+	req.Status = c.QueryParam("filter")
 
 	// validate ExtIDs
-	if err := api.validate.StructPartial(req, "ExtIDs"); err != nil {
+	if err := api.validate.StructPartial(req, "ExtIDs", "Status"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
@@ -348,12 +360,13 @@ func (api *Api) getEntry(c echo.Context) error {
 
 func (api *Api) getChainEntries(c echo.Context) error {
 
-	req := &model.Chain{ChainID: c.Param("chainid")}
+	req := &model.Entry{ChainID: c.Param("chainid")}
+	req.Status = c.QueryParam("filter")
 
 	log.Debug("Validating input data")
 
 	// validate ChainID
-	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
+	if err := api.validate.StructPartial(req, "ChainID", "Status"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
@@ -382,11 +395,12 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 	}
 
 	req.ChainID = c.Param("chainid")
+	req.Status = c.QueryParam("filter")
 
 	log.Debug("Validating input data")
 
 	// validate ChainID, ExtID
-	if err := api.validate.StructPartial(req, "ChainID", "ExtIDs"); err != nil {
+	if err := api.validate.StructPartial(req, "ChainID", "ExtIDs", "Status"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
