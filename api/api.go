@@ -213,11 +213,14 @@ func (api *Api) createChain(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp, err := api.service.CreateChain(req, api.user)
+	chain, err := api.service.CreateChain(req, api.user)
 
 	if err != nil {
 		return api.ErrorResponse(err, c)
 	}
+
+	resp := &model.ChainWithLinks{Chain: chain}
+	resp.Links = append(resp.Links, model.Link{Rel: "firstEntry", Href: "/entries/" + chain.Base64Decode().FirstEntryHash()})
 
 	return api.SuccessResponse(resp, c)
 }
@@ -282,7 +285,7 @@ func (api *Api) getChain(c echo.Context) error {
 		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
 	}
 
-	return api.SuccessResponse(resp, c)
+	return api.SuccessResponse(resp.ConvertToChainWithLinks(), c)
 
 }
 

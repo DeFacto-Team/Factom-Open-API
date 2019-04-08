@@ -17,14 +17,14 @@ type Service interface {
 	CheckUser(token string) *model.User
 	UpdateUser(user *model.User) error
 
-	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
+	GetChain(chain *model.Chain, user *model.User) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
 	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	SetChainSentToPool(chain *model.Chain) error
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
-	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
+	CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error)
 	GetChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
 	SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
 
@@ -74,7 +74,7 @@ func (c *ServiceContext) UpdateUser(user *model.User) error {
 	return nil
 }
 
-func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks {
+func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.Chain {
 
 	log.Debug("Search for chain into local DB")
 
@@ -91,7 +91,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 		}
 
 		// localChain already base64 encoded
-		return localChain.ConvertToChainWithLinks()
+		return localChain
 	}
 
 	log.Debug("Chain " + chain.ChainID + " not found into local DB")
@@ -117,7 +117,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 			log.Error(err)
 		}
 
-		return chain.ConvertToChainWithLinks()
+		return chain
 	}
 
 	return nil
@@ -162,7 +162,7 @@ func (c *ServiceContext) ResetChainsParsingAtAPIStart() error {
 
 }
 
-func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error) {
+func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
 
 	chain = chain.Base64Decode()
 
@@ -175,11 +175,6 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 
 	// default chain status for new chains
 	chain.Status = model.ChainQueue
-
-	resp := &model.ChainWithLinks{}
-
-	// calculate entryhash of the first entry
-	resp.Links = append(resp.Links, model.Link{Rel: "firstEntry", Href: "/entries/" + chain.FirstEntryHash()})
 
 	// check if chain exists on Factom
 	if chain.Exists() == true {
@@ -221,9 +216,7 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 		log.Error(err)
 	}
 
-	resp.Chain = chain.Base64Encode()
-
-	return resp, nil
+	return chain.Base64Encode(), nil
 
 }
 
