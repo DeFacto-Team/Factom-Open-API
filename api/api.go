@@ -100,7 +100,13 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	api.Http.POST("/v1/chains", api.createChain)
 	api.Http.GET("/v1/chains", api.getChains)
 	api.Http.GET("/v1/chains/:chainid", api.getChain)
+	api.Http.POST("/v1/chains/search", api.searchChains)
+
+	// Chains entries
 	api.Http.GET("/v1/chains/:chainid/entries", api.getChainEntries)
+	//	api.Http.GET("/v1/chains/:chainid/entries/first", api.getFirstChainEntry)
+	//	api.Http.GET("/v1/chains/:chainid/entries/last", api.getFirstChainEntry)
+	api.Http.POST("/v1/chains/:chainid/entries/search", api.searchChainEntries)
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
@@ -224,6 +230,29 @@ func (api *Api) getChains(c echo.Context) error {
 
 }
 
+func (api *Api) searchChains(c echo.Context) error {
+
+	// Open API Chain struct
+	req := &model.Chain{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	log.Debug("Validating input data")
+
+	// validate ExtIDs
+	if err := api.validate.StructPartial(req, "ExtIDs"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp := api.service.SearchUserChains(req, api.user)
+
+	return api.SuccessResponse(resp, c)
+
+}
+
 func (api *Api) getChain(c echo.Context) error {
 
 	req := &model.Chain{ChainID: c.Param("chainid")}
@@ -281,7 +310,7 @@ func (api *Api) createEntry(c echo.Context) error {
 
 	log.Debug("Validating input data")
 
-	// validate ChainID, ExtID (if exists), Content
+	// validate ChainID, ExtID (if exists), Content (if exists)
 	if err := api.validate.StructExcept(req, "EntryHash"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
@@ -323,7 +352,7 @@ func (api *Api) getChainEntries(c echo.Context) error {
 
 	log.Debug("Validating input data")
 
-	// validate ExtIDs, Content
+	// validate ChainID
 	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
 		return api.ErrorResponse(err, c)
 	}
@@ -331,7 +360,39 @@ func (api *Api) getChainEntries(c echo.Context) error {
 	resp, err := api.service.GetChainEntries(req, api.user)
 
 	if err != nil {
-		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
+		return api.ErrorResponse(err, c)
+	}
+
+	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *Api) searchChainEntries(c echo.Context) error {
+
+	// Open API Entry struct
+	req := &model.Entry{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	if len(req.ExtIDs) == 0 {
+		return api.ErrorResponse(fmt.Errorf("Single or multiple extIds required"), c)
+	}
+
+	req.ChainID = c.Param("chainid")
+
+	log.Debug("Validating input data")
+
+	// validate ChainID, ExtID
+	if err := api.validate.StructPartial(req, "ChainID", "ExtIDs"); err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp, err := api.service.SearchChainEntries(req, api.user)
+	if err != nil {
+		return api.ErrorResponse(err, c)
 	}
 
 	return api.SuccessResponse(resp, c)

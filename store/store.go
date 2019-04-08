@@ -23,7 +23,9 @@ type Store interface {
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
 	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
+	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	GetChainEntries(chain *model.Chain) []*model.Entry
+	SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
 	UpdateChainsWhere(sql string, chain *model.Chain) error
@@ -152,7 +154,15 @@ func (c *StoreContext) GetChains(chain *model.Chain) []*model.Chain {
 func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User) []*model.Chain {
 
 	res := []*model.Chain{}
-	c.db.Where(chain).Model(&user).Related(&res, "Chains")
+	c.db.Where(chain).Model(user).Related(&res, "Chains")
+	return res
+
+}
+
+func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+
+	res := []*model.Chain{}
+	c.db.Where("ext_ids @> ?", chain.ExtIDs).Model(&user).Related(&res, "Chains")
 	return res
 
 }
@@ -172,6 +182,14 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 	if c.db.First(&res, entry).RecordNotFound() {
 		return nil
 	}
+	return res
+
+}
+
+func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry {
+
+	res := []*model.Entry{}
+	c.db.Where("ext_ids @> ?", entry.ExtIDs).Model(chain).Related(&res, "Entries")
 	return res
 
 }
@@ -238,11 +256,11 @@ func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBloc
 
 func (c *StoreContext) GetChainEntries(chain *model.Chain) []*model.Entry {
 
-	entries := []*model.Entry{}
+	res := []*model.Entry{}
 
-	c.db.Model(chain).Related(&entries, "Entries")
+	c.db.Model(chain).Related(&res, "Entries")
 
-	return entries
+	return res
 
 }
 

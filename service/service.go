@@ -21,11 +21,13 @@ type Service interface {
 	GetChain(chain *model.Chain, user *model.User) *model.ChainWithLinks
 	GetChains(chain *model.Chain) []*model.Chain
 	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
+	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
 	SetChainSentToPool(chain *model.Chain) error
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.ChainWithLinks, error)
 	GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error)
+	SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -138,6 +140,12 @@ func (c *ServiceContext) GetUserChains(chain *model.Chain, user *model.User) []*
 
 }
 
+func (c *ServiceContext) SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+
+	return c.store.SearchUserChains(chain, user)
+
+}
+
 func (c *ServiceContext) SetChainSentToPool(chain *model.Chain) error {
 
 	t := true
@@ -226,8 +234,6 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 
 func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) ([]*model.Entry, error) {
 
-	resp := &model.ChainWithLinks{}
-
 	log.Debug("Search for chain into local DB")
 
 	// search for chain.ChainID into local DB
@@ -244,7 +250,6 @@ func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) (
 
 			log.Debug("Getting chain status from the blockchain")
 			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
-			resp.Chain = chain
 
 			log.Debug("Creating chain into local DB")
 			err := c.store.CreateChain(chain)
@@ -267,6 +272,57 @@ func (c *ServiceContext) GetChainEntries(chain *model.Chain, user *model.User) (
 	}
 
 	return c.store.GetChainEntries(chain), nil
+
+}
+
+func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error) {
+
+	log.Debug("Search for chain into local DB")
+
+	chain := entry.GetChain()
+
+	// search for chain.ChainID into local DB
+	localChain := c.store.GetChain(chain)
+
+	if localChain == nil {
+
+		log.Debug("Chain " + chain.ChainID + " not found into local DB")
+		log.Debug("Search for chain on the blockchain")
+
+		if chain.Exists() {
+			chain = chain.Base64Encode()
+			log.Debug("Chain " + chain.ChainID + " found on the blockchain")
+
+			log.Debug("Getting chain status from the blockchain")
+			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
+
+			log.Debug("Creating chain into local DB")
+			err := c.store.CreateChain(chain)
+			if err != nil {
+				log.Error(err)
+			}
+
+		} else {
+			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
+			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
+		}
+
+	}
+
+	// If we are here, so no errors occured and we force bind chain to API user
+	log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
+	err := c.store.BindChainToUser(chain, user)
+	if err != nil {
+		log.Error(err)
+	}
+
+	return c.store.SearchChainEntries(&model.Chain{ChainID: entry.ChainID}, entry), nil
+
+}
+
+func (c *ServiceContext) GetChainFirstEntry(chain *model.Chain, user *model.User) *model.Entry {
+
+	return nil
 
 }
 
