@@ -54,7 +54,7 @@ type StoreContext struct {
 func NewStore(conf *config.Config) (Store, error) {
 
 	storeConfig := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		conf.Store.Host, conf.Store.Port, conf.Store.User, conf.Store.Password, conf.Store.Dbname,
+		conf.Store.Host, conf.Store.Port, conf.Store.User, conf.Store.Password, conf.Store.DBName,
 	)
 
 	db, err := gorm.Open("postgres", storeConfig)
@@ -62,7 +62,7 @@ func NewStore(conf *config.Config) (Store, error) {
 		return nil, err
 	}
 
-	if conf.Api.Logging && conf.LogLevel >= 6 {
+	if conf.API.Logging && conf.LogLevel >= 6 {
 		db.LogMode(true)
 	}
 

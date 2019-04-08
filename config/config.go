@@ -9,8 +9,8 @@ type Config struct {
 	ConfigFile string
 	LogLevel   uint32 `default:"4"`
 	GzipLevel  int    `default:"-1"`
-	Api        struct {
-		HttpPort int  `default:"8080"`
+	API        struct {
+		HTTPPort int  `default:"8080"`
 		Logging  bool `default:"false"`
 	}
 	Store struct {
@@ -18,7 +18,7 @@ type Config struct {
 		Port     int    `required:"true"`
 		User     string `required:"true"`
 		Password string `required:"true"`
-		Dbname   string `required:"true"`
+		DBName   string `required:"true"`
 	}
 	Factom struct {
 		URL       string `required:"true"`

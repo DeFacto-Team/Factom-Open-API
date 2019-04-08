@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/api"
@@ -20,6 +19,7 @@ import (
 )
 
 const (
+	ConfigFile     = ".config/config.yaml"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )
@@ -28,13 +28,9 @@ func main() {
 
 	var err error
 
-	// Get config flag if exists
-	configFile := flag.String("c", "config/config.yaml", "Path to config file")
-	flag.Parse()
-
 	// Load config
 	var conf *config.Config
-	if conf, err = config.NewConfig(*configFile); err != nil {
+	if conf, err = config.NewConfig(ConfigFile); err != nil {
 		log.Fatal(err)
 	}
 

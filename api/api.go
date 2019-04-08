@@ -66,11 +66,11 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 
 	api.Http = echo.New()
 	api.Http.Logger.SetLevel(log.Lvl(conf.LogLevel))
-	api.apiInfo.Address = ":" + strconv.Itoa(api.conf.Api.HttpPort)
+	api.apiInfo.Address = ":" + strconv.Itoa(api.conf.API.HTTPPort)
 	api.Http.HideBanner = true
 	api.Http.Pre(middleware.RemoveTrailingSlash())
 
-	if conf.Api.Logging {
+	if conf.API.Logging {
 		api.Http.Use(middleware.Logger())
 		api.apiInfo.MW = append(api.apiInfo.MW, "Logger")
 	}
@@ -123,7 +123,7 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 
 // Start API server
 func (api *Api) Start() error {
-	return api.Http.Start(":" + strconv.Itoa(api.conf.Api.HttpPort))
+	return api.Http.Start(":" + strconv.Itoa(api.conf.API.HTTPPort))
 }
 
 // Returns API information

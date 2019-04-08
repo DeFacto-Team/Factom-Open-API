@@ -25,18 +25,18 @@ type WalletContext struct {
 func NewWallet(conf *config.Config) (Wallet, error) {
 
 	// setup EC pub-priv keypair from Es address
-	ec_address, err := factom.GetECAddress(conf.Factom.EsAddress)
+	ECAddress, err := factom.GetECAddress(conf.Factom.EsAddress)
 	if err != nil {
 		return nil, fmt.Errorf("INVALID Es address set in config: %s", conf.Factom.EsAddress)
 	} else {
-		balance, _ := factom.GetECBalance(ec_address.PubString())
-		log.Info("Using EC address: ", ec_address, ", balance=", balance)
+		balance, _ := factom.GetECBalance(ECAddress.PubString())
+		log.Info("Using EC address: ", ECAddress, ", balance=", balance)
 		if balance == 0 {
 			log.Warn("EC address balance is 0 EC. Please top up your EC address to let API create chains & entries on the blockchain.")
 		}
 	}
 
-	return &WalletContext{ec_address}, nil
+	return &WalletContext{ECAddress}, nil
 
 }
 
