@@ -8,9 +8,8 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/wallet"
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
-	"time"
-	//factom "github.com/ilzheev/factom"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 type Service interface {
