@@ -7,7 +7,8 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 
 	"github.com/jinzhu/gorm"
-	//log "github.com/sirupsen/logrus"
+	"github.com/rubenv/sql-migrate"
+	log "github.com/sirupsen/logrus"
 )
 
 type Store interface {
@@ -65,6 +66,18 @@ func NewStore(conf *config.Config) (Store, error) {
 	if conf.API.Logging && conf.LogLevel >= 6 {
 		db.LogMode(true)
 	}
+
+	log.Info("Applying SQL migrations")
+
+	migrations := &migrate.FileMigrationSource{
+		Dir: "store/migrations",
+	}
+
+	n, err := migrate.Exec(db.DB(), "postgres", migrations, migrate.Up)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Info("Store: applied ", n, " migration(s)")
 
 	return &StoreContext{db}, nil
 
