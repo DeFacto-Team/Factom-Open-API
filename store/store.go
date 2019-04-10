@@ -67,7 +67,7 @@ func NewStore(conf *config.Config) (Store, error) {
 		db.LogMode(true)
 	}
 
-	log.Info("Applying SQL migrations")
+	log.Info("Store: applying SQL migrations")
 
 	migrations := &migrate.FileMigrationSource{
 		Dir: "store/migrations",

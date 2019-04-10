@@ -27,7 +27,8 @@ import (
 	"github.com/FactomProject/factom"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/labstack/gommon/log"
+	glog "github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -65,13 +66,15 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	api.service = s
 
 	api.Http = echo.New()
-	api.Http.Logger.SetLevel(log.Lvl(conf.LogLevel))
+	api.Http.Logger.SetLevel(glog.Lvl(conf.LogLevel))
 	api.apiInfo.Address = ":" + strconv.Itoa(api.conf.API.HTTPPort)
 	api.Http.HideBanner = true
 	api.Http.Pre(middleware.RemoveTrailingSlash())
 
 	if conf.API.Logging {
-		api.Http.Use(middleware.Logger())
+		api.Http.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Format: "  API[${status}] ${method} ${uri} (ip=${remote_ip}, latency=${latency_human})\n",
+		}))
 		api.apiInfo.MW = append(api.apiInfo.MW, "Logger")
 	}
 
