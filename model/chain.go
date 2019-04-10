@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"github.com/lib/pq"
 	"time"
-	//	"encoding/json"
-	//	"encoding/hex"
 
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
@@ -34,6 +32,10 @@ type Chain struct {
 type ChainWithLinks struct {
 	*Chain
 	Links []Link `json:"links" form:"links" query:"links" validate:""`
+}
+
+type Chains struct {
+	Items []*Chain
 }
 
 const (
@@ -163,6 +165,18 @@ func (chain *Chain) ConvertToChainWithLinks() *ChainWithLinks {
 
 	resp.Links = append(resp.Links, Link{Rel: "firstEntry", Href: "/chains/" + chain.ChainID + "/entries/first"})
 	resp.Links = append(resp.Links, Link{Rel: "lastEntry", Href: "/chains/" + chain.ChainID + "/entries/last"})
+
+	return resp
+
+}
+
+func (chains Chains) ConvertToChainsWithLinks() []*ChainWithLinks {
+
+	var resp []*ChainWithLinks
+
+	for _, v := range chains.Items {
+		resp = append(resp, v.ConvertToChainWithLinks())
+	}
 
 	return resp
 

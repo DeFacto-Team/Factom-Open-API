@@ -240,7 +240,9 @@ func (api *Api) getChains(c echo.Context) error {
 
 	resp := api.service.GetUserChains(chain, api.user)
 
-	return api.SuccessResponse(resp, c)
+	chains := &model.Chains{Items: resp}
+
+	return api.SuccessResponse(chains.ConvertToChainsWithLinks(), c)
 
 }
 
@@ -264,7 +266,9 @@ func (api *Api) searchChains(c echo.Context) error {
 
 	resp := api.service.SearchUserChains(req, api.user)
 
-	return api.SuccessResponse(resp, c)
+	chains := &model.Chains{Items: resp}
+
+	return api.SuccessResponse(chains.ConvertToChainsWithLinks(), c)
 
 }
 
