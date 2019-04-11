@@ -17,7 +17,7 @@ type Service interface {
 	CheckUser(token string) *model.User
 	UpdateUser(user *model.User) error
 
-	GetChain(chain *model.Chain, user *model.User) *model.Chain
+	GetChain(chain *model.Chain, user *model.User) (*model.Chain, error)
 	GetChains(chain *model.Chain) []*model.Chain
 	GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
 	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
@@ -28,7 +28,7 @@ type Service interface {
 	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
 	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
 
-	GetEntry(entry *model.Entry, user *model.User) *model.Entry
+	GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 
 	GetQueue(queue *model.Queue) []*model.Queue
@@ -74,7 +74,7 @@ func (c *ServiceContext) UpdateUser(user *model.User) error {
 	return nil
 }
 
-func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.Chain {
+func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
 
 	log.Debug("Search for chain into local DB")
 
@@ -91,7 +91,7 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 		}
 
 		// localChain already base64 encoded
-		return localChain
+		return localChain, nil
 	}
 
 	log.Debug("Chain " + chain.ChainID + " not found into local DB")
@@ -117,10 +117,10 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) *model.C
 			log.Error(err)
 		}
 
-		return chain
+		return chain, nil
 	}
 
-	return nil
+	return nil, fmt.Errorf("Chain %s does not exist", chain.ChainID)
 }
 
 func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
@@ -319,7 +319,7 @@ func (c *ServiceContext) GetChainFirstEntry(chain *model.Chain, user *model.User
 
 }
 
-func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.Entry {
+func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
 
 	log.Debug("Search for entry into local DB")
 
@@ -335,7 +335,7 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 			log.Error(err)
 		}
 		// localentry already base64 encoded
-		return localentry
+		return localentry, nil
 	}
 
 	log.Debug("Entry " + entry.EntryHash + " not found into local DB")
@@ -376,10 +376,10 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) *model.E
 			log.Error(err)
 		}
 
-		return resp.Base64Encode()
+		return resp.Base64Encode(), nil
 	}
 
-	return nil
+	return nil, fmt.Errorf("Entry %s does not exist", entry.EntryHash)
 
 }
 

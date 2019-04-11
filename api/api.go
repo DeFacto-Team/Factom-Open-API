@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
+	"github.com/DeFacto-Team/Factom-Open-API/errors"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
 	"github.com/FactomProject/factom"
@@ -204,15 +205,26 @@ func (api *Api) SuccessResponsePagination(res interface{}, total int, c echo.Con
 }
 
 // Custom API response in case of error
-func (api *Api) ErrorResponse(err error, c echo.Context) error {
+func (api *Api) ErrorResponse(err *errors.Error, c echo.Context) error {
 	resp := &ErrorResponse{
 		Result: false,
-		Code:   http.StatusBadRequest,
+		Code:   err.Code,
 		Error:  err.Error(),
 	}
+
+	var HTTPResponseCode int
+
+	// factomd error codes will be lt 0
+	// error codes from 1400 to 1499 will be lt 0
+	// error codes from 1500 will be gte 0
+	if err.Code-1500 < 0 {
+		HTTPResponseCode = http.StatusBadRequest
+	} else {
+		HTTPResponseCode = http.StatusInternalServerError
+	}
+
 	log.Error(err.Error())
-	api.Http.Logger.Error(resp.Error)
-	return c.JSON(resp.Code, resp)
+	return c.JSON(HTTPResponseCode, resp)
 }
 
 // Helper function: check if pagination params are int;
@@ -236,7 +248,7 @@ func (api *Api) GetPaginationParams(c echo.Context) (int, int, error) {
 	if c.QueryParam("limit") != "" {
 		limit, err = strconv.Atoi(c.QueryParam("limit"))
 		if err != nil {
-			err = fmt.Errorf("'start' expected to be an integer, '%s' received", c.QueryParam("limit"))
+			err = fmt.Errorf("'limit' expected to be an integer, '%s' received", c.QueryParam("limit"))
 			log.Error(err)
 			return 0, 0, err
 		}
@@ -252,7 +264,7 @@ func (api *Api) createChain(c echo.Context) error {
 
 	// check user limits
 	if err := api.checkUserLimit(model.QueueActionChain, c); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.LimitationError, err), c)
 	}
 
 	// Open API Chain struct
@@ -268,20 +280,20 @@ func (api *Api) createChain(c echo.Context) error {
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
 	}
 
 	log.Debug("Validating input data")
 
 	// validate ExtIDs, Content
 	if err := api.validate.StructExcept(req, "ChainID"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	chain, err := api.service.CreateChain(req, api.user)
 
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	resp := &model.ChainWithLinks{Chain: chain}
@@ -299,13 +311,13 @@ func (api *Api) getChains(c echo.Context) error {
 		chain.Status = c.QueryParam("status")
 		// validate Status
 		if err := api.validate.StructPartial(chain, "Status"); err != nil {
-			return api.ErrorResponse(err, c)
+			return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 		}
 	}
 
 	start, limit, err := api.GetPaginationParams(c)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
 	resp, total := api.service.GetUserChains(chain, api.user, start, limit)
@@ -323,7 +335,7 @@ func (api *Api) searchChains(c echo.Context) error {
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
 	}
 
 	log.Debug("Validating input data")
@@ -331,12 +343,12 @@ func (api *Api) searchChains(c echo.Context) error {
 
 	// validate ExtIDs
 	if err := api.validate.StructPartial(req, "ExtIDs", "Status"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	start, limit, err := api.GetPaginationParams(c)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
 	resp, total := api.service.SearchUserChains(req, api.user, start, limit)
@@ -355,13 +367,12 @@ func (api *Api) getChain(c echo.Context) error {
 
 	// validate ExtIDs, Content
 	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	resp := api.service.GetChain(req, api.user)
-
-	if resp == nil {
-		return api.ErrorResponse(fmt.Errorf("Chain %s does not exist", req.ChainID), c)
+	resp, err := api.service.GetChain(req, api.user)
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	return api.SuccessResponse(resp.ConvertToChainWithLinks(), c)
@@ -391,7 +402,7 @@ func (api *Api) createEntry(c echo.Context) error {
 
 	// check user limits
 	if err := api.checkUserLimit(model.QueueActionEntry, c); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.LimitationError, err), c)
 	}
 
 	// Open API Entry struct
@@ -399,21 +410,20 @@ func (api *Api) createEntry(c echo.Context) error {
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
 	}
 
 	log.Debug("Validating input data")
 
 	// validate ChainID, ExtID (if exists), Content (if exists)
 	if err := api.validate.StructExcept(req, "EntryHash"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	// Create entry
 	resp, err := api.service.CreateEntry(req, api.user)
-
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	return api.SuccessResponse(resp, c)
@@ -427,13 +437,12 @@ func (api *Api) getEntry(c echo.Context) error {
 
 	// validate ExtIDs, Content
 	if err := api.validate.StructPartial(req, "EntryHash"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	resp := api.service.GetEntry(req, api.user)
-
-	if resp == nil {
-		return api.ErrorResponse(fmt.Errorf("Entry %s does not exist", req.EntryHash), c)
+	resp, err := api.service.GetEntry(req, api.user)
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	return api.SuccessResponse(resp, c)
@@ -449,18 +458,18 @@ func (api *Api) getChainEntries(c echo.Context) error {
 
 	// validate ChainID
 	if err := api.validate.StructPartial(req, "ChainID", "Status"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	start, limit, err := api.GetPaginationParams(c)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
 	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit)
 
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)
@@ -474,11 +483,12 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
 	}
 
 	if len(req.ExtIDs) == 0 {
-		return api.ErrorResponse(fmt.Errorf("Single or multiple extIds required"), c)
+		err := fmt.Errorf("Single or multiple 'extIds' are required")
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	req.ChainID = c.Param("chainid")
@@ -488,17 +498,17 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 
 	// validate ChainID, ExtID
 	if err := api.validate.StructPartial(req, "ChainID", "ExtIDs", "Status"); err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
 	start, limit, err := api.GetPaginationParams(c)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
 	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)
@@ -512,7 +522,7 @@ func (api *Api) factomd(c echo.Context) error {
 	if c.FormValue("params") != "" {
 		err := json.Unmarshal([]byte(c.FormValue("params")), &params)
 		if err != nil {
-			return api.ErrorResponse(err, c)
+			return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 		}
 	}
 
@@ -528,11 +538,11 @@ func (api *Api) factomd(c echo.Context) error {
 
 	resp, err := factom.SendFactomdRequest(request)
 	if err != nil {
-		return api.ErrorResponse(err, c)
+		return api.ErrorResponse(errors.New(resp.Error.Code, err), c)
 	}
 
 	if resp.Error != nil {
-		return api.ErrorResponse(resp.Error, c)
+		return api.ErrorResponse(errors.New(resp.Error.Code, err), c)
 	}
 
 	return api.SuccessResponse(resp.Result, c)
