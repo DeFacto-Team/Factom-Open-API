@@ -699,7 +699,7 @@ func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, upda
 
 func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
 
-	log.Debug("Fetching EntryBlock " + ebhash)
+	log.Debug("History parse: Fetching EntryBlock " + ebhash)
 
 	eb, err := factom.GetEBlock(ebhash)
 	if err != nil {
@@ -719,15 +719,17 @@ func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock
 
 	for _, fe := range s {
 		entry = model.NewEntryFromFactomModel(fe)
-		log.Debug("Fetching Entry " + entry.EntryHash)
+		log.Debug("History parse: Fetching Entry " + entry.EntryHash)
 		entry.Status = model.EntryCompleted
 		err = c.store.CreateEntry(entry.Base64Encode())
 		if err != nil {
 			log.Error(err)
+			return "", err
 		}
 		err = c.store.BindEntryToEBlock(entry, entryblock)
 		if err != nil {
 			log.Error(err)
+			return "", err
 		}
 	}
 
