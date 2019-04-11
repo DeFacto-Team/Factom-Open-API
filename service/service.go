@@ -19,14 +19,14 @@ type Service interface {
 
 	GetChain(chain *model.Chain, user *model.User) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
-	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
-	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
+	GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
+	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
 	SetChainSentToPool(chain *model.Chain) error
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error)
-	GetChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
-	SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error)
+	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
+	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
 
 	GetEntry(entry *model.Entry, user *model.User) *model.Entry
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -129,15 +129,15 @@ func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
 
 }
 
-func (c *ServiceContext) GetUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+func (c *ServiceContext) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
-	return c.store.GetUserChains(chain, user)
+	return c.store.GetUserChains(chain, user, start, limit)
 
 }
 
-func (c *ServiceContext) SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+func (c *ServiceContext) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
-	return c.store.SearchUserChains(chain, user)
+	return c.store.SearchUserChains(chain, user, start, limit)
 
 }
 
@@ -220,7 +220,7 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 
 }
 
-func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error) {
+func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error) {
 
 	log.Debug("Search for chain into local DB")
 
@@ -248,7 +248,7 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User) (
 
 		} else {
 			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
-			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
+			return nil, 0, fmt.Errorf("Chain " + chain.ChainID + " not found")
 		}
 
 	}
@@ -260,11 +260,13 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User) (
 		log.Error(err)
 	}
 
-	return c.store.GetChainEntries(entry.GetChain(), entry), nil
+	result, total := c.store.GetChainEntries(entry.GetChain(), entry, start, limit)
+
+	return result, total, nil
 
 }
 
-func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User) ([]*model.Entry, error) {
+func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error) {
 
 	log.Debug("Search for chain into local DB")
 
@@ -293,7 +295,7 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 
 		} else {
 			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
-			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
+			return nil, 0, fmt.Errorf("Chain " + chain.ChainID + " not found")
 		}
 
 	}
@@ -305,7 +307,9 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 		log.Error(err)
 	}
 
-	return c.store.SearchChainEntries(entry.GetChain(), entry), nil
+	result, total := c.store.SearchChainEntries(entry.GetChain(), entry, start, limit)
+
+	return result, total, nil
 
 }
 

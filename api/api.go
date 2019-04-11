@@ -56,6 +56,18 @@ type SuccessResponse struct {
 	Result interface{} `json:"result"`
 }
 
+type SuccessResponsePagination struct {
+	Result interface{} `json:"result"`
+	Start  *int        `json:"start"`
+	Limit  *int        `json:"limit"`
+	Total  *int        `json:"total"`
+}
+
+const (
+	DefaultPaginationStart = 0
+	DefaultPaginationLimit = 30
+)
+
 func NewApi(conf *config.Config, s service.Service) *Api {
 
 	api := &Api{}
@@ -169,7 +181,26 @@ func (api *Api) checkUserLimit(action string, c echo.Context) error {
 
 // Success API response
 func (api *Api) SuccessResponse(res interface{}, c echo.Context) error {
-	return c.JSON(http.StatusOK, &SuccessResponse{Result: res})
+	resp := &SuccessResponse{
+		Result: res,
+	}
+	return c.JSON(http.StatusOK, resp)
+}
+
+// Success API response with pagination params
+func (api *Api) SuccessResponsePagination(res interface{}, total int, c echo.Context) error {
+
+	// err should be already checked into API function, so not checking it in response
+	start, limit, _ := api.GetPaginationParams(c)
+
+	resp := &SuccessResponsePagination{
+		Result: res,
+		Start:  &start,
+		Limit:  &limit,
+		Total:  &total,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // Custom API response in case of error
@@ -182,6 +213,37 @@ func (api *Api) ErrorResponse(err error, c echo.Context) error {
 	log.Error(err.Error())
 	api.Http.Logger.Error(resp.Error)
 	return c.JSON(resp.Code, resp)
+}
+
+// Helper function: check if pagination params are int;
+// returns start, limit;
+// number from const is used if param was not provided
+func (api *Api) GetPaginationParams(c echo.Context) (int, int, error) {
+
+	start := DefaultPaginationStart
+	limit := DefaultPaginationLimit
+	var err error
+
+	if c.QueryParam("start") != "" {
+		start, err = strconv.Atoi(c.QueryParam("start"))
+		if err != nil {
+			err = fmt.Errorf("'start' expected to be an integer, '%s' received", c.QueryParam("start"))
+			log.Error(err)
+			return 0, 0, err
+		}
+	}
+
+	if c.QueryParam("limit") != "" {
+		limit, err = strconv.Atoi(c.QueryParam("limit"))
+		if err != nil {
+			err = fmt.Errorf("'start' expected to be an integer, '%s' received", c.QueryParam("limit"))
+			log.Error(err)
+			return 0, 0, err
+		}
+	}
+
+	return start, limit, nil
+
 }
 
 // API functions
@@ -241,11 +303,16 @@ func (api *Api) getChains(c echo.Context) error {
 		}
 	}
 
-	resp := api.service.GetUserChains(chain, api.user)
+	start, limit, err := api.GetPaginationParams(c)
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp, total := api.service.GetUserChains(chain, api.user, start, limit)
 
 	chains := &model.Chains{Items: resp}
 
-	return api.SuccessResponse(chains.ConvertToChainsWithLinks(), c)
+	return api.SuccessResponsePagination(chains.ConvertToChainsWithLinks(), total, c)
 
 }
 
@@ -267,11 +334,16 @@ func (api *Api) searchChains(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp := api.service.SearchUserChains(req, api.user)
+	start, limit, err := api.GetPaginationParams(c)
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp, total := api.service.SearchUserChains(req, api.user, start, limit)
 
 	chains := &model.Chains{Items: resp}
 
-	return api.SuccessResponse(chains.ConvertToChainsWithLinks(), c)
+	return api.SuccessResponsePagination(chains.ConvertToChainsWithLinks(), total, c)
 
 }
 
@@ -380,13 +452,18 @@ func (api *Api) getChainEntries(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp, err := api.service.GetChainEntries(req, api.user)
+	start, limit, err := api.GetPaginationParams(c)
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit)
 
 	if err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	return api.SuccessResponse(resp, c)
+	return api.SuccessResponsePagination(resp, total, c)
 
 }
 
@@ -414,12 +491,17 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 		return api.ErrorResponse(err, c)
 	}
 
-	resp, err := api.service.SearchChainEntries(req, api.user)
+	start, limit, err := api.GetPaginationParams(c)
 	if err != nil {
 		return api.ErrorResponse(err, c)
 	}
 
-	return api.SuccessResponse(resp, c)
+	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit)
+	if err != nil {
+		return api.ErrorResponse(err, c)
+	}
+
+	return api.SuccessResponsePagination(resp, total, c)
 
 }
 

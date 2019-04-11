@@ -23,10 +23,10 @@ type Store interface {
 
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
-	GetUserChains(chain *model.Chain, user *model.User) []*model.Chain
-	SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain
-	GetChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry
-	SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry
+	GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
+	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
+	GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int)
+	SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int)
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
 	UpdateChainsWhere(sql string, chain *model.Chain) error
@@ -164,15 +164,23 @@ func (c *StoreContext) GetChains(chain *model.Chain) []*model.Chain {
 
 }
 
-func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	res := []*model.Chain{}
+
 	c.db.Where(chain).Model(user).Related(&res, "Chains")
-	return res
+	total := len(res)
+
+	if start > 0 || total > limit {
+		log.Warn("Second DB Request")
+		c.db.Offset(start).Limit(limit).Where(chain).Model(user).Related(&res, "Chains")
+	}
+
+	return res, total
 
 }
 
-func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User) []*model.Chain {
+func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	res := []*model.Chain{}
 
@@ -181,8 +189,13 @@ func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User) []
 		where.Status = chain.Status
 	}
 
-	c.db.Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(&user).Related(&res, "Chains")
-	return res
+	c.db.Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+	total := len(res)
+
+	if start > 0 || total > limit {
+		c.db.Offset(start).Limit(limit).Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+	}
+	return res, total
 
 }
 
@@ -205,7 +218,26 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 
 }
 
-func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry {
+func (c *StoreContext) GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
+
+	res := []*model.Entry{}
+
+	where := &model.Entry{}
+	if entry.Status != "" {
+		where.Status = entry.Status
+	}
+
+	c.db.Model(chain).Where(where).Related(&res, "Entries")
+	total := len(res)
+
+	if start > 0 || total > limit {
+		c.db.Offset(start).Limit(limit).Model(chain).Where(where).Related(&res, "Entries")
+	}
+	return res, total
+
+}
+
+func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
 
 	res := []*model.Entry{}
 
@@ -215,7 +247,12 @@ func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry
 	}
 
 	c.db.Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
-	return res
+	total := len(res)
+
+	if start > 0 || total > limit {
+		c.db.Offset(start).Limit(limit).Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
+	}
+	return res, total
 
 }
 
@@ -276,21 +313,6 @@ func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBloc
 	c.db.Model(eblock).Association("Entries").Append(entry)
 
 	return nil
-
-}
-
-func (c *StoreContext) GetChainEntries(chain *model.Chain, entry *model.Entry) []*model.Entry {
-
-	res := []*model.Entry{}
-
-	where := &model.Entry{}
-	if entry.Status != "" {
-		where.Status = entry.Status
-	}
-
-	c.db.Model(chain).Where(where).Related(&res, "Entries")
-
-	return res
 
 }
 
