@@ -172,7 +172,7 @@ func (chain *Chain) ConvertToChainWithLinks() *ChainWithLinks {
 
 func (chains Chains) ConvertToChainsWithLinks() []*ChainWithLinks {
 
-	var resp []*ChainWithLinks
+	resp := []*ChainWithLinks{}
 
 	for _, v := range chains.Items {
 		resp = append(resp, v.ConvertToChainWithLinks())
