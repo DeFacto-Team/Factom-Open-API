@@ -53,6 +53,11 @@ type ErrorResponse struct {
 	Error  string `json:"error"`
 }
 
+type AcceptedResponse struct {
+	Result  interface{} `json:"result"`
+	Message string      `json:"message"`
+}
+
 type SuccessResponse struct {
 	Result interface{} `json:"result"`
 }
@@ -186,6 +191,15 @@ func (api *Api) SuccessResponse(res interface{}, c echo.Context) error {
 		Result: res,
 	}
 	return c.JSON(http.StatusOK, resp)
+}
+
+// Accepted API response
+func (api *Api) AcceptedResponse(res interface{}, mes string, c echo.Context) error {
+	resp := &AcceptedResponse{
+		Result:  res,
+		Message: mes,
+	}
+	return c.JSON(http.StatusAccepted, resp)
 }
 
 // Success API response with pagination params
@@ -451,6 +465,8 @@ func (api *Api) getEntry(c echo.Context) error {
 
 func (api *Api) getChainEntries(c echo.Context) error {
 
+	var force bool
+
 	req := &model.Entry{ChainID: c.Param("chainid")}
 	req.Status = c.QueryParam("status")
 
@@ -466,10 +482,16 @@ func (api *Api) getChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
-	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit)
+	if c.QueryParam("force") == "true" {
+		force = true
+	}
 
+	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit, force)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+	if err == nil && resp == nil {
+		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' to request to get partial data.", c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)
@@ -477,6 +499,8 @@ func (api *Api) getChainEntries(c echo.Context) error {
 }
 
 func (api *Api) searchChainEntries(c echo.Context) error {
+
+	var force bool
 
 	// Open API Entry struct
 	req := &model.Entry{}
@@ -506,9 +530,16 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
-	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit)
+	if c.QueryParam("force") == "true" {
+		force = true
+	}
+
+	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit, force)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+	if err == nil && resp == nil {
+		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' to request to get partial data.", c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)

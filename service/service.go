@@ -25,8 +25,8 @@ type Service interface {
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error)
-	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
-	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error)
+	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error)
+	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error)
 
 	GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -220,7 +220,9 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 
 }
 
-func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error) {
+func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+
+	flagJustCreated := false
 
 	log.Debug("Search for chain into local DB")
 
@@ -246,6 +248,8 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, s
 				log.Error(err)
 			}
 
+			flagJustCreated = true
+
 		} else {
 			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
 			return nil, 0, fmt.Errorf("Chain " + chain.ChainID + " not found")
@@ -258,6 +262,14 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, s
 	err := c.store.BindChainToUser(chain, user)
 	if err != nil {
 		log.Error(err)
+	}
+
+	// if force=true not passed
+	if !force {
+		// check if chain just created or not fully synced yet
+		if flagJustCreated == true || (localChain.Status == model.ChainCompleted && !(*localChain.Synced)) {
+			return nil, 0, nil
+		}
 	}
 
 	result, total := c.store.GetChainEntries(entry.GetChain(), entry, start, limit)
@@ -266,7 +278,9 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, s
 
 }
 
-func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int) ([]*model.Entry, int, error) {
+func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+
+	flagJustCreated := false
 
 	log.Debug("Search for chain into local DB")
 
@@ -293,6 +307,8 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 				log.Error(err)
 			}
 
+			flagJustCreated = true
+
 		} else {
 			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
 			return nil, 0, fmt.Errorf("Chain " + chain.ChainID + " not found")
@@ -305,6 +321,14 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 	err := c.store.BindChainToUser(chain, user)
 	if err != nil {
 		log.Error(err)
+	}
+
+	// if force=true not passed
+	if !force {
+		// check if chain just created or not fully synced yet
+		if flagJustCreated == true || (localChain.Status == model.ChainCompleted && !(*localChain.Synced)) {
+			return nil, 0, nil
+		}
 	}
 
 	result, total := c.store.SearchChainEntries(entry.GetChain(), entry, start, limit)
