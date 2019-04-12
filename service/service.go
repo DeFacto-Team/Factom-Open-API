@@ -44,17 +44,17 @@ type Service interface {
 
 // NewService initializes service with store & wallet as ServiceContext
 func NewService(store store.Store, wallet wallet.Wallet) Service {
-	return &ServiceContext{store: store, wallet: wallet}
+	return &Context{store: store, wallet: wallet}
 }
 
-// ServiceContext keeps store & wallet instances
-type ServiceContext struct {
+// Context keeps store & wallet instances
+type Context struct {
 	store  store.Store
 	wallet wallet.Wallet
 }
 
 // CreateUser is generic function to create user into DB
-func (c *ServiceContext) CreateUser(user *model.User) error {
+func (c *Context) CreateUser(user *model.User) error {
 
 	err := c.store.CreateUser(user)
 	if err != nil {
@@ -65,12 +65,12 @@ func (c *ServiceContext) CreateUser(user *model.User) error {
 }
 
 // CheckUser returns only enabled users by their access token
-func (c *ServiceContext) CheckUser(token string) *model.User {
+func (c *Context) CheckUser(token string) *model.User {
 	return c.store.GetUser(&model.User{AccessToken: token, Status: 1})
 }
 
 // UpdateUser is generic function to update user into DB
-func (c *ServiceContext) UpdateUser(user *model.User) error {
+func (c *Context) UpdateUser(user *model.User) error {
 
 	err := c.store.UpdateUser(user)
 	if err != nil {
@@ -81,7 +81,7 @@ func (c *ServiceContext) UpdateUser(user *model.User) error {
 }
 
 // GetChain is high-level function, that run by api.GetChain()
-func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
+func (c *Context) GetChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
 
 	log.Debug("Search for chain into local DB")
 
@@ -131,28 +131,28 @@ func (c *ServiceContext) GetChain(chain *model.Chain, user *model.User) (*model.
 }
 
 // GetChains is generic function to get items from chains db
-func (c *ServiceContext) GetChains(chain *model.Chain) []*model.Chain {
+func (c *Context) GetChains(chain *model.Chain) []*model.Chain {
 
 	return c.store.GetChains(chain)
 
 }
 
 // GetUserChains is high-level function, that run by api.GetChains()
-func (c *ServiceContext) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	return c.store.GetUserChains(chain, user, start, limit)
 
 }
 
 // SearchUserChains is high-level function, that run by api.SearchChains()
-func (c *ServiceContext) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	return c.store.SearchUserChains(chain, user, start, limit)
 
 }
 
 // SetChainSentToPool marks chain as sent into history fetching pool for not sending it into pool more than once
-func (c *ServiceContext) SetChainSentToPool(chain *model.Chain) error {
+func (c *Context) SetChainSentToPool(chain *model.Chain) error {
 
 	t := true
 	return c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, SentToPool: &t})
@@ -160,7 +160,7 @@ func (c *ServiceContext) SetChainSentToPool(chain *model.Chain) error {
 }
 
 // ResetChainParsing resets WorkerID & SentToPool params of the chain. A fallback function, that runs in case of error while chain syncing.
-func (c *ServiceContext) ResetChainParsing(chain *model.Chain) error {
+func (c *Context) ResetChainParsing(chain *model.Chain) error {
 
 	t := false
 	return c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, WorkerID: -1, SentToPool: &t})
@@ -168,7 +168,7 @@ func (c *ServiceContext) ResetChainParsing(chain *model.Chain) error {
 }
 
 // ResetChainsParsingAtAPIStart resets WorkerID & SentToPool params of unsynced chains on API start, to let them finish syncing
-func (c *ServiceContext) ResetChainsParsingAtAPIStart() error {
+func (c *Context) ResetChainsParsingAtAPIStart() error {
 
 	t := false
 	return c.store.UpdateChainsWhere("synced IS FALSE", &model.Chain{WorkerID: -1, SentToPool: &t})
@@ -176,7 +176,7 @@ func (c *ServiceContext) ResetChainsParsingAtAPIStart() error {
 }
 
 // CreateChain is high-level function, that run by api.CreateChain()
-func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
+func (c *Context) CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error) {
 
 	chain = chain.Base64Decode()
 
@@ -235,7 +235,7 @@ func (c *ServiceContext) CreateChain(chain *model.Chain, user *model.User) (*mod
 }
 
 // GetChainEntries is high-level function, that run by api.GetChainEntries()
-func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+func (c *Context) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
 
 	flagJustCreated := false
 
@@ -294,7 +294,7 @@ func (c *ServiceContext) GetChainEntries(entry *model.Entry, user *model.User, s
 }
 
 // SearchChainEntries is high-level function, that run by api.SearchChainEntries()
-func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+func (c *Context) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
 
 	flagJustCreated := false
 
@@ -354,14 +354,14 @@ func (c *ServiceContext) SearchChainEntries(entry *model.Entry, user *model.User
 }
 
 // GetChainFirstEntry is high-level function, that run by api.GetChainFirstEntry()
-func (c *ServiceContext) GetChainFirstEntry(chain *model.Chain, user *model.User) *model.Entry {
+func (c *Context) GetChainFirstEntry(chain *model.Chain, user *model.User) *model.Entry {
 
 	return nil
 
 }
 
 // GetEntry is high-level function, that run by api.GetEntry()
-func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
+func (c *Context) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
 
 	log.Debug("Search for entry into local DB")
 
@@ -426,7 +426,7 @@ func (c *ServiceContext) GetEntry(entry *model.Entry, user *model.User) (*model.
 }
 
 // CreateEntry is high-level function, that run by api.CreateEntry()
-func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
+func (c *Context) CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error) {
 
 	entry = entry.Base64Decode()
 
@@ -497,7 +497,7 @@ func (c *ServiceContext) CreateEntry(entry *model.Entry, user *model.User) (*mod
 }
 
 // addToQueue checks if task already exists into queue db and if not, then adds the task into queue db
-func (c *ServiceContext) addToQueue(params *model.QueueParams, action string, user *model.User) error {
+func (c *Context) addToQueue(params *model.QueueParams, action string, user *model.User) error {
 
 	log.Debug("Adding to queue: " + action)
 
@@ -520,28 +520,28 @@ func (c *ServiceContext) addToQueue(params *model.QueueParams, action string, us
 }
 
 // GetQueue is generic function to get items from queue db
-func (c *ServiceContext) GetQueue(queue *model.Queue) []*model.Queue {
+func (c *Context) GetQueue(queue *model.Queue) []*model.Queue {
 
 	return c.store.GetQueue(queue)
 
 }
 
 // GetQueueToProcess gets unprocessed and failed (while previous processing) tasks from queue
-func (c *ServiceContext) GetQueueToProcess() []*model.Queue {
+func (c *Context) GetQueueToProcess() []*model.Queue {
 
 	return c.store.GetQueueWhere("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())")
 
 }
 
 // GetQueueToClear gets tasks from queue, that was successfully processed more than 1 hour ago
-func (c *ServiceContext) GetQueueToClear() []*model.Queue {
+func (c *Context) GetQueueToClear() []*model.Queue {
 
 	return c.store.GetQueueWhere("result IS NOT NULL AND processed_at IS NOT NULL AND processed_at < NOW() - INTERVAL '1 hour'")
 
 }
 
 // ProcessQueue processes write task from queue: makes factomd commit+reveal request and update queue item according to response (success or error)
-func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
+func (c *Context) ProcessQueue(queue *model.Queue) error {
 
 	params := &model.QueueParams{}
 	err := json.Unmarshal(queue.Params, &params)
@@ -617,7 +617,7 @@ func (c *ServiceContext) ProcessQueue(queue *model.Queue) error {
 
 // ClearQueue gets entry status from Factom, checks if it's 'completed' and then deletes task.
 // Otherwise it runs ProcessQueue() for force processing.
-func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
+func (c *Context) ClearQueue(queue *model.Queue) error {
 
 	debugMessage := fmt.Sprintf("Queue clearing: ID=%d", queue.ID)
 	log.Debug(debugMessage)
@@ -660,8 +660,8 @@ func (c *ServiceContext) ClearQueue(queue *model.Queue) error {
 
 }
 
-// ParseNewChainEntries fetches new entries of chains, that appeared on Factom inside all new entry blocks till chain.LatestEntryBlock
-func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
+// ParseNewChainEntries fetches new entries of chain, that appeared on Factom inside all new entry blocks till chain.LatestEntryBlock
+func (c *Context) ParseNewChainEntries(chain *model.Chain) error {
 
 	var parseFrom string
 	var parseTo string
@@ -698,7 +698,7 @@ func (c *ServiceContext) ParseNewChainEntries(chain *model.Chain) error {
 // ParseAllChainEntries fetches all entries of chain from Factom.
 // By default the parsing starts from ChainHead.
 // If chain is partially fetched (i.e. reference field chain.EarliestEntryBlock != ""), the parsing starts from EarliestEntryBlock
-func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain, workerID int) error {
+func (c *Context) ParseAllChainEntries(chain *model.Chain, workerID int) error {
 
 	var parseFrom string
 	var parseTo string
@@ -745,7 +745,7 @@ func (c *ServiceContext) ParseAllChainEntries(chain *model.Chain, workerID int) 
 // updateEarliestEntryBlock is a flag, that reflect should chain.EarliestEntryBlock be updated during the parsing.
 // While history fetching (from X block till the first block), chain.EarliestEntryBlock is being updated.
 // While updates fetching (from ChainHead till latest parsed block), chain.EarliestEntryBlock is NOT being updated.
-func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, updateEarliestEntryBlock bool) error {
+func (c *Context) parseEntryBlocks(parseFrom string, parseTo string, updateEarliestEntryBlock bool) error {
 
 	for ebhash := parseFrom; ebhash != parseTo; {
 		var err error
@@ -760,7 +760,7 @@ func (c *ServiceContext) parseEntryBlocks(parseFrom string, parseTo string, upda
 }
 
 // Parses all entries from the entryblock and returns keymr of previous entryblock
-func (c *ServiceContext) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
+func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
 
 	log.Debug("History parse: Fetching EntryBlock " + ebhash)
 

@@ -18,7 +18,7 @@ type Wallet interface {
 	CommitRevealChain(chain *factom.Chain) (string, error)
 }
 
-type WalletContext struct {
+type Context struct {
 	ec *factom.ECAddress
 }
 
@@ -36,15 +36,15 @@ func NewWallet(conf *config.Config) (Wallet, error) {
 		}
 	}
 
-	return &WalletContext{ECAddress}, nil
+	return &Context{ECAddress}, nil
 
 }
 
-func (c *WalletContext) GetEC() *factom.ECAddress {
+func (c *Context) GetEC() *factom.ECAddress {
 	return c.ec
 }
 
-func (c *WalletContext) checkBalance(cost int8) bool {
+func (c *Context) checkBalance(cost int8) bool {
 
 	balance, _ := factom.GetECBalance(c.ec.PubString())
 	if balance < int64(cost) {
@@ -55,7 +55,7 @@ func (c *WalletContext) checkBalance(cost int8) bool {
 
 }
 
-func (c *WalletContext) CommitRevealEntry(entry *factom.Entry) (string, error) {
+func (c *Context) CommitRevealEntry(entry *factom.Entry) (string, error) {
 
 	// calculate entry cost
 	cost, err := factom.EntryCost(entry)
@@ -87,7 +87,7 @@ func (c *WalletContext) CommitRevealEntry(entry *factom.Entry) (string, error) {
 
 }
 
-func (c *WalletContext) CommitRevealChain(chain *factom.Chain) (string, error) {
+func (c *Context) CommitRevealChain(chain *factom.Chain) (string, error) {
 
 	// calculate entry cost
 	cost, err := factom.EntryCost(chain.FirstEntry)

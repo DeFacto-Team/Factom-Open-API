@@ -47,7 +47,7 @@ type Store interface {
 }
 
 // Контекст стореджа
-type StoreContext struct {
+type Context struct {
 	db *gorm.DB
 }
 
@@ -79,18 +79,18 @@ func NewStore(conf *config.Config) (Store, error) {
 	}
 	log.Info("Store: applied ", n, " migration(s)")
 
-	return &StoreContext{db}, nil
+	return &Context{db}, nil
 
 }
 
 // Close store
-func (c *StoreContext) Close() error {
+func (c *Context) Close() error {
 
 	return c.db.Close()
 
 }
 
-func (c *StoreContext) CreateUser(user *model.User) error {
+func (c *Context) CreateUser(user *model.User) error {
 
 	if c.db.Create(&user).RowsAffected > 0 {
 		return nil
@@ -100,7 +100,7 @@ func (c *StoreContext) CreateUser(user *model.User) error {
 
 }
 
-func (c *StoreContext) GetUser(user *model.User) *model.User {
+func (c *Context) GetUser(user *model.User) *model.User {
 
 	res := &model.User{}
 	if c.db.First(&res, user).RecordNotFound() {
@@ -110,7 +110,7 @@ func (c *StoreContext) GetUser(user *model.User) *model.User {
 
 }
 
-func (c *StoreContext) GetUsers(user *model.User) []*model.User {
+func (c *Context) GetUsers(user *model.User) []*model.User {
 
 	res := []*model.User{}
 	c.db.Where(user).Find(&res)
@@ -118,7 +118,7 @@ func (c *StoreContext) GetUsers(user *model.User) []*model.User {
 
 }
 
-func (c *StoreContext) UpdateUser(user *model.User) error {
+func (c *Context) UpdateUser(user *model.User) error {
 
 	if c.db.Model(&user).Updates(user).RowsAffected > 0 {
 		return nil
@@ -127,7 +127,7 @@ func (c *StoreContext) UpdateUser(user *model.User) error {
 
 }
 
-func (c *StoreContext) DeleteUser(user *model.User) error {
+func (c *Context) DeleteUser(user *model.User) error {
 
 	if c.db.Delete(&user).RowsAffected > 0 {
 		return nil
@@ -136,7 +136,7 @@ func (c *StoreContext) DeleteUser(user *model.User) error {
 
 }
 
-func (c *StoreContext) DisableUserUsageLimit(user *model.User) error {
+func (c *Context) DisableUserUsageLimit(user *model.User) error {
 
 	if c.db.Model(user).Update("usage_limit", 0).RowsAffected > 0 {
 		return nil
@@ -146,7 +146,7 @@ func (c *StoreContext) DisableUserUsageLimit(user *model.User) error {
 
 }
 
-func (c *StoreContext) GetChain(chain *model.Chain) *model.Chain {
+func (c *Context) GetChain(chain *model.Chain) *model.Chain {
 
 	res := &model.Chain{}
 	if c.db.First(&res, chain).RecordNotFound() {
@@ -156,7 +156,7 @@ func (c *StoreContext) GetChain(chain *model.Chain) *model.Chain {
 
 }
 
-func (c *StoreContext) GetChains(chain *model.Chain) []*model.Chain {
+func (c *Context) GetChains(chain *model.Chain) []*model.Chain {
 
 	res := []*model.Chain{}
 	c.db.Where(chain).Find(&res)
@@ -164,7 +164,7 @@ func (c *StoreContext) GetChains(chain *model.Chain) []*model.Chain {
 
 }
 
-func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	res := []*model.Chain{}
 
@@ -180,7 +180,7 @@ func (c *StoreContext) GetUserChains(chain *model.Chain, user *model.User, start
 
 }
 
-func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
 
 	res := []*model.Chain{}
 
@@ -199,7 +199,7 @@ func (c *StoreContext) SearchUserChains(chain *model.Chain, user *model.User, st
 
 }
 
-func (c *StoreContext) CreateChain(chain *model.Chain) error {
+func (c *Context) CreateChain(chain *model.Chain) error {
 
 	if err := c.db.FirstOrCreate(&chain).Error; err != nil {
 		return err
@@ -208,7 +208,7 @@ func (c *StoreContext) CreateChain(chain *model.Chain) error {
 
 }
 
-func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
+func (c *Context) GetEntry(entry *model.Entry) *model.Entry {
 
 	res := &model.Entry{}
 	if c.db.First(&res, entry).RecordNotFound() {
@@ -218,7 +218,7 @@ func (c *StoreContext) GetEntry(entry *model.Entry) *model.Entry {
 
 }
 
-func (c *StoreContext) GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
+func (c *Context) GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
 
 	res := []*model.Entry{}
 
@@ -237,7 +237,7 @@ func (c *StoreContext) GetChainEntries(chain *model.Chain, entry *model.Entry, s
 
 }
 
-func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
+func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
 
 	res := []*model.Entry{}
 
@@ -256,7 +256,7 @@ func (c *StoreContext) SearchChainEntries(chain *model.Chain, entry *model.Entry
 
 }
 
-func (c *StoreContext) CreateEntry(entry *model.Entry) error {
+func (c *Context) CreateEntry(entry *model.Entry) error {
 
 	if err := c.db.Assign(model.Entry{Status: entry.Status}).FirstOrCreate(&entry).Error; err != nil {
 		return err
@@ -265,7 +265,7 @@ func (c *StoreContext) CreateEntry(entry *model.Entry) error {
 
 }
 
-func (c *StoreContext) UpdateEntry(entry *model.Entry) error {
+func (c *Context) UpdateEntry(entry *model.Entry) error {
 
 	if c.db.Model(&entry).Updates(entry).RowsAffected > 0 {
 		return nil
@@ -274,7 +274,7 @@ func (c *StoreContext) UpdateEntry(entry *model.Entry) error {
 
 }
 
-func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
+func (c *Context) CreateEBlock(eblock *model.EBlock) error {
 
 	if err := c.db.FirstOrCreate(&eblock).Error; err != nil {
 		return err
@@ -283,7 +283,7 @@ func (c *StoreContext) CreateEBlock(eblock *model.EBlock) error {
 
 }
 
-func (c *StoreContext) UpdateChain(chain *model.Chain) error {
+func (c *Context) UpdateChain(chain *model.Chain) error {
 
 	if c.db.Model(&chain).Updates(chain).RowsAffected > 0 {
 		return nil
@@ -292,7 +292,7 @@ func (c *StoreContext) UpdateChain(chain *model.Chain) error {
 
 }
 
-func (c *StoreContext) UpdateChainsWhere(sql string, chain *model.Chain) error {
+func (c *Context) UpdateChainsWhere(sql string, chain *model.Chain) error {
 
 	c.db.Model(model.Chain{}).Where(sql).Updates(chain)
 
@@ -300,7 +300,7 @@ func (c *StoreContext) UpdateChainsWhere(sql string, chain *model.Chain) error {
 
 }
 
-func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) error {
+func (c *Context) BindChainToUser(chain *model.Chain, user *model.User) error {
 
 	c.db.Model(user).Association("Chains").Append(chain)
 
@@ -308,7 +308,7 @@ func (c *StoreContext) BindChainToUser(chain *model.Chain, user *model.User) err
 
 }
 
-func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBlock) error {
+func (c *Context) BindEntryToEBlock(entry *model.Entry, eblock *model.EBlock) error {
 
 	c.db.Model(eblock).Association("Entries").Append(entry)
 
@@ -316,7 +316,7 @@ func (c *StoreContext) BindEntryToEBlock(entry *model.Entry, eblock *model.EBloc
 
 }
 
-func (c *StoreContext) GetQueue(queue *model.Queue) []*model.Queue {
+func (c *Context) GetQueue(queue *model.Queue) []*model.Queue {
 
 	res := []*model.Queue{}
 	c.db.Where(queue).Find(&res)
@@ -324,7 +324,7 @@ func (c *StoreContext) GetQueue(queue *model.Queue) []*model.Queue {
 
 }
 
-func (c *StoreContext) GetQueueWhere(sql string) []*model.Queue {
+func (c *Context) GetQueueWhere(sql string) []*model.Queue {
 
 	res := []*model.Queue{}
 	c.db.Where(sql).Find(&res)
@@ -332,7 +332,7 @@ func (c *StoreContext) GetQueueWhere(sql string) []*model.Queue {
 
 }
 
-func (c *StoreContext) GetQueueItem(queue *model.Queue) *model.Queue {
+func (c *Context) GetQueueItem(queue *model.Queue) *model.Queue {
 
 	res := &model.Queue{}
 	if c.db.First(&res, queue).RecordNotFound() {
@@ -342,7 +342,7 @@ func (c *StoreContext) GetQueueItem(queue *model.Queue) *model.Queue {
 
 }
 
-func (c *StoreContext) CreateQueue(queue *model.Queue) error {
+func (c *Context) CreateQueue(queue *model.Queue) error {
 
 	if c.db.Create(&queue).RowsAffected > 0 {
 		return nil
@@ -352,7 +352,7 @@ func (c *StoreContext) CreateQueue(queue *model.Queue) error {
 
 }
 
-func (c *StoreContext) UpdateQueue(queue *model.Queue) error {
+func (c *Context) UpdateQueue(queue *model.Queue) error {
 
 	if c.db.Model(&queue).Updates(queue).RowsAffected > 0 {
 		return nil
@@ -361,7 +361,7 @@ func (c *StoreContext) UpdateQueue(queue *model.Queue) error {
 
 }
 
-func (c *StoreContext) DeleteQueue(queue *model.Queue) error {
+func (c *Context) DeleteQueue(queue *model.Queue) error {
 
 	if c.db.Delete(&queue).RowsAffected > 0 {
 		return nil
