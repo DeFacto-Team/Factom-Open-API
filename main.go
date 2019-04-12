@@ -185,6 +185,7 @@ func fetchChainUpdates(s service.Service) {
 	}
 }
 
+// Get all tasks from queue where processed_at == NULL
 func processQueue(s service.Service) {
 	for {
 		log.Info("Processing queue: iteration started")

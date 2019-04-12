@@ -23,10 +23,10 @@ type Queue struct {
 	UserID      int
 	Action      string
 	Params      []byte
-	Error       string
-	Result      string
-	ProcessedAt *time.Time
-	NextTryAt   *time.Time
+	Error       string     // factomd request error
+	Result      string     // factomd request result
+	ProcessedAt *time.Time // time when sent to Factom without error, otherwise null
+	NextTryAt   *time.Time // by default null, set when processing failed to postpone next attempt
 	TryCount    int
 }
 
