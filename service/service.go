@@ -730,12 +730,14 @@ func (c *Context) ParseAllChainEntries(chain *model.Chain, workerID int) error {
 		parseFrom = chain.EarliestEntryBlock
 	}
 
-	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, Status: status, WorkerID: workerID})
+	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, WorkerID: workerID})
 
 	err := c.parseEntryBlocks(parseFrom, parseTo, true)
 	if err != nil {
 		return err
 	}
+
+	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, Status: status})
 
 	return nil
 
