@@ -156,13 +156,6 @@ func (chain *Chain) ConvertToChainWithLinks() *ChainWithLinks {
 	resp := &ChainWithLinks{Chain: chain}
 
 	resp.Links = append(resp.Links, Link{Rel: "entries", Href: "/chains/" + chain.ChainID + "/entries"})
-
-	t := false
-
-	if chain.Status == ChainCompleted && chain.Synced == &t {
-		return resp
-	}
-
 	resp.Links = append(resp.Links, Link{Rel: "firstEntry", Href: "/chains/" + chain.ChainID + "/entries/first"})
 	resp.Links = append(resp.Links, Link{Rel: "lastEntry", Href: "/chains/" + chain.ChainID + "/entries/last"})
 
