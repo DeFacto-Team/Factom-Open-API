@@ -813,9 +813,10 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 		}
 	}
 
-	// if we parsed earliest block, set synced=true & update extIDs
+	// if we parsed the first entry block, set synced=true & update extIDs
 	if eb.Header.PrevKeyMR == factom.ZeroHash {
 		t := true
+		// s[0] — first entry of the entry block
 		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs, WorkerID: -2})
 		if err != nil {
 			return "", err
