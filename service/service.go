@@ -730,13 +730,21 @@ func (c *Context) ParseAllChainEntries(chain *model.Chain, workerID int) error {
 		parseFrom = chain.EarliestEntryBlock
 	}
 
+	// set chain LatestEntryBlock & assign worker ID
 	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, LatestEntryBlock: chainhead, WorkerID: workerID})
 
+	// parsing chain entryblocks & entries recursively
 	err := c.parseEntryBlocks(parseFrom, parseTo, true)
 	if err != nil {
 		return err
 	}
 
+	// if no errors (chain synced completely), then update chain status to completed
+	// chain.Synced was already updated to true into parseEntryBlocks() → parseEntryBlock()
+	// existing chains are 'completed' initially
+	// this needed only for recently created chains with status "processing",
+	// so basically the single entryblock parsed in the previous case
+	// (except the case when API / factomd was offline for a long time, but there is no issue)
 	c.store.UpdateChain(&model.Chain{ChainID: chain.ChainID, Status: status})
 
 	return nil
