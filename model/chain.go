@@ -27,6 +27,7 @@ type Chain struct {
 	Entries            []Entry        `json:"-" form:"-" query:"-" gorm:"foreignkey:chain_id"`
 	WorkerID           int            `json:"-" form:"-" query:"-" gorm:"not null;default:-1"`
 	SentToPool         *bool          `json:"-" form:"-" query:"-" gorm:"not null;default:false"`
+	FactomTime         time.Time      `json:"createdAt"`
 }
 
 type ChainWithLinks struct {

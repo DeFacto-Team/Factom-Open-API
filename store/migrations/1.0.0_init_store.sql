@@ -45,6 +45,7 @@ CREATE TABLE chains(
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
+    factom_time TIMESTAMPTZ,
     CONSTRAINT chains_chain_id_key PRIMARY KEY (chain_id)
 );
 
@@ -67,6 +68,7 @@ CREATE TABLE entries(
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
+    factom_time TIMESTAMPTZ,
     CONSTRAINT entries_entry_hash_key PRIMARY KEY(entry_hash),
     CONSTRAINT entries_chain_id_fkey FOREIGN KEY(chain_id) REFERENCES chains(chain_id)
 );
