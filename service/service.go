@@ -413,13 +413,15 @@ func (c *Context) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, 
 
 		log.Debug("Creating entry into local DB")
 
-		// get entry timestamp from Factom
-		factomTime, err := resp.GetTimeFromFactom()
-		if err != nil {
-			log.Error(err)
-		} else {
-			t := time.Unix(factomTime, 0).UTC()
-			resp.FactomTime = &t
+		// get entry timestamp from Factom ONLY IF ENTRY STATUS IS COMPLETED
+		if resp.Status == model.EntryCompleted {
+			factomTime, err := resp.GetTimeFromFactom()
+			if err != nil {
+				log.Error(err)
+			} else {
+				t := time.Unix(factomTime, 0).UTC()
+				resp.FactomTime = &t
+			}
 		}
 
 		err = c.store.CreateEntry(resp.Base64Encode())
