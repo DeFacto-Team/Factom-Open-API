@@ -206,6 +206,10 @@ func (c *Context) CreateChain(chain *model.Chain, user *model.User) (*model.Chai
 
 	log.Debug("Chain ", chain.ChainID, " not found both on Factom & into local DB")
 
+	// new chain & entry into local DB will be created with FactomTime=NOW()
+	timeNow := time.Now().UTC().Round(time.Second)
+	chain.FactomTime = &timeNow
+
 	log.Debug("Creating chain into local DB")
 	err = c.store.CreateChain(chain.Base64Encode())
 	if err != nil {
@@ -399,6 +403,7 @@ func (c *Context) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, 
 			chain := resp.GetChain()
 			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
 
+			// here we add existing Factom chain into local DB with factomTime = null
 			err = c.store.CreateChain(chain)
 			if err != nil {
 				log.Error(err)
@@ -407,6 +412,16 @@ func (c *Context) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, 
 		}
 
 		log.Debug("Creating entry into local DB")
+
+		// get entry timestamp from Factom
+		factomTime, err := resp.GetTimeFromFactom()
+		if err != nil {
+			log.Error(err)
+		} else {
+			t := time.Unix(factomTime, 0).UTC()
+			resp.FactomTime = &t
+		}
+
 		err = c.store.CreateEntry(resp.Base64Encode())
 		if err != nil {
 			log.Error(err)
@@ -467,8 +482,10 @@ func (c *Context) CreateEntry(entry *model.Entry, user *model.User) (*model.Entr
 		log.Debug("Entry " + entry.EntryHash + " not found into local DB")
 		log.Debug("Creating entry into local DB")
 
-		// new entry status queue
+		// new entry status queue, factomTime NOW()
 		entry.Status = model.EntryQueue
+		timeNow := time.Now().UTC().Round(time.Second)
+		entry.FactomTime = &timeNow
 
 		err = c.store.CreateEntry(entry.Base64Encode())
 		if err != nil {
@@ -479,6 +496,7 @@ func (c *Context) CreateEntry(entry *model.Entry, user *model.User) (*model.Entr
 		log.Debug("Entry " + entry.EntryHash + " found into local DB")
 		// use entry status from local db
 		entry.Status = localEntry.Status
+		entry.FactomTime = localEntry.FactomTime
 	}
 
 	err = c.addToQueue(entry.ConvertToQueueParams(), model.QueueActionEntry, user)
@@ -794,6 +812,8 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 		entry = model.NewEntryFromFactomModel(fe)
 		log.Debug("History parse: Fetching Entry " + entry.EntryHash)
 		entry.Status = model.EntryCompleted
+		t := time.Unix(eb.Header.Timestamp, 0).UTC()
+		entry.FactomTime = &t
 		err = c.store.CreateEntry(entry.Base64Encode())
 		if err != nil {
 			log.Error(err)
@@ -813,11 +833,12 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 		}
 	}
 
-	// if we parsed the first entry block, set synced=true & update extIDs
+	// if we parsed the first entry block, set synced=true & update extIDs & set FactomTime to time of the block
 	if eb.Header.PrevKeyMR == factom.ZeroHash {
 		t := true
+		factomTime := time.Unix(eb.Header.Timestamp, 0).UTC()
 		// s[0] — first entry of the entry block
-		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs, WorkerID: -2})
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs, FactomTime: &factomTime, WorkerID: -2})
 		if err != nil {
 			return "", err
 		}

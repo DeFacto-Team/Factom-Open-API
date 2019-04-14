@@ -27,7 +27,7 @@ type Chain struct {
 	Entries            []Entry        `json:"-" form:"-" query:"-" gorm:"foreignkey:chain_id"`
 	WorkerID           int            `json:"-" form:"-" query:"-" gorm:"not null;default:-1"`
 	SentToPool         *bool          `json:"-" form:"-" query:"-" gorm:"not null;default:false"`
-	FactomTime         time.Time      `json:"createdAt"`
+	FactomTime         *time.Time     `json:"createdAt"`
 }
 
 type ChainWithLinks struct {
@@ -55,6 +55,7 @@ func (chain *Chain) ConvertToEntryModel() *Entry {
 	}
 	entry.EntryHash = entry.Hash()
 	entry.Status = chain.Status
+	entry.FactomTime = chain.FactomTime
 	return entry
 
 }

@@ -258,7 +258,13 @@ func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, sta
 
 func (c *Context) CreateEntry(entry *model.Entry) error {
 
-	if err := c.db.Assign(model.Entry{Status: entry.Status}).FirstOrCreate(&entry).Error; err != nil {
+	assign := model.Entry{}
+	assign.Status = entry.Status
+	if entry.FactomTime != nil {
+		assign.FactomTime = entry.FactomTime
+	}
+
+	if err := c.db.Assign(assign).FirstOrCreate(&entry).Error; err != nil {
 		return err
 	}
 	return nil

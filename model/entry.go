@@ -39,7 +39,7 @@ type Entry struct {
 	Content     string         `json:"content" form:"content" query:"content" validate:"omitempty,base64"`
 	Status      string         `json:"status" form:"status" query:"status" validate:"omitempty,oneof=queue processing completed" gorm:"not null;default:'queue'"`
 	EntryBlocks []*EBlock      `json:"-" form:"-" query:"-" gorm:"many2many:entries_e_blocks;"`
-	FactomTime  time.Time      `json:"createdAt"`
+	FactomTime  *time.Time     `json:"createdAt"`
 }
 
 func NewEntryFromFactomModel(fe *factom.Entry) *Entry {
@@ -194,13 +194,13 @@ func (entry *Entry) GetStatusFromFactom() string {
 
 func (entry *Entry) GetTimeFromFactom() (int64, error) {
 
-	status, err := factom.EntryACK(entry.EntryHash, "")
+	status, err := factom.EntryRevealACK(entry.EntryHash, "", factom.ZeroHash)
 
 	if err != nil {
 		return 0, err
 	}
 
-	return status.CommitData.TransactionDate, nil
+	return status.EntryData.BlockDate, nil
 
 }
 
