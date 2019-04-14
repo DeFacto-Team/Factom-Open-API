@@ -168,12 +168,12 @@ func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int,
 
 	res := []*model.Chain{}
 
-	c.db.Where(chain).Model(user).Related(&res, "Chains")
+	c.db.Order("factom_time desc, created_at desc").Where(chain).Model(user).Related(&res, "Chains")
 	total := len(res)
 
 	if start > 0 || total > limit {
 		log.Warn("Second DB Request")
-		c.db.Offset(start).Limit(limit).Where(chain).Model(user).Related(&res, "Chains")
+		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where(chain).Model(user).Related(&res, "Chains")
 	}
 
 	return res, total
@@ -189,11 +189,11 @@ func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start i
 		where.Status = chain.Status
 	}
 
-	c.db.Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+	c.db.Order("factom_time desc, created_at desc").Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
 	}
 	return res, total
 
@@ -227,11 +227,11 @@ func (c *Context) GetChainEntries(chain *model.Chain, entry *model.Entry, start 
 		where.Status = entry.Status
 	}
 
-	c.db.Model(chain).Where(where).Related(&res, "Entries")
+	c.db.Order("factom_time desc, created_at desc").Model(chain).Where(where).Related(&res, "Entries")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Model(chain).Where(where).Related(&res, "Entries")
+		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Model(chain).Where(where).Related(&res, "Entries")
 	}
 	return res, total
 
@@ -246,11 +246,11 @@ func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, sta
 		where.Status = entry.Status
 	}
 
-	c.db.Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
+	c.db.Order("factom_time desc, created_at desc").Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
+		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
 	}
 	return res, total
 
