@@ -7,7 +7,6 @@ import (
 
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
-	//	log "github.com/sirupsen/logrus"
 )
 
 // swagger:model
