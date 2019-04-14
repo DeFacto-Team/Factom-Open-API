@@ -23,10 +23,10 @@ type Store interface {
 
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
-	GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
-	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
-	GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int)
-	SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int)
+	GetUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int)
+	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int)
+	GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int, sort string) ([]*model.Entry, int)
+	SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int, sort string) ([]*model.Entry, int)
 	CreateChain(chain *model.Chain) error
 	UpdateChain(chain *model.Chain) error
 	UpdateChainsWhere(sql string, chain *model.Chain) error
@@ -164,23 +164,27 @@ func (c *Context) GetChains(chain *model.Chain) []*model.Chain {
 
 }
 
-func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int) {
+
+	orderString := fmt.Sprintf("factom_time %s, created_at %s", sort, sort)
 
 	res := []*model.Chain{}
 
-	c.db.Order("factom_time desc, created_at desc").Where(chain).Model(user).Related(&res, "Chains")
+	c.db.Order(orderString).Where(chain).Model(user).Related(&res, "Chains")
 	total := len(res)
 
 	if start > 0 || total > limit {
 		log.Warn("Second DB Request")
-		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where(chain).Model(user).Related(&res, "Chains")
+		c.db.Offset(start).Limit(limit).Order(orderString).Where(chain).Model(user).Related(&res, "Chains")
 	}
 
 	return res, total
 
 }
 
-func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int) {
+
+	orderString := fmt.Sprintf("factom_time %s, created_at %s", sort, sort)
 
 	res := []*model.Chain{}
 
@@ -189,11 +193,11 @@ func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start i
 		where.Status = chain.Status
 	}
 
-	c.db.Order("factom_time desc, created_at desc").Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+	c.db.Order(orderString).Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
+		c.db.Offset(start).Limit(limit).Order(orderString).Where("ext_ids @> ?", chain.ExtIDs).Where(where).Model(user).Related(&res, "Chains")
 	}
 	return res, total
 
@@ -218,7 +222,9 @@ func (c *Context) GetEntry(entry *model.Entry) *model.Entry {
 
 }
 
-func (c *Context) GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
+func (c *Context) GetChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int, sort string) ([]*model.Entry, int) {
+
+	orderString := fmt.Sprintf("factom_time %s, created_at %s", sort, sort)
 
 	res := []*model.Entry{}
 
@@ -227,17 +233,19 @@ func (c *Context) GetChainEntries(chain *model.Chain, entry *model.Entry, start 
 		where.Status = entry.Status
 	}
 
-	c.db.Order("factom_time desc, created_at desc").Model(chain).Where(where).Related(&res, "Entries")
+	c.db.Order(orderString).Model(chain).Where(where).Related(&res, "Entries")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Model(chain).Where(where).Related(&res, "Entries")
+		c.db.Offset(start).Limit(limit).Order(orderString).Model(chain).Where(where).Related(&res, "Entries")
 	}
 	return res, total
 
 }
 
-func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int) ([]*model.Entry, int) {
+func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, start int, limit int, sort string) ([]*model.Entry, int) {
+
+	orderString := fmt.Sprintf("factom_time %s, created_at %s", sort, sort)
 
 	res := []*model.Entry{}
 
@@ -246,11 +254,11 @@ func (c *Context) SearchChainEntries(chain *model.Chain, entry *model.Entry, sta
 		where.Status = entry.Status
 	}
 
-	c.db.Order("factom_time desc, created_at desc").Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
+	c.db.Order(orderString).Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
 	total := len(res)
 
 	if start > 0 || total > limit {
-		c.db.Offset(start).Limit(limit).Order("factom_time desc, created_at desc").Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
+		c.db.Offset(start).Limit(limit).Order(orderString).Where("ext_ids @> ?", entry.ExtIDs).Where(where).Model(chain).Related(&res, "Entries")
 	}
 	return res, total
 

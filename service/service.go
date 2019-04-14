@@ -20,14 +20,14 @@ type Service interface {
 
 	GetChain(chain *model.Chain, user *model.User) (*model.Chain, error)
 	GetChains(chain *model.Chain) []*model.Chain
-	GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
-	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int)
+	GetUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int)
+	SearchUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int)
 	SetChainSentToPool(chain *model.Chain) error
 	ResetChainParsing(chain *model.Chain) error
 	ResetChainsParsingAtAPIStart() error
 	CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error)
-	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error)
-	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error)
+	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error)
+	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error)
 
 	GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -138,16 +138,16 @@ func (c *Context) GetChains(chain *model.Chain) []*model.Chain {
 }
 
 // GetUserChains is high-level function, that run by api.GetChains()
-func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) GetUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int) {
 
-	return c.store.GetUserChains(chain, user, start, limit)
+	return c.store.GetUserChains(chain, user, start, limit, sort)
 
 }
 
 // SearchUserChains is high-level function, that run by api.SearchChains()
-func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int) ([]*model.Chain, int) {
+func (c *Context) SearchUserChains(chain *model.Chain, user *model.User, start int, limit int, sort string) ([]*model.Chain, int) {
 
-	return c.store.SearchUserChains(chain, user, start, limit)
+	return c.store.SearchUserChains(chain, user, start, limit, sort)
 
 }
 
@@ -239,7 +239,7 @@ func (c *Context) CreateChain(chain *model.Chain, user *model.User) (*model.Chai
 }
 
 // GetChainEntries is high-level function, that run by api.GetChainEntries()
-func (c *Context) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+func (c *Context) GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error) {
 
 	flagJustCreated := false
 
@@ -291,14 +291,14 @@ func (c *Context) GetChainEntries(entry *model.Entry, user *model.User, start in
 		}
 	}
 
-	result, total := c.store.GetChainEntries(entry.GetChain(), entry, start, limit)
+	result, total := c.store.GetChainEntries(entry.GetChain(), entry, start, limit, sort)
 
 	return result, total, nil
 
 }
 
 // SearchChainEntries is high-level function, that run by api.SearchChainEntries()
-func (c *Context) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, force bool) ([]*model.Entry, int, error) {
+func (c *Context) SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error) {
 
 	flagJustCreated := false
 
@@ -351,7 +351,7 @@ func (c *Context) SearchChainEntries(entry *model.Entry, user *model.User, start
 		}
 	}
 
-	result, total := c.store.SearchChainEntries(entry.GetChain(), entry, start, limit)
+	result, total := c.store.SearchChainEntries(entry.GetChain(), entry, start, limit, sort)
 
 	return result, total, nil
 

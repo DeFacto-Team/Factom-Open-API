@@ -72,6 +72,8 @@ type SuccessResponsePagination struct {
 const (
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
+	DefaultSort            = "desc"
+	AlternativeSort        = "asc"
 )
 
 func NewApi(conf *config.Config, s service.Service) *Api {
@@ -206,7 +208,7 @@ func (api *Api) AcceptedResponse(res interface{}, mes string, c echo.Context) er
 func (api *Api) SuccessResponsePagination(res interface{}, total int, c echo.Context) error {
 
 	// err should be already checked into API function, so not checking it in response
-	start, limit, _ := api.GetPaginationParams(c)
+	start, limit, _, _ := api.GetPaginationParams(c)
 
 	resp := &SuccessResponsePagination{
 		Result: res,
@@ -242,12 +244,13 @@ func (api *Api) ErrorResponse(err *errors.Error, c echo.Context) error {
 }
 
 // Helper function: check if pagination params are int;
-// returns start, limit;
+// returns start, limit, sort;
 // number from const is used if param was not provided
-func (api *Api) GetPaginationParams(c echo.Context) (int, int, error) {
+func (api *Api) GetPaginationParams(c echo.Context) (int, int, string, error) {
 
 	start := DefaultPaginationStart
 	limit := DefaultPaginationLimit
+	sort := DefaultSort
 	var err error
 
 	if c.QueryParam("start") != "" {
@@ -255,7 +258,7 @@ func (api *Api) GetPaginationParams(c echo.Context) (int, int, error) {
 		if err != nil {
 			err = fmt.Errorf("'start' expected to be an integer, '%s' received", c.QueryParam("start"))
 			log.Error(err)
-			return 0, 0, err
+			return 0, 0, sort, err
 		}
 	}
 
@@ -264,11 +267,15 @@ func (api *Api) GetPaginationParams(c echo.Context) (int, int, error) {
 		if err != nil {
 			err = fmt.Errorf("'limit' expected to be an integer, '%s' received", c.QueryParam("limit"))
 			log.Error(err)
-			return 0, 0, err
+			return 0, 0, sort, err
 		}
 	}
 
-	return start, limit, nil
+	if c.QueryParam("sort") == AlternativeSort {
+		sort = AlternativeSort
+	}
+
+	return start, limit, sort, nil
 
 }
 
@@ -329,12 +336,12 @@ func (api *Api) getChains(c echo.Context) error {
 		}
 	}
 
-	start, limit, err := api.GetPaginationParams(c)
+	start, limit, sort, err := api.GetPaginationParams(c)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
-	resp, total := api.service.GetUserChains(chain, api.user, start, limit)
+	resp, total := api.service.GetUserChains(chain, api.user, start, limit, sort)
 
 	chains := &model.Chains{Items: resp}
 
@@ -360,12 +367,12 @@ func (api *Api) searchChains(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	start, limit, err := api.GetPaginationParams(c)
+	start, limit, sort, err := api.GetPaginationParams(c)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
 
-	resp, total := api.service.SearchUserChains(req, api.user, start, limit)
+	resp, total := api.service.SearchUserChains(req, api.user, start, limit, sort)
 
 	chains := &model.Chains{Items: resp}
 
@@ -477,7 +484,7 @@ func (api *Api) getChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	start, limit, err := api.GetPaginationParams(c)
+	start, limit, sort, err := api.GetPaginationParams(c)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
@@ -486,7 +493,7 @@ func (api *Api) getChainEntries(c echo.Context) error {
 		force = true
 	}
 
-	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit, force)
+	resp, total, err := api.service.GetChainEntries(req, api.user, start, limit, sort, force)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
@@ -525,7 +532,7 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	start, limit, err := api.GetPaginationParams(c)
+	start, limit, sort, err := api.GetPaginationParams(c)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.PaginationError, err), c)
 	}
@@ -534,7 +541,7 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 		force = true
 	}
 
-	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit, force)
+	resp, total, err := api.service.SearchChainEntries(req, api.user, start, limit, sort, force)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
