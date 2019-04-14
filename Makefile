@@ -24,7 +24,7 @@ spec-ui: spec
 	swagger serve -F=swagger ./spec/api.json
 
 db-run: db-stop
-	 docker run -d -p 5433:5432 --name factom-open-api-db postgres
+	 docker run -d -p 5432:5432 --name factom-open-api-db postgres
 	 sleep 3
 
 db-stop:
