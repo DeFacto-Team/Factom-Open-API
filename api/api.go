@@ -127,9 +127,8 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 
 	// Chains entries
 	api.Http.GET("/v1/chains/:chainid/entries", api.getChainEntries)
-	//	api.Http.GET("/v1/chains/:chainid/entries/first", api.getFirstChainEntry)
-	//	api.Http.GET("/v1/chains/:chainid/entries/last", api.getFirstChainEntry)
 	api.Http.POST("/v1/chains/:chainid/entries/search", api.searchChainEntries)
+	api.Http.GET("/v1/chains/:chainid/entries/:item", api.getChainFirstOrLastEntry)
 
 	// Entries
 	api.Http.POST("/v1/entries", api.createEntry)
@@ -550,6 +549,42 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)
+
+}
+
+func (api *Api) getChainFirstOrLastEntry(c echo.Context) error {
+
+	log.Debug("Validating first/last item")
+
+	var sort string
+
+	switch c.Param("item") {
+	case "first":
+		sort = "asc"
+	case "last":
+		sort = "desc"
+	default:
+		return api.ErrorResponse(errors.New(errors.ValidationError, fmt.Errorf("Invalid request")), c)
+	}
+
+	req := &model.Entry{ChainID: c.Param("chainid")}
+
+	log.Debug("Validating input data")
+
+	// validate ChainID
+	if err := api.validate.StructPartial(req, "ChainID"); err != nil {
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+	}
+
+	resp, err := api.service.GetChainFirstOrLastEntry(req, sort, api.user)
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+	if err == nil && resp == nil {
+		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again.", c)
+	}
+
+	return api.SuccessResponse(resp, c)
 
 }
 

@@ -28,6 +28,7 @@ type Service interface {
 	CreateChain(chain *model.Chain, user *model.User) (*model.Chain, error)
 	GetChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error)
 	SearchChainEntries(entry *model.Entry, user *model.User, start int, limit int, sort string, force bool) ([]*model.Entry, int, error)
+	GetChainFirstOrLastEntry(entry *model.Entry, sort string, user *model.User) (*model.Entry, error)
 
 	GetEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
 	CreateEntry(entry *model.Entry, user *model.User) (*model.Entry, error)
@@ -357,10 +358,59 @@ func (c *Context) SearchChainEntries(entry *model.Entry, user *model.User, start
 
 }
 
-// GetChainFirstEntry is high-level function, that run by api.GetChainFirstEntry()
-func (c *Context) GetChainFirstEntry(chain *model.Chain, user *model.User) *model.Entry {
+// GetChainFirstOrLastEntry is high-level function, that run by api.GetChainFirstEntry() && api.GetChainLastEntry()
+func (c *Context) GetChainFirstOrLastEntry(entry *model.Entry, sort string, user *model.User) (*model.Entry, error) {
 
-	return nil
+	flagJustCreated := false
+
+	log.Debug("Search for chain into local DB")
+
+	// search for chain.ChainID into local DB
+	chain := entry.GetChain()
+	localChain := c.store.GetChain(chain)
+
+	if localChain == nil {
+
+		log.Debug("Chain " + chain.ChainID + " not found into local DB")
+		log.Debug("Search for chain on the blockchain")
+
+		if chain.Exists() {
+			chain = chain.Base64Encode()
+			log.Debug("Chain " + chain.ChainID + " found on the blockchain")
+
+			log.Debug("Getting chain status from the blockchain")
+			chain.Status, chain.LatestEntryBlock = chain.GetStatusFromFactom()
+
+			log.Debug("Creating chain into local DB")
+			err := c.store.CreateChain(chain)
+			if err != nil {
+				log.Error(err)
+			}
+
+			flagJustCreated = true
+
+		} else {
+			log.Debug("Chain " + chain.ChainID + " not found on the blockchain")
+			return nil, fmt.Errorf("Chain " + chain.ChainID + " not found")
+		}
+
+	}
+
+	// If we are here, so no errors occured and we force bind chain to API user
+	log.Debug("Force binding chain ", chain.ChainID, " to user ", user.Name)
+	err := c.store.BindChainToUser(chain, user)
+	if err != nil {
+		log.Error(err)
+	}
+
+	// check if chain just created or not fully synced yet
+	if flagJustCreated == true || (localChain.Status == model.ChainCompleted && !(*localChain.Synced)) {
+		return nil, nil
+	}
+
+	result := c.store.GetEntry(entry, sort)
+
+	return result, nil
 
 }
 
@@ -370,7 +420,7 @@ func (c *Context) GetEntry(entry *model.Entry, user *model.User) (*model.Entry, 
 	log.Debug("Search for entry into local DB")
 
 	// search for chain.ChainID into local DB
-	localentry := c.store.GetEntry(entry)
+	localentry := c.store.GetEntry(entry, "")
 
 	if localentry != nil {
 		log.Debug("Entry " + entry.EntryHash + " found into local DB")
@@ -478,7 +528,7 @@ func (c *Context) CreateEntry(entry *model.Entry, user *model.User) (*model.Entr
 
 	}
 
-	localEntry := c.store.GetEntry(&model.Entry{EntryHash: entry.EntryHash})
+	localEntry := c.store.GetEntry(&model.Entry{EntryHash: entry.EntryHash}, "")
 
 	if localEntry == nil {
 		log.Debug("Entry " + entry.EntryHash + " not found into local DB")

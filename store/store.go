@@ -32,7 +32,7 @@ type Store interface {
 	UpdateChainsWhere(sql string, chain *model.Chain) error
 	BindChainToUser(chain *model.Chain, user *model.User) error
 
-	GetEntry(entry *model.Entry) *model.Entry
+	GetEntry(entry *model.Entry, sort string) *model.Entry
 	CreateEntry(entry *model.Entry) error
 	UpdateEntry(entry *model.Entry) error
 	CreateEBlock(eblock *model.EBlock) error
@@ -212,10 +212,15 @@ func (c *Context) CreateChain(chain *model.Chain) error {
 
 }
 
-func (c *Context) GetEntry(entry *model.Entry) *model.Entry {
+func (c *Context) GetEntry(entry *model.Entry, sort string) *model.Entry {
+
+	var orderString string
+	if sort != "" {
+		orderString = fmt.Sprintf("factom_time %s, created_at %s", sort, sort)
+	}
 
 	res := &model.Entry{}
-	if c.db.First(&res, entry).RecordNotFound() {
+	if c.db.Order(orderString).First(&res, entry).RecordNotFound() {
 		return nil
 	}
 	return res
