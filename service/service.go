@@ -404,8 +404,21 @@ func (c *Context) GetChainFirstOrLastEntry(entry *model.Entry, sort string, user
 	}
 
 	// check if chain just created or not fully synced yet
-	if flagJustCreated == true || (localChain.Status == model.ChainCompleted && !(*localChain.Synced)) {
+	if flagJustCreated == true {
 		return nil, nil
+	}
+
+	// check if chain not fully synced yet
+	if localChain.Status == model.ChainCompleted && !(*localChain.Synced) {
+		switch sort {
+		case "asc":
+			return nil, nil
+		case "desc":
+			// while requesting last entry, it's enough to have at least one entry block parsed to return a result
+			if localChain.EarliestEntryBlock == "" {
+				return nil, nil
+			}
+		}
 	}
 
 	result := c.store.GetEntry(entry, sort)
