@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 
@@ -15,6 +14,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	ConfigFile = ".config/config.yaml"
+)
+
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
 func main() {
@@ -22,28 +25,27 @@ func main() {
 	var err error
 	var action, name, param string
 
-	configFile := flag.String("c", "config/config.yaml", "Path to config file")
-	flag.Parse()
-
 	var conf *config.Config
-	if conf, err = config.NewConfig(*configFile); err != nil {
+	if conf, err = config.NewConfig(ConfigFile); err != nil {
 		log.Fatal(err)
 	}
 
-	if len(os.Args) <= 1 {
+	args := flag.Args()
+
+	if len(args) == 0 {
 		log.Fatal("No params provided")
 	}
 
-	if len(os.Args) >= 2 {
-		action = os.Args[1]
+	if len(args) >= 1 {
+		action = args[0]
 	}
 
-	if len(os.Args) >= 3 {
-		name = os.Args[2]
+	if len(args) >= 2 {
+		name = args[1]
 	}
 
-	if len(os.Args) >= 4 {
-		param = os.Args[3]
+	if len(args) >= 3 {
+		param = args[2]
 	}
 
 	log.Info("action=", action, ", name=", name, ", param=", param)

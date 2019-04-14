@@ -12,9 +12,6 @@ CREATE TABLE users(
   CONSTRAINT users_id_key PRIMARY KEY(id)
 );
 
--- test API user
-INSERT INTO users(name, access_token) VALUES('test', 'test');
-
 CREATE TABLE queue(
     id		 SERIAL,
     user_id INT4 NOT NULL,
