@@ -801,18 +801,19 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 	if err != nil {
 		return "", err
 	}
-	s, err := factom.GetAllEBlockEntries(ebhash)
-	if err != nil {
-		return "", err
-	}
 
 	var entry *model.Entry
+	var fistEntryOfEntryBlock *model.Entry
 
-	for _, fe := range s {
+	for i, listItem := range eb.EntryList {
+		fe, err := factom.GetEntry(listItem.EntryHash)
+		if err != nil {
+			return "", err
+		}
 		entry = model.NewEntryFromFactomModel(fe)
 		log.Debug("History parse: Fetching Entry " + entry.EntryHash)
 		entry.Status = model.EntryCompleted
-		t := time.Unix(eb.Header.Timestamp, 0).UTC()
+		t := time.Unix(listItem.Timestamp, 0).UTC()
 		entry.FactomTime = &t
 		err = c.store.CreateEntry(entry.Base64Encode())
 		if err != nil {
@@ -823,6 +824,9 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 		if err != nil {
 			log.Error(err)
 			return "", err
+		}
+		if i == 0 {
+			fistEntryOfEntryBlock = entry
 		}
 	}
 
@@ -838,7 +842,7 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 		t := true
 		factomTime := time.Unix(eb.Header.Timestamp, 0).UTC()
 		// s[0] — first entry of the entry block
-		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: model.NewEntryFromFactomModel(s[0]).Base64Encode().ExtIDs, FactomTime: &factomTime, WorkerID: -2})
+		err = c.store.UpdateChain(&model.Chain{ChainID: eb.Header.ChainID, Synced: &t, ExtIDs: fistEntryOfEntryBlock.Base64Encode().ExtIDs, FactomTime: &factomTime, WorkerID: -2})
 		if err != nil {
 			return "", err
 		}
