@@ -52,7 +52,7 @@ type Context struct {
 }
 
 // Create new store
-func NewStore(conf *config.Config) (Store, error) {
+func NewStore(conf *config.Config, applyMigration bool) (Store, error) {
 
 	storeConfig := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		conf.Store.Host, conf.Store.Port, conf.Store.User, conf.Store.Password, conf.Store.DBName,
@@ -67,17 +67,19 @@ func NewStore(conf *config.Config) (Store, error) {
 		db.LogMode(true)
 	}
 
-	log.Info("Store: applying SQL migrations")
+	if applyMigration == true {
+		log.Info("Store: applying SQL migrations")
 
-	migrations := &migrate.FileMigrationSource{
-		Dir: "store/migrations",
-	}
+		migrations := &migrate.FileMigrationSource{
+			Dir: "migrations",
+		}
 
-	n, err := migrate.Exec(db.DB(), "postgres", migrations, migrate.Up)
-	if err != nil {
-		log.Fatal(err)
+		n, err := migrate.Exec(db.DB(), "postgres", migrations, migrate.Up)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Info("Store: applied ", n, " migration(s)")
 	}
-	log.Info("Store: applied ", n, " migration(s)")
 
 	return &Context{db}, nil
 

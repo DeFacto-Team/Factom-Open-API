@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"os/user"
 	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/api"
@@ -19,6 +21,7 @@ import (
 )
 
 const (
+	Version        = "1.0.0"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )
@@ -29,16 +32,26 @@ func main() {
 
 	// Load config
 	var conf *config.Config
-	if conf, err = config.NewConfig("/foa_config/config.yaml"); err != nil {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	configFile := usr.HomeDir + "/.foa/config.yaml"
+
+	flag.StringVar(&configFile, "c", configFile, "config.yaml path")
+	flag.Parse()
+
+	if conf, err = config.NewConfig(configFile); err != nil {
 		log.Fatal(err)
 	}
 
 	// Setup logger
 	log.SetLevel(log.Level(conf.API.LogLevel))
-	log.Info("Starting service…")
+	log.Info("Starting Factom Open API ", Version)
 
 	// Create store
-	store, err := store.NewStore(conf)
+	store, err := store.NewStore(conf, true)
 	if err != nil {
 		log.Error("Database connection FAILED")
 		log.Fatal(err)

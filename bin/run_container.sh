@@ -19,3 +19,4 @@ docker run \
   --link ${POSTGRES_CONTAINER_NAME}:${POSTGRES_CONTAINER_NAME} \
   --name ${CONTAINER_NAME} \
   factom-open-api:latest
+  

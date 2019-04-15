@@ -4,50 +4,42 @@ import (
 	"flag"
 	"github.com/go-yaml/yaml"
 	"github.com/jinzhu/configor"
+	"github.com/mcuadros/go-defaults"
 	"io/ioutil"
 )
 
 // App config struct
 type Config struct {
 	API struct {
-		HTTPPort  int  `default:"8080"`
-		Logging   bool `default:"false"`
-		LogLevel  int  `default:"4"`
-		GzipLevel int  `default:"-1"`
+		HTTPPort  int  `required:"true" default:"8081"`
+		Logging   bool `required:"true" default:"true"`
+		LogLevel  int  `required:"true" default:"4"`
+		GzipLevel int  `required:"true" default:"-1"`
 	}
 	Store struct {
-		Host     string `required:"true"`
-		Port     int    `required:"true"`
-		User     string `required:"true"`
-		Password string `required:"true"`
-		DBName   string `required:"true"`
+		Host     string `required:"true" default:"foa-db"`
+		Port     int    `required:"true" default:"5432"`
+		User     string `required:"true" default:"postgres"`
+		Password string `required:"true" default:"postgres"`
+		DBName   string `required:"true" default:"postgres"`
 	}
 	Factom struct {
-		URL       string `required:"true"`
-		User      string `default:"",required:"true"`
-		Password  string `default:"",required:"true"`
-		EsAddress string `required:"true"`
+		URL       string `required:"true" default:"https://api.factomd.net"`
+		User      string `default:""`
+		Password  string `default:""`
+		EsAddress string `required:"true" default:""`
 	}
 }
 
 // Create config from configFile
 func NewConfig(configFile string) (*Config, error) {
 
-	config := &Config{}
+	config := new(Config)
+	defaults.SetDefaults(config)
 
-	configBytes, err := ioutil.ReadFile("config/defaults.yaml")
-	if err != nil {
-		return nil, err
-	}
-
-	err = yaml.Unmarshal(configBytes, config)
-	if err != nil {
-		return nil, err
-	}
-
-	configBytes, err = ioutil.ReadFile(configFile)
+	configBytes, err := ioutil.ReadFile(configFile)
 	if err == nil {
-		err = yaml.Unmarshal(configBytes, config)
+		err = yaml.Unmarshal(configBytes, &config)
 		if err != nil {
 			return nil, err
 		}

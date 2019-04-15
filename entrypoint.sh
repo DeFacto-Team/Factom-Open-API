@@ -17,4 +17,4 @@
   done
 } &
 
-exec ./bin/factom-open-api
+exec ${@}

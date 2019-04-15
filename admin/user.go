@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os/user"
 	"strconv"
 	"time"
 
@@ -22,7 +23,17 @@ func main() {
 	var action, name, param string
 
 	var conf *config.Config
-	if conf, err = config.NewConfig("/foa_config/config.yaml"); err != nil {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	configFile := usr.HomeDir + "/.foa/config.yaml"
+
+	flag.StringVar(&configFile, "c", configFile, "config.yaml path")
+	flag.Parse()
+
+	if conf, err = config.NewConfig(configFile); err != nil {
 		log.Fatal(err)
 	}
 
@@ -46,7 +57,7 @@ func main() {
 
 	log.Info("action=", action, ", name=", name, ", param=", param)
 
-	store, err := store.NewStore(conf)
+	store, err := store.NewStore(conf, false)
 	if err != nil {
 		log.Fatal(err)
 	}

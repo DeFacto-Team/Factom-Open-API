@@ -1,15 +1,19 @@
 FROM golang:1.12 AS builder
 
+ARG GOBIN=/go/bin/
+ARG GOOS=linux
+ARG GOARCH=amd64
+ARG CGO_ENABLED=0
 ARG PKG_NAME=github.com/DeFacto-Team/Factom-Open-API
-ARG PKG_PATH=$GOPATH/src/${PKG_NAME}
-
-RUN curl https://glide.sh/get | sh
+ARG PKG_PATH=${GOPATH}/src/${PKG_NAME}
 
 WORKDIR ${PKG_PATH}
 
 COPY glide.yaml glide.lock ${PKG_PATH}/
 
-RUN glide install -v
+RUN \
+  curl https://glide.sh/get | sh && \
+  glide install -v
 
 COPY . ${PKG_PATH}/
 
@@ -19,14 +23,15 @@ RUN go build -o /go/bin/user admin/user.go
 FROM alpine:3.7
 
 RUN set -xe && \
-  apk --no-cache add bash inotify-tools && \
+  apk --no-cache add bash ca-certificates inotify-tools && \
   addgroup -g 1000 app && \
   adduser -D -G app -u 1000 app
 
 WORKDIR /home/app
 
-COPY --from=builder /go/bin ./bin/
-COPY ./entrypoint.sh ./
+COPY --from=builder /go/bin/factom-open-api /go/bin/user ./
+COPY ./entrypoint.sh ./entrypoint.sh
+COPY ./migrations ./migrations
 
 RUN \
   mkdir ./values && \
@@ -36,4 +41,6 @@ USER app
 
 EXPOSE 8081
 
-ENTRYPOINT [ "./entrypoint.sh", "-c", "/home/app/values/config.yaml" ]
+ENTRYPOINT [ "./entrypoint.sh" ]
+
+CMD [ "./factom-open-api", "-c", "/home/app/values/config.yaml" ]

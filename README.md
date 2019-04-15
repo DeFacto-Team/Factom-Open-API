@@ -20,7 +20,7 @@ nano ~/.foa/config.yaml
 
 Run Open API container
 ```bash
-docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/foa_config defactoteam/factom-open-api:latest
+docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/root/.foa defactoteam/factom-open-api:latest
 ```
 
 **Congratulations!**
