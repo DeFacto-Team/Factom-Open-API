@@ -9,8 +9,9 @@ WORKDIR $PKG_PATH
 COPY glide.yaml glide.lock $PKG_PATH/
 RUN glide install -v
 
-COPY . $PKG_PATH
+COPY . $PKG_PATH/
 RUN go build main.go
+RUN go build admin/user.go
 
 RUN mkdir -p /.factom-open-api
 COPY config.yaml /.factom-open-api/
