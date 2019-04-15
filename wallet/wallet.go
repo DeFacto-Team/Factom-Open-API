@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	//"encoding/json"
 	"fmt"
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/FactomProject/factom"

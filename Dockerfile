@@ -12,6 +12,7 @@ RUN glide install -v
 COPY . $PKG_PATH
 RUN go build main.go
 
-WORKDIR $PKG_PATH
-EXPOSE 8081
+RUN mkdir -p /.factom-open-api
+COPY config.yaml /.factom-open-api
+
 CMD ["./main"]

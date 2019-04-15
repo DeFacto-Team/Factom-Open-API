@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	ConfigFile     = ".config/config.yaml"
+	ConfigFile     = "/.factom-open-api/config.yaml"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )

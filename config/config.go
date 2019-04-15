@@ -35,7 +35,7 @@ func NewConfig(configFile string) (*Config, error) {
 
 	config := &Config{}
 
-	configBytes, err := ioutil.ReadFile(configFile)
+	configBytes, err := ioutil.ReadFile("config/defaults.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +43,14 @@ func NewConfig(configFile string) (*Config, error) {
 	err = yaml.Unmarshal(configBytes, config)
 	if err != nil {
 		return nil, err
+	}
+
+	configBytes, err = ioutil.ReadFile(configFile)
+	if err == nil {
+		err = yaml.Unmarshal(configBytes, config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	flag.IntVar(&config.API.HTTPPort, "port", config.API.HTTPPort, "Open API port")
