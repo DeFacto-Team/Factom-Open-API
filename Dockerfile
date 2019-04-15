@@ -1,21 +1,17 @@
-FROM golang:1.12-alpine as builder
+FROM golang:1.12
 
-ENV SRC_DIR=/go/src/github.com/DeFacto-Team/Factom-Open-API/
+RUN curl https://glide.sh/get | sh
 
-RUN mkdir -p /root/.config
-COPY .config/config.yaml /root/.config
+ENV PKG_NAME=github.com/DeFacto-Team/Factom-Open-API
+ENV PKG_PATH=$GOPATH/src/$PKG_NAME
+WORKDIR $PKG_PATH
 
-ADD . $SRC_DIR
-RUN cd $SRC_DIR; go build -o openapi; cp openapi /go/bin/
+COPY glide.yaml glide.lock $PKG_PATH/
+RUN glide install -v
 
-ADD openapi /go/bin
+COPY . $PKG_PATH
+RUN go build main.go
 
-FROM alpine:3.7
-
-RUN mkdir -p /root/.config /go/bin
-COPY --from=builder /root/.config/config.yaml /root/.config/config.yaml
-COPY --from=builder /go/bin/openapi /go/bin/openapi
-
-ENTRYPOINT ["/go/bin/openapi"]
-
+WORKDIR $PKG_PATH
 EXPOSE 8081
+CMD ["./main"]

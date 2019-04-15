@@ -1,0 +1,98 @@
+hash: 285f7d44ca636e340509a0d8848c60f8d7d978672cc848bc87f2e5f4ec361cc2
+updated: 2019-04-15T12:16:39.392852+04:00
+imports:
+- name: github.com/BurntSushi/toml
+  version: 3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005
+- name: github.com/dgrijalva/jwt-go
+  version: 3af4c746e1c248ee8491a3e0c6f7a9cd831e95f8
+- name: github.com/FactomProject/basen
+  version: fe3947df716ebfda9847eb1b9a48f9592e06478c
+- name: github.com/FactomProject/btcutil
+  version: 43986820ccd50b2b02b83e575cb3a39c87457482
+  subpackages:
+  - base58
+- name: github.com/FactomProject/btcutilecc
+  version: d3a63a5752ecf3fbc06bd97365da752111c263df
+- name: github.com/FactomProject/ed25519
+  version: 38002c4fe7b609c2fa3144a3cc29b997b756bb4c
+  subpackages:
+  - edwards25519
+- name: github.com/FactomProject/factom
+  version: fc1c06ae7272973dd767b473b384c6221e74c7d7
+- name: github.com/FactomProject/go-bip32
+  version: 3b593af1c415abc1017648e4eb24a88c32fee0f3
+- name: github.com/FactomProject/go-bip39
+  version: d1007fb78d9a7ec65314dad412973e63caf4c527
+- name: github.com/FactomProject/go-bip44
+  version: b541a96d8da98567af7610ef96105a834e6ed46c
+- name: github.com/FactomProject/go-simplejson
+  version: aabad6e819789e569bd6aabf444c935aa9ba1e44
+- name: github.com/FactomProject/netki-go-partner-client
+  version: 426acb535e66cc2f9e6226ae254555e3572fd142
+- name: github.com/go-playground/locales
+  version: f63010822830b6fe52288ee52d5a1151088ce039
+  subpackages:
+  - currency
+- name: github.com/go-playground/universal-translator
+  version: 71201497bace774495daed26a3874fd339e0b538
+- name: github.com/go-yaml/yaml
+  version: 51d6538a90f86fe93ac480b35f37b2be17fef232
+- name: github.com/jinzhu/configor
+  version: 4edaf76fe18865e36de734d887f4c01bd05707af
+- name: github.com/jinzhu/copier
+  version: 7e38e58719c33e0d44d585c4ab477a30f8cb82dd
+- name: github.com/jinzhu/gorm
+  version: e3987fd4b803c16497aa4dfd2e75db7a6a061a4e
+- name: github.com/jinzhu/inflection
+  version: 04140366298a54a039076d798123ffa108fff46c
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: f55edac94c9bbba5d6182a4be46d86a2c9b5b50e
+- name: github.com/labstack/echo
+  version: 38772c686c76b501f94bd6cd5b77f5842e93b559
+  subpackages:
+  - middleware
+- name: github.com/labstack/gommon
+  version: 7fd9f68ece0bcb1a905fac8f1549f0083f71c51b
+  subpackages:
+  - bytes
+  - color
+  - log
+  - random
+- name: github.com/leodido/go-urn
+  version: a67a23e1c1af3c66528573bb86a87246477277c1
+- name: github.com/lib/pq
+  version: 4ded0e9383f75c197b3a2aaa6d590ac52df6fd79
+  subpackages:
+  - oid
+- name: github.com/mattn/go-colorable
+  version: 3a70a971f94a22f2fa562ffcc7a0eb45f5daf045
+- name: github.com/mattn/go-isatty
+  version: c2a7a6ca930a4cd0bc33a3f298eb71960732a3a7
+- name: github.com/rubenv/sql-migrate
+  version: 54bad0a9b051368ffec9cd2b869789c2b8eaea35
+  subpackages:
+  - sqlparse
+- name: github.com/sirupsen/logrus
+  version: 8bdbc7bcc01dcbb8ec23dc8a28e332258d25251f
+- name: github.com/valyala/bytebufferpool
+  version: cdfbe9377474227bb42120c1e22fd4433e7f69bf
+- name: github.com/valyala/fasttemplate
+  version: 8b5e4e491ab636663841c42ea3c5a9adebabaf36
+- name: golang.org/x/crypto
+  version: 9419663f5a44be8b34ca85f08abc5fe1be11f8a3
+  subpackages:
+  - acme
+  - acme/autocert
+  - pbkdf2
+  - ripemd160
+- name: golang.org/x/sys
+  version: 8dbc5d05d6edcc104950cc299a1ce6641235bc86
+  subpackages:
+  - unix
+- name: gopkg.in/go-playground/validator.v9
+  version: 46b4b1e301c24cac870ffcb4ba5c8a703d1ef475
+- name: gopkg.in/gorp.v1
+  version: 6a667da9c028871f98598d85413e3fc4c6daa52e
+- name: gopkg.in/yaml.v2
+  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
+testImports: []
