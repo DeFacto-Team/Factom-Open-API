@@ -9,6 +9,7 @@ docker run -d --name foa-db postgres
 
 Download config template
 ```bash
+mkdir ~/.foa
 curl -o ~/.foa/config.yaml https://raw.githubusercontent.com/DeFacto-Team/Factom-Open-API/master/config.yaml.EXAMPLE
 ```
 
