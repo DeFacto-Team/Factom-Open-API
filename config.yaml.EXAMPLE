@@ -1,9 +1,9 @@
-#api:
+api:
 #  httpport: 8081
 #  logging: true
 #  loglevel: 4
 #  gziplevel: -1
-#store:
+store:
 #  host: "foa-db"
 #  port: 5432
 #  user: "postgres"

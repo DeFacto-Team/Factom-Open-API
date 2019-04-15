@@ -104,7 +104,9 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 			api.user = user
 			return true, nil
 		}
-		return false, fmt.Errorf("User not found")
+		err := fmt.Errorf("Invalid auth key")
+		log.Error(err)
+		return false, err
 	}))
 
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")

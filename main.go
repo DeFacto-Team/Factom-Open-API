@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os/user"
 	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/api"
@@ -30,7 +31,12 @@ func main() {
 
 	// Load config
 	var conf *config.Config
-	if conf, err = config.NewConfig("/foa_config/config.yaml"); err != nil {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if conf, err = config.NewConfig(usr.HomeDir + "/.foa/config.yaml"); err != nil {
 		log.Fatal(err)
 	}
 
