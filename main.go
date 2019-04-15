@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/api"
@@ -33,9 +34,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	version, err := ioutil.ReadFile("VERSION")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Setup logger
 	log.SetLevel(log.Level(conf.API.LogLevel))
-	log.Info("Starting service…")
+	log.Info("Starting Factom Open API ", string(version))
 
 	// Create store
 	store, err := store.NewStore(conf)
