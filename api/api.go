@@ -86,7 +86,7 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	api.service = s
 
 	api.Http = echo.New()
-	api.Http.Logger.SetLevel(glog.Lvl(conf.LogLevel))
+	api.Http.Logger.SetLevel(glog.Lvl(conf.API.LogLevel))
 	api.apiInfo.Address = ":" + strconv.Itoa(api.conf.API.HTTPPort)
 	api.Http.HideBanner = true
 	api.Http.Pre(middleware.RemoveTrailingSlash())
@@ -110,7 +110,7 @@ func NewApi(conf *config.Config, s service.Service) *Api {
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
 
 	api.Http.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: conf.GzipLevel,
+		Level: conf.API.GzipLevel,
 	}))
 
 	// Status

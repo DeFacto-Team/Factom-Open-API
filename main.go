@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Setup logger
-	log.SetLevel(log.Level(conf.LogLevel))
+	log.SetLevel(log.Level(conf.API.LogLevel))
 	log.Info("Starting service with configuration: ", ConfigFile)
 
 	// Create store

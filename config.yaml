@@ -1,15 +1,15 @@
-#loglevel: 4
-#gziplevel: -1
-#api:
+api:
 #  httpport: 8081
 #  logging: true
-#store:
+#  loglevel: 4
+#  gziplevel: -1
+store:
 #  host: "localhost"
 #  port: 5433
 #  user: "postgres"
 #  password: "postgres"
 #  dbname: "postgres"
-#factom:
+factom:
 #  url: "https://api.factomd.net"
 #  user: ""
 #  password: ""

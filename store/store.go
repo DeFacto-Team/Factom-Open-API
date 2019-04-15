@@ -63,7 +63,7 @@ func NewStore(conf *config.Config) (Store, error) {
 		return nil, err
 	}
 
-	if conf.API.Logging && conf.LogLevel >= 6 {
+	if conf.API.Logging && conf.API.LogLevel >= 6 {
 		db.LogMode(true)
 	}
 

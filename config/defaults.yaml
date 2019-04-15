@@ -1,8 +1,8 @@
-loglevel: 4
-gziplevel: -1
 api:
   httpport: 8081
   logging: true
+  loglevel: 4
+  gziplevel: -1
 store:
   host: "localhost"
   port: 5433
