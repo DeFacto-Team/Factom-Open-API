@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	ConfigFile     = "/.factom-open-api/config.yaml"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )
@@ -30,13 +29,13 @@ func main() {
 
 	// Load config
 	var conf *config.Config
-	if conf, err = config.NewConfig(ConfigFile); err != nil {
+	if conf, err = config.NewConfig("/foa_config/config.yaml"); err != nil {
 		log.Fatal(err)
 	}
 
 	// Setup logger
 	log.SetLevel(log.Level(conf.API.LogLevel))
-	log.Info("Starting service with configuration: ", ConfigFile)
+	log.Info("Starting service…")
 
 	// Create store
 	store, err := store.NewStore(conf)

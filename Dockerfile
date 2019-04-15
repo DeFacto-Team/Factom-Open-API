@@ -13,7 +13,6 @@ COPY . $PKG_PATH/
 RUN go build main.go
 RUN go build admin/user.go
 
-RUN mkdir -p /.factom-open-api
-COPY config.yaml /.factom-open-api/
+RUN mkdir -p /foa_config
 
 CMD ["./main"]

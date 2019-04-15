@@ -14,10 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	ConfigFile = ".config/config.yaml"
-)
-
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
 func main() {
@@ -26,7 +22,7 @@ func main() {
 	var action, name, param string
 
 	var conf *config.Config
-	if conf, err = config.NewConfig(ConfigFile); err != nil {
+	if conf, err = config.NewConfig("/foa_config/config.yaml"); err != nil {
 		log.Fatal(err)
 	}
 

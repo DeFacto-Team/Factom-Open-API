@@ -4,7 +4,7 @@
 #  loglevel: 4
 #  gziplevel: -1
 #store:
-#  host: "factom-open-api-db"
+#  host: "foa-db"
 #  port: 5432
 #  user: "postgres"
 #  password: "postgres"
