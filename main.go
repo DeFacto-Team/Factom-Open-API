@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os/user"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 )
 
 const (
+	Version        = "1.0.0"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )
@@ -40,17 +40,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	version, err := ioutil.ReadFile("VERSION")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Setup logger
 	log.SetLevel(log.Level(conf.API.LogLevel))
-	log.Info("Starting Factom Open API ", string(version))
+	log.Info("Starting Factom Open API ", Version)
 
 	// Create store
-	store, err := store.NewStore(conf)
+	store, err := store.NewStore(conf, true)
 	if err != nil {
 		log.Error("Database connection FAILED")
 		log.Fatal(err)

@@ -52,7 +52,7 @@ func main() {
 
 	log.Info("action=", action, ", name=", name, ", param=", param)
 
-	store, err := store.NewStore(conf)
+	store, err := store.NewStore(conf, false)
 	if err != nil {
 		log.Fatal(err)
 	}
