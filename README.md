@@ -22,8 +22,8 @@ Run Open API container
 docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/foa_config defactoteam/factom-open-api:latest
 ```
 
-Confgratulations!
-Your Factom Open API instance available at http://localhost:8081
+**Congratulations!**
+Your Factom Open API available at http://localhost:8081
 
 ## User management
 
@@ -35,7 +35,7 @@ The binary is embedded into Open API container, so you can run it via terminal:
 docker exec -ti factom-open-api ./user create anton
 ```
 You will see access key into terminal.
-By default, new users are **enabled** and **have no writes limit**.
+By default, new users **are enabled** and **have no writes limit**.
 
 You can manage users with additional binary commands:
 ```bash
