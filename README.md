@@ -3,22 +3,22 @@
 ## Installation (developer release)
 
 Run postgres DB container
-```docker
+```bash
 docker run -d --name foa-db postgres
 ```
 
 Download config template
-```curl
+```bash
 curl -o ~/.foa/config.yaml https://raw.githubusercontent.com/DeFacto-Team/Factom-Open-API/master/config.yaml.EXAMPLE
 ```
 
 Edit config & fill Es address (you can also change other params)
-```nano
+```bash
 nano ~/.foa/config.yaml
 ```
 
 Run Open API container
-```docker
+```bash
 docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/foa_config defactoteam/factom-open-api:latest
 ```
 
@@ -31,14 +31,14 @@ For access & work with Factom Open API you need to create user(s).
 In the next version the user management will be possible via admin endpoint and Web UI, but for current release we developed the admin binary.
 
 The binary is embedded into Open API container, so you can run it via terminal:
-```docker
+```bash
 docker exec -ti factom-open-api ./user create anton
 ```
 You will see access key into terminal.
 By default, new users are **enabled** and **have no writes limit**.
 
 You can manage users with additional binary commands:
-```docker
+```bash
 # create user `anton` and generate API access key
 docker exec -ti factom-open-api ./user create anton
 
