@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"os/user"
 	"time"
 
@@ -36,7 +37,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if conf, err = config.NewConfig(usr.HomeDir + "/.foa/config.yaml"); err != nil {
+	configFile := usr.HomeDir + "/.foa/config.yaml"
+
+	flag.StringVar(&configFile, "c", configFile, "config.yaml path")
+	flag.Parse()
+
+	if conf, err = config.NewConfig(configFile); err != nil {
 		log.Fatal(err)
 	}
 
