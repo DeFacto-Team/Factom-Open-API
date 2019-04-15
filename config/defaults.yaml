@@ -4,8 +4,8 @@ api:
   loglevel: 4
   gziplevel: -1
 store:
-  host: "localhost"
-  port: 5433
+  host: "factom-open-api-db"
+  port: 5432
   user: "postgres"
   password: "postgres"
   dbname: "postgres"
