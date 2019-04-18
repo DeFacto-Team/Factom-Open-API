@@ -1,4 +1,4 @@
-# Factom-Open-API
+# Factom Open API
 
 ## Installation (developer release)
 
@@ -20,7 +20,7 @@ nano ~/.foa/config.yaml
 
 Run Open API container
 ```bash
-docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/root/.foa defactoteam/factom-open-api:latest
+docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/root/.foa defactoteam/factom-open-api:1.0.0-rc1
 ```
 
 **Congratulations!**
