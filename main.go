@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	Version        = "1.0.0"
 	MinutesInBlock = 10
 	WorkersCount   = 4
 )
@@ -48,7 +47,7 @@ func main() {
 
 	// Setup logger
 	log.SetLevel(log.Level(conf.API.LogLevel))
-	log.Info("Starting Factom Open API ", Version)
+	log.Info("Starting Factom Open API")
 
 	// Create store
 	store, err := store.NewStore(conf, true)
@@ -100,10 +99,10 @@ func main() {
 	go clearQueue(s)
 
 	// Start API
-	api := api.NewApi(conf, s)
-	log.WithField("address", api.GetApiInfo().Address).
-		WithField("mw", api.GetApiInfo().MW).
-		Info("Starting api")
+	api := api.NewAPI(conf, s)
+	log.WithField("mw", api.GetAPIInfo().MW).
+		WithField("version", api.GetAPIInfo().Version).
+		Info("Starting API")
 	log.Fatal(api.Start())
 
 }

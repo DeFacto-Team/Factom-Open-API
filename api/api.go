@@ -1,16 +1,3 @@
-// Factom-Open-API
-// Version: 1.0
-// Schemes: http
-// Host: localhost
-// BasePath: /v1
-// Consumes:
-// - application/json
-// - application/x-www-form-urlencoded
-// - multipart/form-data
-// Produces:
-// - application/json
-// Contact: team@de-facto.pro
-// swagger:meta
 package api
 
 import (
@@ -33,18 +20,18 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-type Api struct {
-	Http     *echo.Echo
+type API struct {
+	HTTP     *echo.Echo
 	conf     *config.Config
 	service  service.Service
-	apiInfo  ApiInfo
+	apiInfo  APIInfo
 	validate *validator.Validate
 	user     *model.User
 }
 
-type ApiInfo struct {
-	Address string
-	MW      []string
+type APIInfo struct {
+	Version string
+	MW      []string `json:"-"`
 }
 
 type ErrorResponse struct {
@@ -70,106 +57,101 @@ type SuccessResponsePagination struct {
 }
 
 const (
+	Version                = "1.0.0"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
 	AlternativeSort        = "asc"
 )
 
-func NewApi(conf *config.Config, s service.Service) *Api {
+func NewAPI(conf *config.Config, s service.Service) *API {
 
-	api := &Api{}
+	api := &API{}
 
 	api.validate = validator.New()
 
 	api.conf = conf
 	api.service = s
 
-	api.Http = echo.New()
-	api.Http.Logger.SetLevel(glog.Lvl(conf.API.LogLevel))
-	api.apiInfo.Address = ":" + strconv.Itoa(api.conf.API.HTTPPort)
-	api.Http.HideBanner = true
-	api.Http.Pre(middleware.RemoveTrailingSlash())
+	api.HTTP = echo.New()
+	api.HTTP.Logger.SetLevel(glog.Lvl(conf.API.LogLevel))
+	api.apiInfo.Version = Version
+	api.HTTP.HideBanner = true
+	api.HTTP.Pre(middleware.RemoveTrailingSlash())
 
 	if conf.API.Logging {
-		api.Http.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		api.HTTP.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 			Format: "  API[${status}] ${method} ${uri} (ip=${remote_ip}, latency=${latency_human})\n",
 		}))
 		api.apiInfo.MW = append(api.apiInfo.MW, "Logger")
 	}
 
-	api.Http.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
+	api.HTTP.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
 		user := api.service.CheckUser(key)
 		if user != nil {
 			api.user = user
 			return true, nil
 		}
-		err := fmt.Errorf("Invalid auth key")
+		err := fmt.Errorf("Invalid auth key: %s", key)
 		log.Error(err)
 		return false, err
 	}))
 
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
 
-	api.Http.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+	api.HTTP.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Level: conf.API.GzipLevel,
 	}))
+	api.apiInfo.MW = append(api.apiInfo.MW, "Gzip")
 
 	// Status
-	api.Http.GET("/v1", api.index)
-
-	// API specification
-	api.Http.Static("/v1/spec", "spec")
+	api.HTTP.GET("/", api.index)
 
 	// Chains
-	api.Http.POST("/v1/chains", api.createChain)
-	api.Http.GET("/v1/chains", api.getChains)
-	api.Http.GET("/v1/chains/:chainid", api.getChain)
-	api.Http.POST("/v1/chains/search", api.searchChains)
+	api.HTTP.POST("/v1/chains", api.createChain)
+	api.HTTP.GET("/v1/chains", api.getChains)
+	api.HTTP.GET("/v1/chains/:chainid", api.getChain)
+	api.HTTP.POST("/v1/chains/search", api.searchChains)
 
 	// Chains entries
-	api.Http.GET("/v1/chains/:chainid/entries", api.getChainEntries)
-	api.Http.POST("/v1/chains/:chainid/entries/search", api.searchChainEntries)
-	api.Http.GET("/v1/chains/:chainid/entries/:item", api.getChainFirstOrLastEntry)
+	api.HTTP.GET("/v1/chains/:chainid/entries", api.getChainEntries)
+	api.HTTP.POST("/v1/chains/:chainid/entries/search", api.searchChainEntries)
+	api.HTTP.GET("/v1/chains/:chainid/entries/:item", api.getChainFirstOrLastEntry)
 
 	// Entries
-	api.Http.POST("/v1/entries", api.createEntry)
-	api.Http.GET("/v1/entries/:entryhash", api.getEntry)
+	api.HTTP.POST("/v1/entries", api.createEntry)
+	api.HTTP.GET("/v1/entries/:entryhash", api.getEntry)
 
 	// User
-	api.Http.GET("/v1/user", api.getUser)
+	api.HTTP.GET("/v1/user", api.getUser)
 
 	// Direct factomd call
-	api.Http.POST("/v1/factomd/:method", api.factomd)
+	api.HTTP.POST("/v1/factomd/:method", api.factomd)
 
 	return api
 }
 
 // Start API server
-func (api *Api) Start() error {
-	return api.Http.Start(":" + strconv.Itoa(api.conf.API.HTTPPort))
+func (api *API) Start() error {
+	return api.HTTP.Start(":" + strconv.Itoa(api.conf.API.HTTPPort))
 }
 
 // Returns API information
-func (api *Api) GetApiInfo() ApiInfo {
+func (api *API) GetAPIInfo() APIInfo {
 	return api.apiInfo
 }
 
 // Returns API user info
-func (api *Api) getUser(c echo.Context) error {
+func (api *API) getUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, &api.user)
 }
 
-// Returns API specification (Swagger)
-func (api *Api) index(c echo.Context) error {
-	return c.Redirect(http.StatusMovedPermanently, "/spec/api.json")
+// Returns API info
+func (api *API) index(c echo.Context) error {
+	return api.SuccessResponse(api.GetAPIInfo(), c)
 }
 
-func (api *Api) spec(c echo.Context) error {
-	return c.Inline("spec/api.json", "api.json")
-}
-
-func (api *Api) checkUserLimit(action string, c echo.Context) error {
+func (api *API) checkUserLimit(action string, c echo.Context) error {
 
 	var usageCost int
 
@@ -189,7 +171,7 @@ func (api *Api) checkUserLimit(action string, c echo.Context) error {
 }
 
 // Success API response
-func (api *Api) SuccessResponse(res interface{}, c echo.Context) error {
+func (api *API) SuccessResponse(res interface{}, c echo.Context) error {
 	resp := &SuccessResponse{
 		Result: res,
 	}
@@ -197,7 +179,7 @@ func (api *Api) SuccessResponse(res interface{}, c echo.Context) error {
 }
 
 // Accepted API response
-func (api *Api) AcceptedResponse(res interface{}, mes string, c echo.Context) error {
+func (api *API) AcceptedResponse(res interface{}, mes string, c echo.Context) error {
 	resp := &AcceptedResponse{
 		Result:  res,
 		Message: mes,
@@ -206,7 +188,7 @@ func (api *Api) AcceptedResponse(res interface{}, mes string, c echo.Context) er
 }
 
 // Success API response with pagination params
-func (api *Api) SuccessResponsePagination(res interface{}, total int, c echo.Context) error {
+func (api *API) SuccessResponsePagination(res interface{}, total int, c echo.Context) error {
 
 	// err should be already checked into API function, so not checking it in response
 	start, limit, _, _ := api.GetPaginationParams(c)
@@ -222,7 +204,7 @@ func (api *Api) SuccessResponsePagination(res interface{}, total int, c echo.Con
 }
 
 // Custom API response in case of error
-func (api *Api) ErrorResponse(err *errors.Error, c echo.Context) error {
+func (api *API) ErrorResponse(err *errors.Error, c echo.Context) error {
 	resp := &ErrorResponse{
 		Result: false,
 		Code:   err.Code,
@@ -247,7 +229,7 @@ func (api *Api) ErrorResponse(err *errors.Error, c echo.Context) error {
 // Helper function: check if pagination params are int;
 // returns start, limit, sort;
 // number from const is used if param was not provided
-func (api *Api) GetPaginationParams(c echo.Context) (int, int, string, error) {
+func (api *API) GetPaginationParams(c echo.Context) (int, int, string, error) {
 
 	start := DefaultPaginationStart
 	limit := DefaultPaginationLimit
@@ -282,7 +264,7 @@ func (api *Api) GetPaginationParams(c echo.Context) (int, int, string, error) {
 
 // API functions
 
-func (api *Api) createChain(c echo.Context) error {
+func (api *API) createChain(c echo.Context) error {
 
 	// check user limits
 	if err := api.checkUserLimit(model.QueueActionChain, c); err != nil {
@@ -324,7 +306,7 @@ func (api *Api) createChain(c echo.Context) error {
 	return api.SuccessResponse(resp, c)
 }
 
-func (api *Api) getChains(c echo.Context) error {
+func (api *API) getChains(c echo.Context) error {
 
 	chain := &model.Chain{}
 
@@ -350,7 +332,7 @@ func (api *Api) getChains(c echo.Context) error {
 
 }
 
-func (api *Api) searchChains(c echo.Context) error {
+func (api *API) searchChains(c echo.Context) error {
 
 	// Open API Chain struct
 	req := &model.Chain{}
@@ -381,7 +363,7 @@ func (api *Api) searchChains(c echo.Context) error {
 
 }
 
-func (api *Api) getChain(c echo.Context) error {
+func (api *API) getChain(c echo.Context) error {
 
 	req := &model.Chain{ChainID: c.Param("chainid")}
 
@@ -401,26 +383,7 @@ func (api *Api) getChain(c echo.Context) error {
 
 }
 
-// swagger:operation POST /entries createEntry
-// ---
-// description: Create entry in chain
-// parameters:
-// - name: chainid
-//   in: body
-//   description: Chain ID of the Factom chain where to add new entry.
-//   required: true
-//   type: string
-// - name: content
-//   in: body
-//   description: The content of new entry.
-//   required: true
-//   type: string
-// - name: extids
-//   in: body
-//   description: One or many external ids identifying new entry. Should be sent as array of strings.
-//   required: false
-//   type: array
-func (api *Api) createEntry(c echo.Context) error {
+func (api *API) createEntry(c echo.Context) error {
 
 	// check user limits
 	if err := api.checkUserLimit(model.QueueActionEntry, c); err != nil {
@@ -451,7 +414,7 @@ func (api *Api) createEntry(c echo.Context) error {
 	return api.SuccessResponse(resp, c)
 }
 
-func (api *Api) getEntry(c echo.Context) error {
+func (api *API) getEntry(c echo.Context) error {
 
 	req := &model.Entry{EntryHash: c.Param("entryhash")}
 
@@ -471,7 +434,7 @@ func (api *Api) getEntry(c echo.Context) error {
 
 }
 
-func (api *Api) getChainEntries(c echo.Context) error {
+func (api *API) getChainEntries(c echo.Context) error {
 
 	var force bool
 
@@ -506,7 +469,7 @@ func (api *Api) getChainEntries(c echo.Context) error {
 
 }
 
-func (api *Api) searchChainEntries(c echo.Context) error {
+func (api *API) searchChainEntries(c echo.Context) error {
 
 	var force bool
 
@@ -554,7 +517,7 @@ func (api *Api) searchChainEntries(c echo.Context) error {
 
 }
 
-func (api *Api) getChainFirstOrLastEntry(c echo.Context) error {
+func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 
 	log.Debug("Validating first/last item")
 
@@ -590,7 +553,7 @@ func (api *Api) getChainFirstOrLastEntry(c echo.Context) error {
 
 }
 
-func (api *Api) factomd(c echo.Context) error {
+func (api *API) factomd(c echo.Context) error {
 
 	var params interface{}
 

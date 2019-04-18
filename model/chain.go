@@ -9,7 +9,6 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-// swagger:model
 type Chain struct {
 	// gorm.Model without ID
 	CreatedAt time.Time  `json:"-" form:"-" query:"-"`

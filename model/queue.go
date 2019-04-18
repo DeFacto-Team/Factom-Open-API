@@ -12,7 +12,6 @@ const (
 	QueueActionEntry = "entry"
 )
 
-// swagger:model
 type Queue struct {
 	// gorm.Model without ID
 	CreatedAt time.Time  `json:"-" form:"-" query:"-"`

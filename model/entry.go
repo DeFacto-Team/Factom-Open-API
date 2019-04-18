@@ -26,7 +26,6 @@ const (
 	MaxEntrySize = 10240
 )
 
-// swagger:model
 type Entry struct {
 	// gorm.Model without ID
 	CreatedAt time.Time  `json:"-" form:"-" query:"-"`

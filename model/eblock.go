@@ -4,7 +4,6 @@ import (
 	"github.com/FactomProject/factom"
 )
 
-// swagger:model
 type EBlock struct {
 	KeyMR               string   `json:"keyMr" gorm:"primary_key;unique;not null"`
 	BlockSequenceNumber int64    `json:"blockSequenceNumber"`
