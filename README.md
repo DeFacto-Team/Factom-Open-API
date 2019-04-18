@@ -7,7 +7,7 @@ Run postgres DB container
 docker run -d --name foa-db postgres
 ```
 
-Download config template
+Create a folder (e.g. ~/.foa) for config and download config template into it
 ```bash
 mkdir ~/.foa
 curl -o ~/.foa/config.yaml https://raw.githubusercontent.com/DeFacto-Team/Factom-Open-API/master/config.yaml.EXAMPLE
@@ -20,7 +20,7 @@ nano ~/.foa/config.yaml
 
 Run Open API container
 ```bash
-docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/root/.foa defactoteam/factom-open-api:1.0.0-rc1
+docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/home/app/values defactoteam/factom-open-api:1.0.0-rc1
 ```
 
 **Congratulations!**
