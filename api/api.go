@@ -30,7 +30,7 @@ type API struct {
 }
 
 type APIInfo struct {
-	Version string
+	Version string   `json:"version"`
 	MW      []string `json:"-"`
 }
 
@@ -105,7 +105,7 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	api.apiInfo.MW = append(api.apiInfo.MW, "Gzip")
 
 	// Status
-	api.HTTP.GET("/", api.index)
+	api.HTTP.GET("/v1", api.index)
 
 	// Chains
 	api.HTTP.POST("/v1/chains", api.createChain)
