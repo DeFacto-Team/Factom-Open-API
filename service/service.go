@@ -855,7 +855,7 @@ func (c *Context) parseEntryBlocks(parseFrom string, parseTo string, updateEarli
 // Parses all entries from the entryblock and returns keymr of previous entryblock
 func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) (string, error) {
 
-	log.Debug("History parse: Fetching EntryBlock " + ebhash)
+	log.Debug("Fetching EntryBlock " + ebhash)
 
 	eb, err := factom.GetEBlock(ebhash)
 	if err != nil {
@@ -876,7 +876,7 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 			return "", err
 		}
 		entry = model.NewEntryFromFactomModel(fe)
-		log.Debug("History parse: Fetching Entry " + entry.EntryHash)
+		log.Debug("Fetching Entry " + entry.EntryHash)
 		entry.Status = model.EntryCompleted
 		t := time.Unix(listItem.Timestamp, 0).UTC()
 		entry.FactomTime = &t

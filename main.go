@@ -25,6 +25,21 @@ const (
 	WorkersCount   = 4
 )
 
+// @title Factom Open API
+// @version 1.0.0
+// @description Open-source REST API for the Factom blockchain.
+
+// @contact.name De Facto
+// @contact.url https://de-facto.pro
+// @contact.email team@de-facto.pro
+
+// @license.name MIT
+// @license.url https://github.com/DeFacto-Team/Factom-Open-API/blob/master/LICENSE
+
+// @host localhost:8081
+// @BasePath /v1
+
+// @securityDefinitions.apikey ApiKeyAuth
 func main() {
 
 	var err error

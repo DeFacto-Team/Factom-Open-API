@@ -1,0 +1,472 @@
+basePath: /v1
+definitions:
+  api.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+      result:
+        default: false
+        type: boolean
+    type: object
+  api.SuccessResponse:
+    properties:
+      result:
+        type: object
+    type: object
+  api.SuccessResponsePagination:
+    properties:
+      limit:
+        type: integer
+      result:
+        type: object
+      start:
+        type: integer
+      total:
+        type: integer
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: team@de-facto.pro
+    name: De Facto
+    url: https://de-facto.pro
+  description: Open-source REST API for the Factom blockchain.
+  license:
+    name: MIT
+    url: https://github.com/DeFacto-Team/Factom-Open-API/blob/master/LICENSE
+  title: Factom Open API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Get API version
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+      summary: API info
+  /chains:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns all user's chains
+      parameters:
+      - description: 'Select item you would like to start.<br />E.g. if you''ve already
+          seen 30 items and want to see next 30, then you will provide **start=30**.<br
+          />*Default: 0*'
+        in: query
+        name: start
+        type: integer
+      - description: 'The number of items you would like back in each page.<br />*Default:
+          30*'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Filter results by chain''s status.<br />One of: **queue**, **processing**,
+          **completed**<br />*By default filtering disabled.*'
+        in: query
+        name: status
+        type: string
+      - description: 'Sorting order.<br />One of: **asc** or **desc**<br />*Default:
+          desc*'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponsePagination'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Get chains
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Creates chain on the Factom blockchain
+      parameters:
+      - description: One or many external ids identifying new chain.<br />**Should
+          be provided as array of base64 strings.**
+        in: formData
+        name: extIds
+        required: true
+        type: array
+      - description: The content of the first entry of the chain.<br />**Should be
+          provided as base64 string.**
+        in: formData
+        name: content
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Create a chain
+  /chains/{chainId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns Factom chain by Chain ID
+      parameters:
+      - description: Chain ID of the Factom chain.
+        in: path
+        name: chainId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Get chain
+  /chains/{chainId}/entries:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns entries of Factom chain
+      parameters:
+      - description: Chain ID of the Factom chain.
+        in: path
+        name: chainId
+        required: true
+        type: string
+      - description: 'Select item you would like to start.<br />E.g. if you''ve already
+          seen 30 items and want to see next 30, then you will provide **start=30**.<br
+          />*Default: 0*'
+        in: query
+        name: start
+        type: integer
+      - description: 'The number of items you would like back in each page.<br />*Default:
+          30*'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Filter results by chain''s status.<br />One of: **queue**, **processing**,
+          **completed**<br />*By default filtering disabled.*'
+        in: query
+        name: status
+        type: string
+      - description: 'Sorting order.<br />One of: **asc** or **desc**<br />*Default:
+          desc*'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponsePagination'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Get chain entries
+  /chains/{chainId}/entries/first:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns first entry of Factom chain
+      parameters:
+      - description: Chain ID of the Factom chain.
+        in: path
+        name: chainId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Get first entry of the chain
+  /chains/{chainId}/entries/search:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Search entries into Factom chain by external id(s)
+      parameters:
+      - description: Chain ID of the Factom chain.
+        in: path
+        name: chainId
+        required: true
+        type: string
+      - description: One or many external IDs, that used for search.<br />**Should
+          be provided as array of base64 strings.**
+        in: formData
+        name: extIds
+        required: true
+        type: array
+      - description: 'Select item you would like to start.<br />E.g. if you''ve already
+          seen 30 items and want to see next 30, then you will provide **start=30**.<br
+          />*Default: 0*'
+        in: query
+        name: start
+        type: integer
+      - description: 'The number of items you would like back in each page.<br />*Default:
+          30*'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Filter results by chain''s status.<br />One of: **queue**, **processing**,
+          **completed**<br />*By default filtering disabled.*'
+        in: query
+        name: status
+        type: string
+      - description: 'Sorting order.<br />One of: **asc** or **desc**<br />*Default:
+          desc*'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponsePagination'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Search entries of chain
+  /chains/search:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Search user's chains by external id(s)
+      parameters:
+      - description: One or many external IDs, that used for search.<br />**Should
+          be provided as array of base64 strings.**
+        in: formData
+        name: extIds
+        required: true
+        type: array
+      - description: 'Select item you would like to start.<br />E.g. if you''ve already
+          seen 30 items and want to see next 30, then you will provide **start=30**.<br
+          />*Default: 0*'
+        in: query
+        name: start
+        type: integer
+      - description: 'The number of items you would like back in each page.<br />*Default:
+          30*'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Filter results by chain''s status.<br />One of: **queue**, **processing**,
+          **completed**<br />*By default filtering disabled.*'
+        in: query
+        name: status
+        type: string
+      - description: 'Sorting order.<br />One of: **asc** or **desc**<br />*Default:
+          desc*'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Search chains
+  /entries:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Creates entry on the Factom blockchain
+      parameters:
+      - description: Chain ID of the Factom chain, where to add new entry.
+        in: formData
+        name: chainId
+        required: true
+        type: string
+      - description: One or many external ids identifying new chain.<br />**Should
+          be provided as array of base64 strings.**
+        in: formData
+        name: extIds
+        type: array
+      - description: The content of the new entry of the chain.<br />**Should be provided
+          as base64 string.**
+        in: formData
+        name: content
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Create an entry
+  /entries/{entryHash}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns Factom entry by EntryHash
+      parameters:
+      - description: EntryHash of the Factom entry.
+        in: path
+        name: entryHash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      summary: Get entry
+  /factomd/{method}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Sends direct request to factomd API
+      parameters:
+      - description: factomd API method
+        in: path
+        name: method
+        required: true
+        type: string
+      - description: factomd request's params.<br />**Should be provided as JSON string,**
+          e.g. *{'chainid':'XXXX'}*
+        in: formData
+        name: params
+        type: string
+      produces:
+      - application/json
+      summary: Generic factomd
+  /user:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Get API user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+      summary: User info
+swagger: "2.0"

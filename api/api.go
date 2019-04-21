@@ -13,10 +13,11 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
 	"github.com/FactomProject/factom"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	glog "github.com/labstack/gommon/log"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
+	"github.com/swaggo/echo-swagger"
+	_ "github.com/swaggo/echo-swagger/example/docs"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -35,7 +36,7 @@ type APIInfo struct {
 }
 
 type ErrorResponse struct {
-	Result bool   `json:"result"`
+	Result bool   `json:"result" default:"false"`
 	Code   int    `json:"code"`
 	Error  string `json:"error"`
 }
@@ -57,7 +58,7 @@ type SuccessResponsePagination struct {
 }
 
 const (
-	Version                = "1.0.0"
+	Version                = "1.0.0-rc2"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
@@ -74,7 +75,6 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	api.service = s
 
 	api.HTTP = echo.New()
-	api.HTTP.Logger.SetLevel(glog.Lvl(conf.API.LogLevel))
 	api.apiInfo.Version = Version
 	api.HTTP.HideBanner = true
 	api.HTTP.Pre(middleware.RemoveTrailingSlash())
@@ -86,7 +86,8 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 		api.apiInfo.MW = append(api.apiInfo.MW, "Logger")
 	}
 
-	api.HTTP.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
+	authGroup := api.HTTP.Group("/v1")
+	authGroup.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
 		user := api.service.CheckUser(key)
 		if user != nil {
 			api.user = user
@@ -99,34 +100,34 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
 
-	api.HTTP.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: conf.API.GzipLevel,
-	}))
-	api.apiInfo.MW = append(api.apiInfo.MW, "Gzip")
-
 	// Status
 	api.HTTP.GET("/v1", api.index)
 
+	// Documentation
+	url := echoSwagger.URL("swagger.json")
+	api.HTTP.Static("/docs/swagger.json", "./docs/swagger.json")
+	api.HTTP.GET("/docs/*", echoSwagger.EchoWrapHandler(url))
+
 	// Chains
-	api.HTTP.POST("/v1/chains", api.createChain)
-	api.HTTP.GET("/v1/chains", api.getChains)
-	api.HTTP.GET("/v1/chains/:chainid", api.getChain)
-	api.HTTP.POST("/v1/chains/search", api.searchChains)
+	authGroup.POST("/chains", api.createChain)
+	authGroup.GET("/chains", api.getChains)
+	authGroup.GET("/chains/:chainid", api.getChain)
+	authGroup.POST("/chains/search", api.searchChains)
 
 	// Chains entries
-	api.HTTP.GET("/v1/chains/:chainid/entries", api.getChainEntries)
-	api.HTTP.POST("/v1/chains/:chainid/entries/search", api.searchChainEntries)
-	api.HTTP.GET("/v1/chains/:chainid/entries/:item", api.getChainFirstOrLastEntry)
+	authGroup.GET("/chains/:chainid/entries", api.getChainEntries)
+	authGroup.POST("/chains/:chainid/entries/search", api.searchChainEntries)
+	authGroup.GET("/chains/:chainid/entries/:item", api.getChainFirstOrLastEntry)
 
 	// Entries
-	api.HTTP.POST("/v1/entries", api.createEntry)
-	api.HTTP.GET("/v1/entries/:entryhash", api.getEntry)
+	authGroup.POST("/entries", api.createEntry)
+	authGroup.GET("/entries/:entryhash", api.getEntry)
 
 	// User
-	api.HTTP.GET("/v1/user", api.getUser)
+	authGroup.GET("/user", api.getUser)
 
 	// Direct factomd call
-	api.HTTP.POST("/v1/factomd/:method", api.factomd)
+	authGroup.POST("/factomd/:method", api.factomd)
 
 	return api
 }
@@ -141,12 +142,26 @@ func (api *API) GetAPIInfo() APIInfo {
 	return api.apiInfo
 }
 
-// Returns API user info
+// getUser godoc
+// @Summary User info
+// @Description Get API user info
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Success 200 {object} api.SuccessResponse
+// @Router /user [get]
 func (api *API) getUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, &api.user)
 }
 
-// Returns API info
+// index godoc
+// @Summary API info
+// @Description Get API version
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Success 200 {object} api.SuccessResponse
+// @Router / [get]
 func (api *API) index(c echo.Context) error {
 	return api.SuccessResponse(api.GetAPIInfo(), c)
 }
@@ -264,6 +279,18 @@ func (api *API) GetPaginationParams(c echo.Context) (int, int, string, error) {
 
 // API functions
 
+// createChain godoc
+// @Summary Create a chain
+// @Description Creates chain on the Factom blockchain
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param extIds formData array true "One or many external ids identifying new chain.<br />**Should be provided as array of base64 strings.**"
+// @Param content formData string false "The content of the first entry of the chain.<br />**Should be provided as base64 string.**"
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains [post]
 func (api *API) createChain(c echo.Context) error {
 
 	// check user limits
@@ -306,6 +333,20 @@ func (api *API) createChain(c echo.Context) error {
 	return api.SuccessResponse(resp, c)
 }
 
+// getChains godoc
+// @Summary Get chains
+// @Description Returns all user's chains
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param start query integer false "Select item you would like to start.<br />E.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.<br />*Default: 0*"
+// @Param limit query integer false "The number of items you would like back in each page.<br />*Default: 30*"
+// @Param status query string false "Filter results by chain's status.<br />One of: **queue**, **processing**, **completed**<br />*By default filtering disabled.*"
+// @Param sort query string false "Sorting order.<br />One of: **asc** or **desc**<br />*Default: desc*"
+// @Success 200 {object} api.SuccessResponsePagination
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains [get]
 func (api *API) getChains(c echo.Context) error {
 
 	chain := &model.Chain{}
@@ -332,6 +373,21 @@ func (api *API) getChains(c echo.Context) error {
 
 }
 
+// searchChains godoc
+// @Summary Search chains
+// @Description Search user's chains by external id(s)
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param extIds formData array true "One or many external IDs, that used for search.<br />**Should be provided as array of base64 strings.**"
+// @Param start query integer false "Select item you would like to start.<br />E.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.<br />*Default: 0*"
+// @Param limit query integer false "The number of items you would like back in each page.<br />*Default: 30*"
+// @Param status query string false "Filter results by chain's status.<br />One of: **queue**, **processing**, **completed**<br />*By default filtering disabled.*"
+// @Param sort query string false "Sorting order.<br />One of: **asc** or **desc**<br />*Default: desc*"
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/search [post]
 func (api *API) searchChains(c echo.Context) error {
 
 	// Open API Chain struct
@@ -363,6 +419,17 @@ func (api *API) searchChains(c echo.Context) error {
 
 }
 
+// getChain godoc
+// @Summary Get chain
+// @Description Returns Factom chain by Chain ID
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId path string true "Chain ID of the Factom chain."
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/{chainId} [get]
 func (api *API) getChain(c echo.Context) error {
 
 	req := &model.Chain{ChainID: c.Param("chainid")}
@@ -383,6 +450,19 @@ func (api *API) getChain(c echo.Context) error {
 
 }
 
+// createEntry godoc
+// @Summary Create an entry
+// @Description Creates entry on the Factom blockchain
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId formData string true "Chain ID of the Factom chain, where to add new entry."
+// @Param extIds formData array false "One or many external ids identifying new chain.<br />**Should be provided as array of base64 strings.**"
+// @Param content formData string false "The content of the new entry of the chain.<br />**Should be provided as base64 string.**"
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /entries [post]
 func (api *API) createEntry(c echo.Context) error {
 
 	// check user limits
@@ -414,6 +494,17 @@ func (api *API) createEntry(c echo.Context) error {
 	return api.SuccessResponse(resp, c)
 }
 
+// getEntry godoc
+// @Summary Get entry
+// @Description Returns Factom entry by EntryHash
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param entryHash path string true "EntryHash of the Factom entry."
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /entries/{entryHash} [get]
 func (api *API) getEntry(c echo.Context) error {
 
 	req := &model.Entry{EntryHash: c.Param("entryhash")}
@@ -434,6 +525,21 @@ func (api *API) getEntry(c echo.Context) error {
 
 }
 
+// getChainEntries godoc
+// @Summary Get chain entries
+// @Description Returns entries of Factom chain
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId path string true "Chain ID of the Factom chain."
+// @Param start query integer false "Select item you would like to start.<br />E.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.<br />*Default: 0*"
+// @Param limit query integer false "The number of items you would like back in each page.<br />*Default: 30*"
+// @Param status query string false "Filter results by chain's status.<br />One of: **queue**, **processing**, **completed**<br />*By default filtering disabled.*"
+// @Param sort query string false "Sorting order.<br />One of: **asc** or **desc**<br />*Default: desc*"
+// @Success 200 {object} api.SuccessResponsePagination
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/{chainId}/entries [get]
 func (api *API) getChainEntries(c echo.Context) error {
 
 	var force bool
@@ -469,6 +575,22 @@ func (api *API) getChainEntries(c echo.Context) error {
 
 }
 
+// searchChainEntries godoc
+// @Summary Search entries of chain
+// @Description Search entries into Factom chain by external id(s)
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId path string true "Chain ID of the Factom chain."
+// @Param extIds formData array true "One or many external IDs, that used for search.<br />**Should be provided as array of base64 strings.**"
+// @Param start query integer false "Select item you would like to start.<br />E.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.<br />*Default: 0*"
+// @Param limit query integer false "The number of items you would like back in each page.<br />*Default: 30*"
+// @Param status query string false "Filter results by chain's status.<br />One of: **queue**, **processing**, **completed**<br />*By default filtering disabled.*"
+// @Param sort query string false "Sorting order.<br />One of: **asc** or **desc**<br />*Default: desc*"
+// @Success 200 {object} api.SuccessResponsePagination
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/{chainId}/entries/search [post]
 func (api *API) searchChainEntries(c echo.Context) error {
 
 	var force bool
@@ -517,6 +639,17 @@ func (api *API) searchChainEntries(c echo.Context) error {
 
 }
 
+// getChainFirstOrLastEntry godoc
+// @Summary Get first entry of the chain
+// @Description Returns first entry of Factom chain
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId path string true "Chain ID of the Factom chain."
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/{chainId}/entries/first [get]
 func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 
 	log.Debug("Validating first/last item")
@@ -553,6 +686,15 @@ func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 
 }
 
+// factomd godoc
+// @Summary Generic factomd
+// @Description Sends direct request to factomd API
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param method path string true "factomd API method"
+// @Param params formData string false "factomd request's params.<br />**Should be provided as JSON string,** e.g. *{'chainid':'XXXX'}*"
+// @Router /factomd/{method} [post]
 func (api *API) factomd(c echo.Context) error {
 
 	var params interface{}
@@ -569,8 +711,6 @@ func (api *API) factomd(c echo.Context) error {
 	if err == nil {
 		params = body
 	}
-
-	log.Info(params)
 
 	request := factom.NewJSON2Request(c.Param("method"), 0, params)
 

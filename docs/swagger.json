@@ -1,0 +1,652 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Open-source REST API for the Factom blockchain.",
+        "title": "Factom Open API",
+        "contact": {
+            "name": "De Facto",
+            "url": "https://de-facto.pro",
+            "email": "team@de-facto.pro"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://github.com/DeFacto-Team/Factom-Open-API/blob/master/LICENSE"
+        },
+        "version": "1.0.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/v1",
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Get API version",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "API info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains": {
+            "get": {
+                "description": "Returns all user's chains",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get chains",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Select item you would like to start.\u003cbr /\u003eE.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.\u003cbr /\u003e*Default: 0*",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of items you would like back in each page.\u003cbr /\u003e*Default: 30*",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter results by chain's status.\u003cbr /\u003eOne of: **queue**, **processing**, **completed**\u003cbr /\u003e*By default filtering disabled.*",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sorting order.\u003cbr /\u003eOne of: **asc** or **desc**\u003cbr /\u003e*Default: desc*",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponsePagination"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates chain on the Factom blockchain",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create a chain",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "description": "One or many external ids identifying new chain.\u003cbr /\u003e**Should be provided as array of base64 strings.**",
+                        "name": "extIds",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The content of the first entry of the chain.\u003cbr /\u003e**Should be provided as base64 string.**",
+                        "name": "content",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains/search": {
+            "post": {
+                "description": "Search user's chains by external id(s)",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Search chains",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "description": "One or many external IDs, that used for search.\u003cbr /\u003e**Should be provided as array of base64 strings.**",
+                        "name": "extIds",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Select item you would like to start.\u003cbr /\u003eE.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.\u003cbr /\u003e*Default: 0*",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of items you would like back in each page.\u003cbr /\u003e*Default: 30*",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter results by chain's status.\u003cbr /\u003eOne of: **queue**, **processing**, **completed**\u003cbr /\u003e*By default filtering disabled.*",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sorting order.\u003cbr /\u003eOne of: **asc** or **desc**\u003cbr /\u003e*Default: desc*",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains/{chainId}": {
+            "get": {
+                "description": "Returns Factom chain by Chain ID",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get chain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain.",
+                        "name": "chainId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains/{chainId}/entries": {
+            "get": {
+                "description": "Returns entries of Factom chain",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get chain entries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain.",
+                        "name": "chainId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Select item you would like to start.\u003cbr /\u003eE.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.\u003cbr /\u003e*Default: 0*",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of items you would like back in each page.\u003cbr /\u003e*Default: 30*",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter results by chain's status.\u003cbr /\u003eOne of: **queue**, **processing**, **completed**\u003cbr /\u003e*By default filtering disabled.*",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sorting order.\u003cbr /\u003eOne of: **asc** or **desc**\u003cbr /\u003e*Default: desc*",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponsePagination"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains/{chainId}/entries/first": {
+            "get": {
+                "description": "Returns first entry of Factom chain",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get first entry of the chain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain.",
+                        "name": "chainId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chains/{chainId}/entries/search": {
+            "post": {
+                "description": "Search entries into Factom chain by external id(s)",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Search entries of chain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain.",
+                        "name": "chainId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "One or many external IDs, that used for search.\u003cbr /\u003e**Should be provided as array of base64 strings.**",
+                        "name": "extIds",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Select item you would like to start.\u003cbr /\u003eE.g. if you've already seen 30 items and want to see next 30, then you will provide **start=30**.\u003cbr /\u003e*Default: 0*",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of items you would like back in each page.\u003cbr /\u003e*Default: 30*",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter results by chain's status.\u003cbr /\u003eOne of: **queue**, **processing**, **completed**\u003cbr /\u003e*By default filtering disabled.*",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sorting order.\u003cbr /\u003eOne of: **asc** or **desc**\u003cbr /\u003e*Default: desc*",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponsePagination"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/entries": {
+            "post": {
+                "description": "Creates entry on the Factom blockchain",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create an entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain, where to add new entry.",
+                        "name": "chainId",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "One or many external ids identifying new chain.\u003cbr /\u003e**Should be provided as array of base64 strings.**",
+                        "name": "extIds",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The content of the new entry of the chain.\u003cbr /\u003e**Should be provided as base64 string.**",
+                        "name": "content",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/entries/{entryHash}": {
+            "get": {
+                "description": "Returns Factom entry by EntryHash",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "EntryHash of the Factom entry.",
+                        "name": "entryHash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/factomd/{method}": {
+            "post": {
+                "description": "Sends direct request to factomd API",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Generic factomd",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "factomd API method",
+                        "name": "method",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "factomd request's params.\u003cbr /\u003e**Should be provided as JSON string,** e.g. *{'chainid':'XXXX'}*",
+                        "name": "params",
+                        "in": "formData"
+                    }
+                ]
+            }
+        },
+        "/user": {
+            "get": {
+                "description": "Get API user info",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "User info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "api.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "result": {
+                    "type": "object"
+                }
+            }
+        },
+        "api.SuccessResponsePagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "result": {
+                    "type": "object"
+                },
+                "start": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}
