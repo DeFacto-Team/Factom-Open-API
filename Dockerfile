@@ -27,6 +27,7 @@ WORKDIR /home/app
 COPY --from=builder /go/bin/factom-open-api /go/bin/user ./
 COPY ./entrypoint.sh ./entrypoint.sh
 COPY ./migrations ./migrations
+COPY ./docs/swagger.json ./docs/swagger.json
 
 RUN \
   mkdir ./values && \
