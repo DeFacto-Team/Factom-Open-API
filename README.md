@@ -14,6 +14,11 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
 * 🛠 Install with binaries (guide under development)
 
+## Clients
+* <a href="https://github.com/DeFacto-Team/Factom-Open-API-PHP" target="_blank">PHP</a>
+* Golang (under development)
+* JS (under development)
+
 ## User management app (temporarily)
 
 For access & work with Factom Open API you need to create user(s).
