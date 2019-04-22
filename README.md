@@ -1,4 +1,14 @@
 # Factom Open API
+Factom Open API is lightweight REST API for Factom blockchain. It connects to existing factomd node and has a built-in Factom wallet, so you don't need to run separate instance for signing data before writing it on the Factom blockchain.
+
+## Main features
+* **Instant start:** use Open API immediately after installation without long syncing data from the blockchain
+* **Write data** on the blockchain at **fixed predictable cost** (**$1 for 1,000 entries** of 1 KB)
+* **BaaS-ready:** user-based API access, counting usage, limits
+* **Easy read chains & entries** from the blockchain
+* **Search chains & entries** by tags (external IDs)
+* **Pagination, sorting, filtering** results with query params
+* **Generic factomd interface:** send direct requests to factomd API via special REST path
 
 ## Installation guides (developer release)
 * 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Run in Docker</a>
