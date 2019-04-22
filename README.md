@@ -1,5 +1,5 @@
 # Factom Open API
-Factom Open API is lightweight REST API for Factom blockchain. It connects to existing factomd node and has a built-in Factom wallet, so you don't need to run separate instance for signing data before writing it on the Factom blockchain.
+Factom Open API is a lightweight REST API for Factom blockchain. It connects to existing factomd node and has a built-in Factom wallet, so you don't need to run separate instance for signing data before writing it on the Factom blockchain.
 
 ## Main features
 * **Instant start:** use Open API immediately after installation without long syncing data from the blockchain
