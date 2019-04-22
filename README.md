@@ -10,11 +10,11 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Pagination, sorting, filtering** results with query params
 * **Generic factomd interface:** send direct requests to factomd API via special REST path
 
-## Installation guides (developer release)
-* 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Run in Docker</a>
-* 🛠 Use binaries (guide is not ready yet)
+## Installation guides
+* 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
+* 🛠 Install with binaries (guide under development)
 
-## User management app
+## User management app (temporarily)
 
 For access & work with Factom Open API you need to create user(s).
 In the next version the user management will be possible via admin endpoint and Web UI, but for current release we developed the admin binary.
