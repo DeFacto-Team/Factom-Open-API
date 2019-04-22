@@ -5,7 +5,7 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Instant start:** use Open API immediately after installation without long syncing data from the blockchain
 * **Write data** on the blockchain at **fixed predictable cost** (**$1 for 1,000 entries** of 1 KB)
 * **BaaS-ready:** user-based API access, counting usage, limits
-* **Easy read chains & entries** from the blockchain
+* **Read chains & entries** from the blockchain easily
 * **Search chains & entries** by tags (external IDs)
 * **Pagination, sorting, filtering** results with query params
 * **Generic factomd interface:** send direct requests to factomd API via special REST path
