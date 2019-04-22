@@ -12,7 +12,7 @@ In the next version the user management will be possible via admin endpoint and 
 ### You run Factom Open API as 🐳 Docker container
 The binary is embedded into Open API container, so you can run it via terminal:
 ```bash
-docker exec -ti factom-open-api ./user create anton
+docker exec -ti factom-open-api ./user -c=/home/app/values/config.yaml create anton
 ```
 You will see access key into terminal.
 By default, new users **are enabled** and **have no writes limit**.
