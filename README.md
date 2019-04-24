@@ -28,7 +28,7 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Generic**
   * <a href="https://docs.openapi.de-facto.pro/factomd/factomd-method" target="_blank">POST /factomd/:method</a> – *Generic factomd interface*
 * **Info**
-  * <a href="https://docs.openapi.de-facto.pro/" target="_blank">GET /user</a> – *Get user info*
+  * <a href="https://docs.openapi.de-facto.pro/user/get-user" target="_blank">GET /user</a> – *Get user info*
   * <a href="https://docs.openapi.de-facto.pro/api/api-info" target="_blank">GET /</a> – *Get API info*
 
 ### Documentation
