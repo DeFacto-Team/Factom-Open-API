@@ -32,7 +32,7 @@ In this way, API user may create chains (giving them ExtIDs) and then search for
   * <a href="https://docs.openapi.de-facto.pro/chains/create-chain" target="_blank">POST /chains</a> – *Create chain*
   * <a href="https://docs.openapi.de-facto.pro/chains/get-chains" target="_blank">GET /chains</a> – *Get user's chains*
   * <a href="https://docs.openapi.de-facto.pro/chains/search-chains" target="_blank">POST /chains/search</a> – *Search user's chains by ExtIDs*
-  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain" target="_blank">GET /chains/:chainId</a> – *Get chains by ChainID*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain" target="_blank">GET /chains/:chainId</a> – *Get chain by ChainID*
   * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-entries" target="_blank">GET /chains/:chainId/entries</a> – *Get chain entries*
   * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-first-entry" target="_blank">GET /chains/:chainId/entries/first</a> – *Get first entry of chain*
   * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-last-entry" target="_blank">GET /chains/:chainId/entries/last</a> – *Get last entry of chain*
