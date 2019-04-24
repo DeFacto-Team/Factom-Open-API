@@ -10,6 +10,17 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Pagination, sorting, filtering** results with query params
 * **Generic factomd interface:** all factomd API requests are supported via special REST path
 
+## Design
+### Fetching updates
+Factom Open API does not store *all chains* of Factom blockchain into local database. Instead, when you start working with a chain using any request (get entry of chain, get chain info, write entry into chain and etc.), the chain is being fetched from Factom into background.
+<br /><br />
+All fetched chains are stored into local DB and being updated automatically (i.e. new entries of this chains will be fetched automatically) in the minute 0-1 of the each block.
+<br /><br />
+**This allows to start using Open API immediately after install without long syncing with Factom blockchain,** but the other side of this approach is that you can not use Open API for specific applications, which require to store all chains, blocks and entries – e.g. Explorer.
+### User's chains
+The great advantage of Factom Open API is binding chains to API users. This binding is stored locally into Open API database. As Open API stores locally only chains with that API users work with, it's possible to show users only *their chains* – not only chains that API user created, but all chains, that user worked with (write, read or search).<br /><br />
+In this way, API user may create chains (giving them ExtIDs) and then search for them by ExtIDs **without worrying about possible existence of other chains with the same ExtID(s)** on the whole blockchain.
+
 ## API Reference
 
 ### Documentation
@@ -46,8 +57,7 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 
 ## User management app (temporarily)
 
-For access & work with Factom Open API you need to create user(s).
-In the next version the user management will be possible via admin endpoint and Web UI, but for current release we developed the admin binary.
+To access and work with Factom Open API, you must first create a user with the embedded admin binary. The next version will feature an admin endpoint and Web UI for user management.
 
 ### You run Factom Open API as 🐳 Docker container
 The binary is embedded into Open API container, so you can run it via terminal:
