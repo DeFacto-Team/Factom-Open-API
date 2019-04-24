@@ -12,6 +12,10 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 
 ## API Reference
 
+### Documentation
+* Documentation on Gitbook: https://docs.openapi.de-facto.pro
+* Built-in Swagger specification: `http://<factom_open_api_server_ip_and_port>/docs/index.html`
+
 ### Methods
 * **Chains**
   * <a href="https://docs.openapi.de-facto.pro/chains/create-chain" target="_blank">POST /chains</a> – *Create chain*
@@ -30,10 +34,6 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Info**
   * <a href="https://docs.openapi.de-facto.pro/user/get-user" target="_blank">GET /user</a> – *Get user info*
   * <a href="https://docs.openapi.de-facto.pro/api/api-info" target="_blank">GET /</a> – *Get API info*
-
-### Documentation
-* Documentation on Gitbook: https://docs.openapi.de-facto.pro
-* Built-in Swagger specification: `http://<factom_open_api_server_ip_and_port>/docs/index.html`
 
 ## Installation guides
 * 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
