@@ -5,10 +5,35 @@ Factom Open API is a lightweight REST API for Factom blockchain. It connects to 
 * **Instant start:** use Open API immediately after installation without long syncing data from the blockchain
 * **Write data** on the blockchain at **fixed predictable cost** (**$1 for 1,000 entries** of 1 KB)
 * **BaaS-ready:** user-based API access, counting usage, limits
-* **Read chains & entries** from the blockchain easily
+* **Read all chain entries at once**: using single request (no need to read all entry blocks one by one)
 * **Search chains & entries** by tags (external IDs)
 * **Pagination, sorting, filtering** results with query params
-* **Generic factomd interface:** send direct requests to factomd API via special REST path
+* **Generic factomd interface:** all factomd API requests are supported via special REST path
+
+## API Reference
+
+### Methods
+* **Chains**
+  * <a href="https://docs.openapi.de-facto.pro/chains/create-chain" target="_blank">POST /chains</a> – *Create chain*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chains" target="_blank">GET /chains</a> – *Get user's chains*
+  * <a href="https://docs.openapi.de-facto.pro/chains/search-chains" target="_blank">POST /chains/search</a> – *Search user's chains by ExtIDs*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain" target="_blank">GET /chains/:chainId</a> – *Get chains by ChainID*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-entries" target="_blank">GET /chains/:chainId/entries</a> – *Get chain entries*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-first-entry" target="_blank">GET /chains/:chainId/entries/first</a> – *Get first entry of chain*
+  * <a href="https://docs.openapi.de-facto.pro/chains/get-chain-last-entry" target="_blank">GET /chains/:chainId/entries/last</a> – *Get last entry of chain*
+  * <a href="https://docs.openapi.de-facto.pro/chains/search-chain-entries" target="_blank">POST /chains/:chainId/entries/search</a> – *Search entries in chain by ExtIDs*
+* **Entries**
+  * <a href="https://docs.openapi.de-facto.pro/entries/create-entry" target="_blank">POST /entries</a> – *Create entry in chain*
+  * <a href="https://docs.openapi.de-facto.pro/entries/get-entry" target="_blank">GET /entries/:entryHash</a> – *Get entry by EntryHash*
+* **Generic**
+  * <a href="https://docs.openapi.de-facto.pro/factomd/factomd-method" target="_blank">POST /factomd/:method</a> – *Generic factomd interface*
+* **Info**
+  * <a href="https://docs.openapi.de-facto.pro/" target="_blank">GET /user</a> – *Get user info*
+  * <a href="https://docs.openapi.de-facto.pro/api/api-info" target="_blank">GET /</a> – *Get API info*
+
+### Documentation
+* Documentation on Gitbook: https://docs.openapi.de-facto.pro
+* Built-in Swagger specification: `http://<factom_open_api_server_ip_and_port>/docs/index.html`
 
 ## Installation guides
 * 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
