@@ -58,7 +58,7 @@ type SuccessResponsePagination struct {
 }
 
 const (
-	Version                = "1.0.0-rc2"
+	Version                = "1.0.0"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"

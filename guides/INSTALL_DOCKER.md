@@ -52,14 +52,14 @@ nano ~/.foa/config.yaml
 ## Step 3: Run Open API container
 If you use Postgres DB as Docker container, use the following command with `--link` flag:
 ```bash
-docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/home/app/values defactoteam/factom-open-api:1.0.0-rc2
+docker run -d -p 8081:8081 --name factom-open-api --link foa-db -v ~/.foa:/home/app/values defactoteam/factom-open-api:1.0.0
 ```
 
 If you do not use Postgres DB as Docker container, use the following command without `--link` flag:
 ```bash
-docker run -d -p 8081:8081 --name factom-open-api -v ~/.foa:/home/app/values defactoteam/factom-open-api:1.0.0-rc2
+docker run -d -p 8081:8081 --name factom-open-api -v ~/.foa:/home/app/values defactoteam/factom-open-api:1.0.0
 ```
 
 1. If you changed API HTTP port into config, don't forget to edit `-p 8081:8081`.
 2. Check the path to config file and edit it, if you use another path, than suggested in this guide (i.e. not `~/.foa`)
-3. Don't use `latest` tag for docker image, it's better to install specific releases. Latest release: `1.0.0-rc2`.
+3. Don't use `latest` tag for docker image, it's better to install specific releases. Latest release: `1.0.0`.

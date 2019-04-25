@@ -42,7 +42,7 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 ## Installation guides
 
 - 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
-- 🛠 Install with binaries (guide under development)
+- 🛠 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_BINARY.md">Install with binaries</a>
 
 ## Clients
 
@@ -106,6 +106,47 @@ docker exec -ti factom-open-api ./user -c=/home/app/values/config.yaml ls
 
 # show help
 docker exec -ti factom-open-api ./user -c=/home/app/values/config.yaml help
+```
+
+### You run Factom Open API as binaries
+
+*By default `user` binary uses the same config as Open API binary (`<USER_FOLDER>/.foa/config.yaml`). If you use custom location for config file, please don't forget to provide it with `-c` flag in addition to all commands below.*
+
+Go to the directory with `user` binary and run it via terminal:
+
+```bash
+./user create anton
+```
+
+You will see an access key in the terminal.
+By default, new users **are enabled** and **have no write limit**.
+
+You can manage users with additional binary commands:
+
+```bash
+# create user `anton` and generate API access key
+./user create anton
+
+# disable access to API for user `anton`
+./user disable anton
+
+# enable access to API for user `anton`
+./user enable anton
+
+# delete user `anton`
+./user delete anton
+
+# rotate API access key for user `anton`
+./user rotate-key anton
+
+# set writes limit for user `anton` to `1000` // 0 for unlimited
+./user set-limit anton 1000
+
+# show users, API keys & params
+./user ls
+
+# show help
+./user help
 ```
 
 ## License
