@@ -107,3 +107,6 @@ docker exec -ti factom-open-api ./user -c=/home/app/values/config.yaml ls
 # show help
 docker exec -ti factom-open-api ./user -c=/home/app/values/config.yaml help
 ```
+
+## License
+Factom Open API is released under the MIT License.
