@@ -12,21 +12,6 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 - **Pagination, sorting, filtering** results with query params
 - **Generic factomd interface:** all factomd API requests are supported via special REST path
 
-## Design
-
-### Fetching updates
-
-Factom Open API does not store _all chains_ of the Factom blockchain in its local database. Instead, when you start working with a chain using any request (get entry of chain, get chain info, write entry into chain, etc...), the chain is fetched from Factom in the background.
-<br /><br />
-All fetched chains are stored in the local DB, and new entries are added automatically in minute 0-1 of each block.
-<br /><br />
-**This allows Factom Open API to be used immediately after installing without a long syncing period with Factom blockchain.** It is not designed for applications which require _all_ chains, blocks and entries - e.g. a Factom Explorer.
-
-### User's chains
-
-A great advantage of Factom Open API is binding chains to API users. This binding is stored locally in the Open API database. It's possible to show users _their chains_, including ones the user created and all chains that the user has worked with (write, read or search).<br /><br />
-This way an API user may create chains (giving them ExtIDs) and then search for them by ExtIDs **without worrying about possible existence of other chains with the same ExtID(s)** on the whole blockchain.
-
 ## API Reference
 
 ### Documentation
@@ -53,6 +38,21 @@ This way an API user may create chains (giving them ExtIDs) and then search for 
 - **Info**
   - <a href="https://docs.openapi.de-facto.pro/user/get-user" target="_blank">GET /user</a> – _Get user info_
   - <a href="https://docs.openapi.de-facto.pro/api/api-info" target="_blank">GET /</a> – _Get API info_
+
+## Design
+
+### Fetching updates
+
+Factom Open API does not store _all chains_ of the Factom blockchain in its local database. Instead, when you start working with a chain using any request (get entry of chain, get chain info, write entry into chain, etc...), the chain is fetched from Factom in the background.
+<br /><br />
+All fetched chains are stored in the local DB, and new entries are added automatically in minute 0-1 of each block.
+<br /><br />
+**This allows Factom Open API to be used immediately after installing without a long syncing period with Factom blockchain.** It is not designed for applications which require _all_ chains, blocks and entries - e.g. a Factom Explorer.
+
+### User's chains
+
+A great advantage of Factom Open API is binding chains to API users. This binding is stored locally in the Open API database. It's possible to show users _their chains_, including ones the user created and all chains that the user has worked with (write, read or search).<br /><br />
+This way API users may search their specific chains by External ID(s) instead of searching the entire blockchain.
 
 ## Installation guides
 
