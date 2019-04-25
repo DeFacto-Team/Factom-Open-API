@@ -39,6 +39,17 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
   - <a href="https://docs.openapi.de-facto.pro/user/get-user" target="_blank">GET /user</a> – _Get user info_
   - <a href="https://docs.openapi.de-facto.pro/api/api-info" target="_blank">GET /</a> – _Get API info_
 
+## Installation guides
+
+- 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
+- 🛠 Install with binaries (guide under development)
+
+## Clients
+
+- <a href="https://github.com/DeFacto-Team/Factom-Open-API-PHP" target="_blank">PHP</a>
+- Golang (under development)
+- JS (under development)
+
 ## Design
 
 ### Fetching updates
@@ -53,17 +64,6 @@ All fetched chains are stored in the local DB, and new entries are added automat
 
 A great advantage of Factom Open API is binding chains to API users. This binding is stored locally in the Open API database. It's possible to show users _their chains_, including ones the user created and all chains that the user has worked with (write, read or search).<br /><br />
 This way API users may search their specific chains by External ID(s) instead of searching the entire blockchain.
-
-## Installation guides
-
-- 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
-- 🛠 Install with binaries (guide under development)
-
-## Clients
-
-- <a href="https://github.com/DeFacto-Team/Factom-Open-API-PHP" target="_blank">PHP</a>
-- Golang (under development)
-- JS (under development)
 
 ## User management app (temporary)
 
