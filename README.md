@@ -48,7 +48,7 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 
 - <a href="https://github.com/DeFacto-Team/Factom-Open-API-PHP" target="_blank">PHP</a>
 
-## Swagger auto-generated clients (beta)
+### Swagger auto-generated clients (beta)
 Factom Open API follows Swagger 2.0 specification.<br />
 Auto-generated clients:
 - <a href="https://github.com/DeFacto-Team/FOA-Swagger-python" target="_blank">Python</a>
