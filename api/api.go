@@ -150,6 +150,7 @@ func (api *API) GetAPIInfo() APIInfo {
 // @Produce json
 // @Success 200 {object} api.SuccessResponse
 // @Router /user [get]
+// @Security ApiKeyAuth
 func (api *API) getUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, &api.user)
 }
@@ -291,6 +292,7 @@ func (api *API) GetPaginationParams(c echo.Context) (int, int, string, error) {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains [post]
+// @Security ApiKeyAuth
 func (api *API) createChain(c echo.Context) error {
 
 	// check user limits
@@ -347,6 +349,7 @@ func (api *API) createChain(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains [get]
+// @Security ApiKeyAuth
 func (api *API) getChains(c echo.Context) error {
 
 	chain := &model.Chain{}
@@ -388,6 +391,7 @@ func (api *API) getChains(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains/search [post]
+// @Security ApiKeyAuth
 func (api *API) searchChains(c echo.Context) error {
 
 	// Open API Chain struct
@@ -430,6 +434,7 @@ func (api *API) searchChains(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains/{chainId} [get]
+// @Security ApiKeyAuth
 func (api *API) getChain(c echo.Context) error {
 
 	req := &model.Chain{ChainID: c.Param("chainid")}
@@ -463,6 +468,7 @@ func (api *API) getChain(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /entries [post]
+// @Security ApiKeyAuth
 func (api *API) createEntry(c echo.Context) error {
 
 	// check user limits
@@ -505,6 +511,7 @@ func (api *API) createEntry(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /entries/{entryHash} [get]
+// @Security ApiKeyAuth
 func (api *API) getEntry(c echo.Context) error {
 
 	req := &model.Entry{EntryHash: c.Param("entryhash")}
@@ -540,6 +547,7 @@ func (api *API) getEntry(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains/{chainId}/entries [get]
+// @Security ApiKeyAuth
 func (api *API) getChainEntries(c echo.Context) error {
 
 	var force bool
@@ -591,6 +599,7 @@ func (api *API) getChainEntries(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains/{chainId}/entries/search [post]
+// @Security ApiKeyAuth
 func (api *API) searchChainEntries(c echo.Context) error {
 
 	var force bool
@@ -639,7 +648,7 @@ func (api *API) searchChainEntries(c echo.Context) error {
 
 }
 
-// getChainFirstOrLastEntry godoc
+// getChainFirstEntry godoc
 // @Summary Get first entry of the chain
 // @Description Returns first entry of Factom chain
 // @Accept x-www-form-urlencoded
@@ -650,6 +659,7 @@ func (api *API) searchChainEntries(c echo.Context) error {
 // @Failure 400 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Router /chains/{chainId}/entries/first [get]
+// @Security ApiKeyAuth
 func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 
 	log.Debug("Validating first/last item")
@@ -686,6 +696,20 @@ func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 
 }
 
+// getChainLastEntry godoc
+// @Summary Get last entry of the chain
+// @Description Returns last entry of Factom chain
+// @Accept x-www-form-urlencoded
+// @Accept json
+// @Produce json
+// @Param chainId path string true "Chain ID of the Factom chain."
+// @Success 200 {object} api.SuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /chains/{chainId}/entries/last [get]
+// @Security ApiKeyAuth
+func _() {}
+
 // factomd godoc
 // @Summary Generic factomd
 // @Description Sends direct request to factomd API
@@ -695,6 +719,7 @@ func (api *API) getChainFirstOrLastEntry(c echo.Context) error {
 // @Param method path string true "factomd API method"
 // @Param params formData string false "factomd request's params.<br />**Should be provided as JSON string,** e.g. *{'chainid':'XXXX'}*"
 // @Router /factomd/{method} [post]
+// @Security ApiKeyAuth
 func (api *API) factomd(c echo.Context) error {
 
 	var params interface{}

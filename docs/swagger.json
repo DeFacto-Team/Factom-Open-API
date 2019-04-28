@@ -41,6 +41,11 @@
         },
         "/chains": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Returns all user's chains",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -101,6 +106,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates chain on the Factom blockchain",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -152,6 +162,11 @@
         },
         "/chains/search": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Search user's chains by external id(s)",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -221,6 +236,11 @@
         },
         "/chains/{chainId}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Returns Factom chain by Chain ID",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -266,6 +286,11 @@
         },
         "/chains/{chainId}/entries": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Returns entries of Factom chain",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -335,6 +360,11 @@
         },
         "/chains/{chainId}/entries/first": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Returns first entry of Factom chain",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -378,8 +408,63 @@
                 }
             }
         },
+        "/chains/{chainId}/entries/last": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns last entry of Factom chain",
+                "consumes": [
+                    "application/x-www-form-urlencoded",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get last entry of the chain",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chain ID of the Factom chain.",
+                        "name": "chainId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/chains/{chainId}/entries/search": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Search entries into Factom chain by external id(s)",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -456,6 +541,11 @@
         },
         "/entries": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Creates entry on the Factom blockchain",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -513,6 +603,11 @@
         },
         "/entries/{entryHash}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Returns Factom entry by EntryHash",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -558,6 +653,11 @@
         },
         "/factomd/{method}": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Sends direct request to factomd API",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -586,6 +686,11 @@
         },
         "/user": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get API user info",
                 "consumes": [
                     "application/x-www-form-urlencoded",
@@ -647,6 +752,13 @@
                     "type": "integer"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

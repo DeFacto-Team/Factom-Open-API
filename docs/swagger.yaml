@@ -100,6 +100,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get chains
     post:
       consumes:
@@ -136,6 +138,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Create a chain
   /chains/{chainId}:
     get:
@@ -167,6 +171,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get chain
   /chains/{chainId}/entries:
     get:
@@ -219,6 +225,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get chain entries
   /chains/{chainId}/entries/first:
     get:
@@ -250,7 +258,42 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get first entry of the chain
+  /chains/{chainId}/entries/last:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+      description: Returns last entry of Factom chain
+      parameters:
+      - description: Chain ID of the Factom chain.
+        in: path
+        name: chainId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SuccessResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get last entry of the chain
   /chains/{chainId}/entries/search:
     post:
       consumes:
@@ -308,6 +351,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Search entries of chain
   /chains/search:
     post:
@@ -361,6 +406,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Search chains
   /entries:
     post:
@@ -402,6 +449,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Create an entry
   /entries/{entryHash}:
     get:
@@ -433,6 +482,8 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get entry
   /factomd/{method}:
     post:
@@ -453,6 +504,8 @@ paths:
         type: string
       produces:
       - application/json
+      security:
+      - ApiKeyAuth: []
       summary: Generic factomd
   /user:
     get:
@@ -468,5 +521,12 @@ paths:
           schema:
             $ref: '#/definitions/api.SuccessResponse'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: User info
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

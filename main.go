@@ -40,6 +40,8 @@ const (
 // @BasePath /v1
 
 // @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 
 	var err error
