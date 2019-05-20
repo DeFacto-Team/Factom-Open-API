@@ -740,12 +740,13 @@ func (api *API) factomd(c echo.Context) error {
 	request := factom.NewJSON2Request(c.Param("method"), 0, params)
 
 	resp, err := factom.SendFactomdRequest(request)
+
 	if err != nil {
-		return api.ErrorResponse(errors.New(resp.Error.Code, err), c)
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
 	if resp.Error != nil {
-		return api.ErrorResponse(errors.New(resp.Error.Code, err), c)
+		return api.ErrorResponse(errors.New(resp.Error.Code, resp.Error), c)
 	}
 
 	return api.SuccessResponse(resp.Result, c)
