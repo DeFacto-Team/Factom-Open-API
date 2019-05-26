@@ -76,7 +76,6 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	api.HTTP = echo.New()
 	api.apiInfo.Version = Version
-	api.HTTP.HideBanner = true
 	api.HTTP.Pre(middleware.RemoveTrailingSlash())
 
 	if conf.API.Logging {
@@ -85,6 +84,9 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 		}))
 		api.apiInfo.MW = append(api.apiInfo.MW, "Logger")
 	}
+
+	api.HTTP.Use(middleware.Recover())
+	api.apiInfo.MW = append(api.apiInfo.MW, "Recover")
 
 	authGroup := api.HTTP.Group("/v1")
 	authGroup.Use(middleware.KeyAuth(func(key string, c echo.Context) (bool, error) {
