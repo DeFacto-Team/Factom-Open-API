@@ -26,7 +26,7 @@ func NewWallet(conf *config.Config) (Wallet, error) {
 	// setup EC pub-priv keypair from Es address
 	ECAddress, err := factom.GetECAddress(conf.Factom.EsAddress)
 	if err != nil {
-		return nil, fmt.Errorf("INVALID Es address set in config: %s", conf.Factom.EsAddress)
+		return nil, fmt.Errorf("Invalid Es address set in config %s", conf.Factom.EsAddress)
 	} else {
 		balance, _ := factom.GetECBalance(ECAddress.PubString())
 		log.Info("Using EC address: ", ECAddress, ", balance=", balance)

@@ -7,12 +7,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/errors"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 	"github.com/DeFacto-Team/Factom-Open-API/service"
+	"github.com/DeFacto-Team/Factom-Open-API/webpack"
 	"github.com/FactomProject/factom"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +35,7 @@ type API struct {
 
 type APIInfo struct {
 	Version string   `json:"version"`
+	Port    int      `json:"-"`
 	MW      []string `json:"-"`
 }
 
@@ -57,13 +61,34 @@ type SuccessResponsePagination struct {
 	Total  *int        `json:"total"`
 }
 
+type ViewData struct {
+	assetsMapper webpack.AssetsMapper
+}
+
 const (
-	Version                = "1.0.0"
+	Version                = "1.1.0"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
 	AlternativeSort        = "asc"
 )
+
+// NewViewData creates new data for the view
+func NewViewData(buildPath string) (ViewData, error) {
+	assetsMapper, err := webpack.NewAssetsMapper(buildPath)
+	if err != nil {
+		return ViewData{}, err
+	}
+
+	return ViewData{
+		assetsMapper: assetsMapper,
+	}, nil
+}
+
+// Webpack maps file name to path
+func (d ViewData) Webpack(file string) string {
+	return d.assetsMapper(file)
+}
 
 func NewAPI(conf *config.Config, s service.Service) *API {
 
@@ -75,7 +100,10 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	api.service = s
 
 	api.HTTP = echo.New()
+	api.HTTP.HideBanner = true
+	api.HTTP.HidePort = true
 	api.apiInfo.Version = Version
+	api.apiInfo.Port = api.conf.API.HTTPPort
 	api.HTTP.Pre(middleware.RemoveTrailingSlash())
 
 	if conf.API.Logging {
@@ -99,8 +127,23 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 		log.Error(err)
 		return false, err
 	}))
-
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
+
+	adminGroup := api.HTTP.Group("/admin")
+	adminGroup.Use(middleware.JWT([]byte("secret")))
+	api.apiInfo.MW = append(api.apiInfo.MW, "JWT")
+
+	// Login endpoint
+	api.HTTP.POST("/login", api.login)
+
+	// Admin UI
+	api.HTTP.File("/", "ui/build/index.html")
+	api.HTTP.File("/manifest.json", "ui/build/manifest.json")
+	api.HTTP.File("/favicon.ico", "ui/build/favicon.ico")
+	api.HTTP.Static("/static", "ui/build/static")
+
+	// Admin endpoints
+	adminGroup.GET("", api.adminIndex)
 
 	// Status
 	api.HTTP.GET("/v1", api.index)
@@ -139,9 +182,47 @@ func (api *API) Start() error {
 	return api.HTTP.Start(":" + strconv.Itoa(api.conf.API.HTTPPort))
 }
 
+// Stop API server
+func (api *API) Stop() error {
+	return api.HTTP.Close()
+}
+
 // Returns API information
 func (api *API) GetAPIInfo() APIInfo {
 	return api.apiInfo
+}
+
+func (api *API) login(c echo.Context) error {
+	user := c.FormValue("user")
+	password := c.FormValue("password")
+
+	log.Info(user)
+	log.Info(password)
+
+	// Check admin auth
+	if user == api.conf.Admin.User && password == api.conf.Admin.Password {
+
+		// Create token
+		token := jwt.New(jwt.SigningMethodHS256)
+
+		// Set claims
+		claims := token.Claims.(jwt.MapClaims)
+		claims["admin"] = true
+		claims["exp"] = time.Now().Add(time.Hour).Unix()
+
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString([]byte("secret"))
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, map[string]string{
+			"token": t,
+		})
+	}
+
+	return echo.ErrUnauthorized
+
 }
 
 // getUser godoc
@@ -154,6 +235,7 @@ func (api *API) GetAPIInfo() APIInfo {
 // @Router /user [get]
 // @Security ApiKeyAuth
 func (api *API) getUser(c echo.Context) error {
+	api.Stop()
 	return c.JSON(http.StatusOK, &api.user)
 }
 
@@ -770,4 +852,8 @@ func bodyToJSON(c echo.Context) (map[string]interface{}, error) {
 	}
 
 	return body, nil
+}
+
+func (api *API) adminIndex(c echo.Context) error {
+	return api.SuccessResponse(api.GetAPIInfo(), c)
 }
