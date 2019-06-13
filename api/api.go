@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -25,12 +26,13 @@ import (
 )
 
 type API struct {
-	HTTP     *echo.Echo
-	conf     *config.Config
-	service  service.Service
-	apiInfo  APIInfo
-	validate *validator.Validate
-	user     *model.User
+	HTTP      *echo.Echo
+	conf      *config.Config
+	service   service.Service
+	apiInfo   APIInfo
+	validate  *validator.Validate
+	user      *model.User
+	jwtSecret []byte
 }
 
 type APIInfo struct {
@@ -130,7 +132,8 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	api.apiInfo.MW = append(api.apiInfo.MW, "KeyAuth")
 
 	adminGroup := api.HTTP.Group("/admin")
-	adminGroup.Use(middleware.JWT([]byte("secret")))
+	api.jwtSecret = generateJWTSecret()
+	adminGroup.Use(middleware.JWT(api.jwtSecret))
 	api.apiInfo.MW = append(api.apiInfo.MW, "JWT")
 
 	// Login endpoint
@@ -196,9 +199,6 @@ func (api *API) login(c echo.Context) error {
 	user := c.FormValue("user")
 	password := c.FormValue("password")
 
-	log.Info(user)
-	log.Info(password)
-
 	// Check admin auth
 	if user == api.conf.Admin.User && password == api.conf.Admin.Password {
 
@@ -211,7 +211,7 @@ func (api *API) login(c echo.Context) error {
 		claims["exp"] = time.Now().Add(time.Hour).Unix()
 
 		// Generate encoded token and send it as response.
-		t, err := token.SignedString([]byte("secret"))
+		t, err := token.SignedString(api.jwtSecret)
 		if err != nil {
 			return err
 		}
@@ -852,6 +852,16 @@ func bodyToJSON(c echo.Context) (map[string]interface{}, error) {
 	}
 
 	return body, nil
+}
+
+func generateJWTSecret() []byte {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+	b := make([]rune, 128)
+	rand.Seed(time.Now().UnixNano())
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return []byte(string((b)))
 }
 
 func (api *API) adminIndex(c echo.Context) error {
