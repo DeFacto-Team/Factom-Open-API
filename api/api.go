@@ -133,7 +133,10 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	adminGroup := api.HTTP.Group("/admin")
 	api.jwtSecret = generateJWTSecret()
-	adminGroup.Use(middleware.JWT(api.jwtSecret))
+	adminGroup.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:  api.jwtSecret,
+		TokenLookup: "cookie:token",
+	}))
 	api.apiInfo.MW = append(api.apiInfo.MW, "JWT")
 
 	// Login endpoint
@@ -147,6 +150,7 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	// Admin endpoints
 	adminGroup.GET("", api.adminIndex)
+	adminGroup.GET("/logout", api.logout)
 
 	// Status
 	api.HTTP.GET("/v1", api.index)
@@ -208,7 +212,7 @@ func (api *API) login(c echo.Context) error {
 		// Set claims
 		claims := token.Claims.(jwt.MapClaims)
 		claims["admin"] = true
-		claims["exp"] = time.Now().Add(time.Hour).Unix()
+		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
 		// Generate encoded token and send it as response.
 		t, err := token.SignedString(api.jwtSecret)
@@ -216,12 +220,24 @@ func (api *API) login(c echo.Context) error {
 			return err
 		}
 
+		writeCookie(c, t)
+
 		return c.JSON(http.StatusOK, map[string]string{
 			"token": t,
 		})
 	}
 
 	return echo.ErrUnauthorized
+
+}
+
+func (api *API) logout(c echo.Context) error {
+
+	deleteCookie(c)
+
+	return c.JSON(http.StatusOK, map[string]bool{
+		"ok": true,
+	})
 
 }
 
@@ -862,6 +878,26 @@ func generateJWTSecret() []byte {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return []byte(string((b)))
+}
+
+func writeCookie(c echo.Context, token string) error {
+	cookie := new(http.Cookie)
+	cookie.Path = "/"
+	cookie.Name = "token"
+	cookie.Value = token
+	cookie.Expires = time.Now().Add(time.Hour)
+	c.SetCookie(cookie)
+	return nil
+}
+
+func deleteCookie(c echo.Context) error {
+	cookie := new(http.Cookie)
+	cookie.Path = "/"
+	cookie.Name = "token"
+	cookie.Value = ""
+	cookie.Expires = time.Now().Add(-1 * time.Hour)
+	c.SetCookie(cookie)
+	return nil
 }
 
 func (api *API) adminIndex(c echo.Context) error {
