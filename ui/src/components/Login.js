@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+
 import { Menu, Icon, Layout, Button, Form, Input, Typography } from 'antd';
 import Logo from './common/Logo';
 import Version from './common/Version';
@@ -23,27 +25,16 @@ const Login = props => {
         const form = event.target;
         const data = new FormData(form);
         
-        fetch(process.env.REACT_APP_API_PATH + '/login', {
-            method: 'POST',
-            body: data,
+        axios.post('/login', data)
+        .then(function (response) {
+            setLoginError(null);
+            props.setLoggedIn(true);
         })
-        .then(res => res.json())
-        .then(
-            (result) => {
-                if (result.token) {
-                    setLoginError(null);
-                    props.setLoggedIn(true);
-                }
-                else {
-                    setLoginError("Invalid credentials");
-                    setIsSubmitting(false);
-                }
-            },
-            (error) => {
-                setLoginError("Connection error");
-                setIsSubmitting(false);
-            }
-        )
+        .catch(function (error) {
+            setLoginError("Invalid credentials");
+            setIsSubmitting(false);
+        });
+
     };
         
     return (
