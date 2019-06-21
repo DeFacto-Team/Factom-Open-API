@@ -70,8 +70,8 @@ const Login = props => {
                         />
                     </Form.Item>
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" disabled={isSubmitting}>
-                        {`${isSubmitting ? 'Loading...' : 'Login'}`}
+                        <Button type="primary" htmlType="submit" loading={ isSubmitting }>
+                            Login
                     </Button>
                     </Form.Item>
                 </Form>
