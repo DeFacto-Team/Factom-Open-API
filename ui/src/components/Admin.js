@@ -45,7 +45,7 @@ const Admin = props => {
                         <Icon type="setting" />
                         Settings
                     </Menu.Item>
-                    <Menu.Item key="logout" onClick={logout}>
+                    <Menu.Item key="logout" onClick={logout} className="menu-logout">
                         <Icon type="logout" />
                         Logout
                     </Menu.Item>
