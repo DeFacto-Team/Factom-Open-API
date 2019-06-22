@@ -10,7 +10,8 @@ const { Header, Content, Footer } = Layout;
 
 const Admin = props => {
 
-    const [currentMenu, setCurrentMenu] = useState([window.location.pathname]);
+    const currentLocation = window.location.pathname;
+    const [currentMenu, setCurrentMenu] = useState([currentLocation]);
 
     const handleMenuClick = e => {
         setCurrentMenu([e.key]);
@@ -53,8 +54,8 @@ const Admin = props => {
                 <Header style={{ padding: 0, margin: 0, background: '#fff', height: 48 }}>
                     <Menu onClick={handleMenuClick} selectedKeys={currentMenu} mode="horizontal">
                         <Logo />
-                        <Menu.Item key="/dashboard">
-                            <Link to="/dashboard">
+                        <Menu.Item key="/">
+                            <Link to="/">
                                 <Icon type="appstore" />
                                 Dashboard
                             </Link>
@@ -84,7 +85,7 @@ const Admin = props => {
                     </Menu>
                 </Header>
                 <Content style={{ padding: 24, margin: 0 }}>
-                        <Route exact path="/dashboard" component={Dashboard} />
+                        <Route exact path="/" component={Dashboard} />
                         <Route exact path="/users" component={Users} />
                         <Route exact path="/queue" component={Queue} />
                         <Route exact path="/settings" component={Settings} />

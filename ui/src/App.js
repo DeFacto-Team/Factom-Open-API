@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-// import { HashRouter as Router } from 'react-router-dom';
 import Login from './components/Login';
 import Admin from './components/Admin';
 import './App.css';
