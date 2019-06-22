@@ -10,10 +10,7 @@ const { Header, Content, Footer } = Layout;
 
 const Admin = props => {
 
-    var currentLocation = window.location.pathname;
-    console.log(currentLocation);
-
-    const [currentMenu, setCurrentMenu] = useState([currentLocation]);
+    const [currentMenu, setCurrentMenu] = useState([window.location.pathname]);
 
     const handleMenuClick = e => {
         setCurrentMenu([e.key]);
