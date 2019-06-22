@@ -79,16 +79,18 @@ const Admin = props => {
                             </Link>
                         </Menu.Item>
                         <Menu.Item key="/logout" onClick={logout} className="menu-logout">
-                            <Icon type="logout" />
-                            Logout
+                            <Link to="/">
+                                <Icon type="logout" />
+                                Logout
+                            </Link>
                         </Menu.Item>
                     </Menu>
                 </Header>
                 <Content style={{ padding: 24, margin: 0 }}>
-                        <Route exact path="/" component={Dashboard} />
-                        <Route exact path="/users" component={Users} />
-                        <Route exact path="/queue" component={Queue} />
-                        <Route exact path="/settings" component={Settings} />
+                    <Route exact path="/" component={Dashboard} />
+                    <Route exact path="/users" component={Users} />
+                    <Route exact path="/queue" component={Queue} />
+                    <Route exact path="/settings" component={Settings} />
                 </Content>
                 <Footer style={{ padding: '18px 24px', margin: 0, background: '#fff' }}>
                     <small>
