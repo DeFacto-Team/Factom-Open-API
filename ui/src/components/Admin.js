@@ -6,6 +6,11 @@ import { Menu, Icon, Layout } from 'antd';
 import Logo from './common/Logo';
 import Version from './common/Version';
 
+import Dashboard from './admin/Dashboard';
+import Queue from './admin/Queue';
+import Users from './admin/Users';
+import Settings from './admin/Settings';
+
 const { Header, Content, Footer } = Layout;
 
 const Admin = props => {
@@ -23,30 +28,6 @@ const Admin = props => {
           props.setLoggedIn(false)
         });
     }
-
-    const Dashboard = () => (
-        <div>
-        Home
-        </div>
-    )
-
-    const Users = () => (
-        <div>
-        Users
-        </div>
-    )
-
-    const Queue = () => (
-        <div>
-        Queue
-        </div>
-    )
-
-    const Settings = () => (
-        <div>
-        Settings
-        </div>
-    )
 
     return (
         <Router>
