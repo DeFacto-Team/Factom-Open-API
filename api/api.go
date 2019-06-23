@@ -251,7 +251,6 @@ func (api *API) logout(c echo.Context) error {
 // @Router /user [get]
 // @Security ApiKeyAuth
 func (api *API) getUser(c echo.Context) error {
-	api.Stop()
 	return c.JSON(http.StatusOK, &api.user)
 }
 
