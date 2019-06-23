@@ -18,3 +18,13 @@
 .ant-menu-item.ant-menu-item-active.menu-logout:hover a {
   color: #f5222d;
 }
+
+.loader {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  height: 42px;
+}
