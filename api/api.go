@@ -252,19 +252,6 @@ func (api *API) adminGetUsers(c echo.Context) error {
 
 	user := &model.User{}
 
-	/*
-
-		if c.QueryParam("status") != "" {
-			log.Debug("Validating input data")
-			chain.Status = c.QueryParam("status")
-			// validate Status
-			if err := api.validate.StructPartial(chain, "Status"); err != nil {
-				return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
-			}
-		}
-
-	*/
-
 	resp := api.service.GetUsers(user)
 
 	return api.SuccessResponse(resp, c)
