@@ -32,6 +32,7 @@ require (
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/btcsuitereleases/btcutil v0.0.0-20150612230727-f2b1058a8255 // indirect
 	github.com/cmars/basen v0.0.0-20150613233007-fe3947df716e // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/go-openapi/jsonpointer v0.19.0 // indirect
 	github.com/go-openapi/jsonreference v0.19.0 // indirect
@@ -42,6 +43,7 @@ require (
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gobuffalo/packr v1.25.0 // indirect
 	github.com/hashicorp/go-plugin v1.0.0 // indirect
+	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/jinzhu/configor v1.0.0
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
@@ -50,6 +52,7 @@ require (
 	github.com/labstack/echo/v4 v4.0.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.1.0
+	github.com/liip/sheriff v0.0.0-20190308094614-91aa83a45a3d
 	github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983 // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mcuadros/go-defaults v1.1.0
