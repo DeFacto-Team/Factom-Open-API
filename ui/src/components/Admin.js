@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Menu, Icon, Layout } from 'antd';
 import Logo from './common/Logo';
 import Version from './common/Version';
+import { NotifyNetworkError } from './common/Notifications';
 
 import Dashboard from './admin/Dashboard';
 import Queue from './admin/Queue';
@@ -26,6 +27,9 @@ const Admin = props => {
         axios.get("/admin/logout")
         .then(function (response) {
           props.setLoggedIn(false)
+        })
+        .catch(function (error) {
+          NotifyNetworkError();
         });
     }
 

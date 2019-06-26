@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 import { Menu, Icon, Layout, Button, Form, Input, Typography } from 'antd';
+
 import Logo from './common/Logo';
 import Version from './common/Version';
+import { NotifyNetworkError, NotifyLoginSuccess } from './common/Notifications';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -29,14 +31,21 @@ const Login = props => {
         .then(function (response) {
             setLoginError(null);
             props.setLoggedIn(true);
+            NotifyLoginSuccess();
         })
         .catch(function (error) {
-            setLoginError("Invalid credentials");
+            if (error.response) {
+                setLoginError(error.response.data.message);
+            }
+            else {
+                setLoginError(error.message);
+                NotifyNetworkError();
+            }
             setIsSubmitting(false);
         });
 
     };
-        
+
     return (
         <Layout>
             <Header style={{ padding: 0, margin: 0, background: '#fff', height: 48 }}>
@@ -75,7 +84,7 @@ const Login = props => {
                     </Button>
                     </Form.Item>
                 </Form>
-                { loginError ? <Text type="danger">{loginError}</Text> : null }
+                { loginError ? <Text type="danger"><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /> {loginError}</Text> : null }
             </Content>
             <Footer style={{ padding: '18px 24px', margin: 0, background: '#fff' }}>
                 <small><code>
