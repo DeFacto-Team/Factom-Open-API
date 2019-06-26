@@ -11,11 +11,11 @@
   color: #f5222d;
 }
 
-.ant-menu-item.ant-menu-item-active.menu-logout:hover {
+.ant-menu-item.ant-menu-item-active.menu-logout:hover, .ant-menu-item.ant-menu-item-selected.menu-logout:hover {
   border-color: #f5222d;
 }
 
-.ant-menu-item.ant-menu-item-active.menu-logout:hover a {
+.ant-menu-item.ant-menu-item-active.menu-logout:hover a, .ant-menu-item.ant-menu-item-selected.menu-logout:hover a {
   color: #f5222d;
 }
 
@@ -27,4 +27,20 @@
   right: 0;
   margin: auto;
   height: 42px;
+}
+
+.titleAdd {
+  padding-left: 12px;
+}
+
+.ant-table-row {
+  background: #fff;
+}
+
+.danger {
+  color: #f5222d;
+}
+
+.ant-message-notice:first-child {
+  margin-top: 35px;
 }

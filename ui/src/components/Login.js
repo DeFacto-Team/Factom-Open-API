@@ -5,7 +5,7 @@ import { Menu, Icon, Layout, Button, Form, Input, Typography } from 'antd';
 
 import Logo from './common/Logo';
 import Version from './common/Version';
-import { NotifyNetworkError, NotifyLoginSuccess } from './common/Notifications';
+import { NotifyNetworkError } from './common/Notifications';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -31,7 +31,6 @@ const Login = props => {
         .then(function (response) {
             setLoginError(null);
             props.setLoggedIn(true);
-            NotifyLoginSuccess();
         })
         .catch(function (error) {
             if (error.response) {
