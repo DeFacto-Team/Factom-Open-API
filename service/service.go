@@ -14,6 +14,7 @@ import (
 
 // Service is an interface with all core functions
 type Service interface {
+	GetUsers(user *model.User) []*model.User
 	CreateUser(user *model.User) error
 	CheckUser(token string) *model.User
 	UpdateUser(user *model.User) error
@@ -52,6 +53,13 @@ func NewService(store store.Store, wallet wallet.Wallet) Service {
 type Context struct {
 	store  store.Store
 	wallet wallet.Wallet
+}
+
+// GetUsers is generic function to get items from users db
+func (c *Context) GetUsers(user *model.User) []*model.User {
+
+	return c.store.GetUsers(user)
+
 }
 
 // CreateUser is generic function to create user into DB

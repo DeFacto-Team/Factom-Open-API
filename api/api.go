@@ -150,7 +150,8 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	// Admin endpoints
 	adminGroup.GET("", api.adminIndex)
-	adminGroup.GET("/logout", api.logout)
+	adminGroup.GET("/users", api.adminGetUsers)
+	adminGroup.GET("/logout", api.adminLogout)
 
 	// Status
 	api.HTTP.GET("/v1", api.index)
@@ -231,13 +232,42 @@ func (api *API) login(c echo.Context) error {
 
 }
 
-func (api *API) logout(c echo.Context) error {
+func (api *API) adminLogout(c echo.Context) error {
 
 	deleteCookie(c)
 
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
 	})
+
+}
+
+func (api *API) adminIndex(c echo.Context) error {
+
+	return api.SuccessResponse(api.GetAPIInfo(), c)
+
+}
+
+func (api *API) adminGetUsers(c echo.Context) error {
+
+	user := &model.User{}
+
+	/*
+
+		if c.QueryParam("status") != "" {
+			log.Debug("Validating input data")
+			chain.Status = c.QueryParam("status")
+			// validate Status
+			if err := api.validate.StructPartial(chain, "Status"); err != nil {
+				return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+			}
+		}
+
+	*/
+
+	resp := api.service.GetUsers(user)
+
+	return api.SuccessResponse(resp, c)
 
 }
 
@@ -251,7 +281,8 @@ func (api *API) logout(c echo.Context) error {
 // @Router /user [get]
 // @Security ApiKeyAuth
 func (api *API) getUser(c echo.Context) error {
-	return c.JSON(http.StatusOK, &api.user)
+	resp, _ := api.user.FilterStruct([]string{"api"})
+	return c.JSON(http.StatusOK, &resp)
 }
 
 // index godoc
@@ -852,6 +883,8 @@ func (api *API) factomd(c echo.Context) error {
 
 }
 
+// helpers
+
 func bodyToJSON(c echo.Context) (map[string]interface{}, error) {
 
 	s, err := ioutil.ReadAll(c.Request().Body)
@@ -897,8 +930,4 @@ func deleteCookie(c echo.Context) error {
 	cookie.Expires = time.Now().Add(-1 * time.Hour)
 	c.SetCookie(cookie)
 	return nil
-}
-
-func (api *API) adminIndex(c echo.Context) error {
-	return api.SuccessResponse(api.GetAPIInfo(), c)
 }
