@@ -151,6 +151,7 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	// Admin endpoints
 	adminGroup.GET("", api.adminIndex)
 	adminGroup.GET("/users", api.adminGetUsers)
+	adminGroup.DELETE("/users", api.adminDeleteUser)
 	adminGroup.GET("/logout", api.adminLogout)
 
 	// Status
@@ -255,6 +256,23 @@ func (api *API) adminGetUsers(c echo.Context) error {
 	resp := api.service.GetUsers(user)
 
 	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *API) adminDeleteUser(c echo.Context) error {
+
+	req := &model.User{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	if err := api.service.DeleteUser(req); err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	return api.SuccessResponse(req, c)
 
 }
 

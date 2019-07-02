@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-import { Typography, Modal, Button, Icon, Table, Divider, Popconfirm, message } from 'antd';
+import { Typography, Modal, Button, Icon, Table, Divider, Popconfirm, message, Tag } from 'antd';
+import { NotifyNetworkError } from './../common/Notifications';
 
 const { Title } = Typography;
 
@@ -9,7 +10,7 @@ const Users = () => {
 
     const [modalShown, setModalShown] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [users, setUsers] = useState(null);
+    const [users, setUsers] = useState([]);
     
     const handleOk = event => {
         setIsSubmitting(true);
@@ -23,9 +24,38 @@ const Users = () => {
         setModalShown(false);
     };
 
-    const confirmDeleteUser = event => {
-        console.log(event);
-        message.success('Click on Yes');
+    const addUser = (id, name, status) => {
+        setUsers([
+            ...users,
+            {
+                id: id,
+                name: name,
+                status: status
+            }
+        ]);
+    };
+
+    const deleteUser = (id) => {
+        var array = [...users];
+        var index = array.findIndex(v => v.id === id);
+        array.splice(index, 1);
+        setUsers(array);
+    };
+
+    const confirmDeleteUser = (id, name) => {
+        axios.delete("/admin/users", { data: { id: id }})
+        .then(function (response) {
+            deleteUser(id);
+            message.success(`User '${name}' deleted`);
+        })
+        .catch(function (error) {
+            if (error.response) {
+                message.error(error.response.data.error);
+            }
+            else {
+                NotifyNetworkError();
+            }
+        });
     }
       
     const getUsers = () => {
@@ -41,10 +71,6 @@ const Users = () => {
     }
     
     const columns = [
-        {
-            title: 'ID',
-            dataIndex: 'id',
-        },
         {
             title: 'Name',
             dataIndex: 'name',
@@ -64,6 +90,13 @@ const Users = () => {
         {
             title: 'Status',
             dataIndex: 'status',
+            render: (text, record) => (
+                <span>
+                    <Tag color={record.status ? 'green' : 'orange'}>
+                        {record.status ? 'ON' : 'OFF'}
+                    </Tag>
+                </span>
+            ),
         },
         {
             title: 'Action',
@@ -74,7 +107,7 @@ const Users = () => {
                   <Divider type="vertical" />
                   <Popconfirm
                     title={`Delete user '${user.name}'?`}
-                    onConfirm={confirmDeleteUser}
+                    onConfirm={() => confirmDeleteUser(user.id, user.name)}
                     okText="Delete"
                     cancelText="No"
                   >
@@ -109,7 +142,7 @@ const Users = () => {
                 New user
             </Button>
             </p>
-            <Table rowSelection={rowSelection} dataSource={users} columns={columns} />
+            <Table rowSelection={rowSelection} dataSource={users} columns={columns} rowKey="id" />
             <Modal
                 title="Title"
                 visible={modalShown}

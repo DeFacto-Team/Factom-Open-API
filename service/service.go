@@ -18,6 +18,7 @@ type Service interface {
 	CreateUser(user *model.User) error
 	CheckUser(token string) *model.User
 	UpdateUser(user *model.User) error
+	DeleteUser(user *model.User) error
 
 	GetChain(chain *model.Chain, user *model.User) (*model.Chain, error)
 	GetChains(chain *model.Chain) []*model.Chain
@@ -82,6 +83,17 @@ func (c *Context) CheckUser(token string) *model.User {
 func (c *Context) UpdateUser(user *model.User) error {
 
 	err := c.store.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateUser is generic function to delete user from DB
+func (c *Context) DeleteUser(user *model.User) error {
+
+	err := c.store.DeleteUser(user)
 	if err != nil {
 		return err
 	}
