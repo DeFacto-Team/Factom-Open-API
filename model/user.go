@@ -12,7 +12,7 @@ type User struct {
 	DeletedAt *time.Time `json:"-" form:"-" query:"-"`
 	// model
 	ID          int      `json:"id" form:"id" query:"id" validate:"required" gorm:"primary_key;unique;not null"`
-	Name        string   `json:"name" form:"name" query:"name" validate:"required" gorm:"unique;not null" groups:"api"`
+	Name        string   `json:"name" form:"name" query:"name" validate:"required" gorm:"not null" groups:"api"`
 	AccessToken string   `json:"accessToken" form:"accessToken" query:"accessToken" validate:"required" gorm:"unique;not null" groups:"api"`
 	Usage       int      `json:"usage" form:"usage" query:"usage" groups:"api"`
 	UsageLimit  int      `json:"usageLimit" form:"usageLimit" query:"usageLimit" groups:"api"`
