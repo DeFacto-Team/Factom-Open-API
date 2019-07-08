@@ -48,3 +48,7 @@
 .pointer {
   cursor: pointer;
 }
+
+.new-user-form {
+  margin: 15px 0;
+}

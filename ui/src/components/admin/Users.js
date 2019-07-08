@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-import { Typography, Modal, Button, Icon, Table, Divider, Input, Popconfirm, Form, message, Tag } from 'antd';
+import { Typography, Modal, Button, Icon, Table, Divider, Input, Popconfirm, Tooltip, message, Tag, Form } from 'antd';
 import { NotifyNetworkError } from './../common/Notifications';
 import EditableText from './../common/EditableText';
 
@@ -9,22 +9,17 @@ const { Title, Text } = Typography;
 
 const Users = () => {
 
-    const [modalShown, setModalShown] = useState(false);
-    const [modalHasErrors, setModalHasErrors] = useState(false);
-    const [modalIsSubmitting, setModalIsSubmitting] = useState(false);
+    const [formHasErrors, setFormHasErrors] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
     const [tableIsLoading, setTableIsLoading] = useState(false);
-    
-    const handleFormOk = event => {
-        setModalIsSubmitting(true);
-        setTimeout(() => {
-            setModalShown(false);
-            setModalIsSubmitting(false);
-        }, 2000);
-    };
 
-    const handleFormCancel = event => {
-        setModalShown(false);
+    const validateForm = (event) => {
+        if (event.target.value === '') {
+            setFormHasErrors(true);
+        } else {
+            setFormHasErrors(false);
+        }
     };
 
     const toggleUserStatus = (user) => {
@@ -34,9 +29,14 @@ const Users = () => {
 
     }
 
-    const createUser = (name) => {
+    const handleSubmit = event => {
+        event.preventDefault();
+        setIsSubmitting(true);
 
-        axios.post("/admin/users", { name: name })
+        const form = event.target;
+        const data = new FormData(form);
+        
+        axios.post('/admin/users', data)
         .then(function (response) {
             const user = response.data.result;
             setUsers([
@@ -45,15 +45,25 @@ const Users = () => {
                     id: user.id,
                     name: user.name,
                     accessToken: user.accessToken,
-                    usage: 0,
+                    usage: user.usage,
                     usageLimit: user.usageLimit,
                     status: user.status,
                 }
             ]);
-    
+            setIsSubmitting(false);
+            message.success(`User '${user.name}' added`);
         })
-        
-    };
+        .catch(function (error) {
+            if (error.response) {
+                message.error(error.response.data.error);
+            }
+            else {
+                NotifyNetworkError();
+            }
+            setIsSubmitting(false);
+        });
+
+    };    
 
     const updateUser = (user, field, value) => {
 
@@ -82,19 +92,15 @@ const Users = () => {
 
     const rotateToken = (user) => {
 
-        setTableIsLoading(true);
-
         axios.post("/admin/users/rotate", { id: user.id })
         .then(function (response) {
             const array = [...users];
             const index = array.findIndex(v => v.id === user.id);
             array[index].accessToken = response.data.result.accessToken;
             setUsers(array);
-            setTableIsLoading(false);
             message.success(`Access token for '${user.name}' rotated`);
         })
         .catch(function (error) {
-            setTableIsLoading(false);
             if (error.response) {
                 message.error(error.response.data.error);
             }
@@ -146,7 +152,7 @@ const Users = () => {
             defaultSortOrder: 'ascend',
             sortDirections: ['descend', 'ascend'],
             render: (text, user) => (
-                <EditableText text={user.name} placeholder="name" onSave={(value) => updateUser(user, "name", value)} />
+                <EditableText text={user.name} placeholder="Name" onSave={(value) => updateUser(user, "name", value)} />
             ),
         },
         {
@@ -215,23 +221,22 @@ const Users = () => {
             <Title level={4}>
                 Users
             </Title>
-            <p>
-            <Button type="primary" onClick={() => setModalShown(true)} className="titleAdd">
-                <Icon type="user-add" />
-                New user
-            </Button>
-            </p>
-            <Table dataSource={users} columns={columns} rowKey="id" loading={tableIsLoading} />
-            <Modal
-                title="New user"
-                visible={modalShown}
-                onOk={handleFormOk}
-                confirmLoading={modalIsSubmitting}
-                onCancel={handleFormCancel}
-            >
-                <Input addonBefore="Name" size="large" style={{ width: '50%' }} />
-                <Input addonBefore="Usage Limit" size="large" style={{ width: '50%' }} />
-            </Modal>
+            <Form layout="inline" noValidate className="new-user-form" onSubmit={handleSubmit}>
+                <Form.Item>
+                    <Input addonBefore="Name" size="large" name="name" onChange={validateForm} suffix={
+                        <Tooltip title="Any name to identify client/project">
+                            <Icon type="info-circle" style={{ color: 'rgba(0,0,0,.45)' }} />
+                        </Tooltip>
+                    }
+                    />
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" icon="plus" size="large" htmlType="submit" disabled={ formHasErrors } loading={ isSubmitting }>
+                        Add user
+                    </Button>
+                </Form.Item>
+            </Form>
+            <Table dataSource={users} columns={columns} rowKey="id" loading={tableIsLoading} className="new-user" />
         </div>
     );
 
