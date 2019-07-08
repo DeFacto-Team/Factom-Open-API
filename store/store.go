@@ -14,12 +14,11 @@ import (
 type Store interface {
 	Close() error
 
-	CreateUser(user *model.User) error
+	CreateUser(user *model.User) (*model.User, error)
 	GetUser(user *model.User) *model.User
 	GetUsers(user *model.User) []*model.User
 	UpdateUser(user *model.User) error
 	DeleteUser(user *model.User) error
-	DisableUserUsageLimit(chain *model.User) error
 
 	GetChain(chain *model.Chain) *model.Chain
 	GetChains(chain *model.Chain) []*model.Chain
@@ -92,13 +91,13 @@ func (c *Context) Close() error {
 
 }
 
-func (c *Context) CreateUser(user *model.User) error {
+func (c *Context) CreateUser(user *model.User) (*model.User, error) {
 
 	if c.db.Create(&user).RowsAffected > 0 {
-		return nil
+		return user, nil
 	}
 
-	return fmt.Errorf("Creating user failed")
+	return nil, fmt.Errorf("Creating user failed")
 
 }
 
@@ -122,6 +121,18 @@ func (c *Context) GetUsers(user *model.User) []*model.User {
 
 func (c *Context) UpdateUser(user *model.User) error {
 
+	if user.Status == 0 {
+		c.db.Model(user).Update("status", user.Status)
+	}
+
+	if user.Usage == 0 {
+		c.db.Model(user).Update("usage", user.Usage)
+	}
+
+	if user.UsageLimit == 0 {
+		c.db.Model(user).Update("usage_limit", user.UsageLimit)
+	}
+
 	if c.db.Model(&user).Updates(user).RowsAffected > 0 {
 		return nil
 	}
@@ -135,16 +146,6 @@ func (c *Context) DeleteUser(user *model.User) error {
 		return nil
 	}
 	return fmt.Errorf("DB: Deletion user failed")
-
-}
-
-func (c *Context) DisableUserUsageLimit(user *model.User) error {
-
-	if c.db.Model(user).Update("usage_limit", 0).RowsAffected > 0 {
-		return nil
-	}
-
-	return fmt.Errorf("DB: Updating user limit failed")
 
 }
 

@@ -73,6 +73,7 @@ const (
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
 	AlternativeSort        = "asc"
+	AccessTokenLength      = 32
 )
 
 // NewViewData creates new data for the view
@@ -151,7 +152,10 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	// Admin endpoints
 	adminGroup.GET("", api.adminIndex)
 	adminGroup.GET("/users", api.adminGetUsers)
+	adminGroup.POST("/users", api.adminCreateUser)
 	adminGroup.DELETE("/users", api.adminDeleteUser)
+	adminGroup.PUT("/users/:id", api.adminUpdateUser)
+	adminGroup.POST("/users/rotate", api.adminRotateUserToken)
 	adminGroup.GET("/logout", api.adminLogout)
 
 	// Status
@@ -256,6 +260,74 @@ func (api *API) adminGetUsers(c echo.Context) error {
 	resp := api.service.GetUsers(user)
 
 	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *API) adminCreateUser(c echo.Context) error {
+
+	req := &model.User{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	// generate access token
+	req.AccessToken = req.GenerateAccessToken(AccessTokenLength)
+
+	// validate Name, AccessToken
+	if err := api.validate.StructExcept(req, "ID"); err != nil {
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+	}
+
+	resp, err := api.service.CreateUser(req)
+
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *API) adminUpdateUser(c echo.Context) error {
+
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+	}
+
+	user := api.service.GetUser(&model.User{ID: userID})
+
+	// bind input data
+	if err := c.Bind(user); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	if err := api.service.UpdateUser(user); err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	return api.SuccessResponse(user, c)
+
+}
+
+func (api *API) adminRotateUserToken(c echo.Context) error {
+
+	req := &model.User{}
+
+	// bind input data
+	if err := c.Bind(req); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	req.AccessToken = req.GenerateAccessToken(AccessTokenLength)
+
+	if err := api.service.UpdateUser(req); err != nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	return api.SuccessResponse(req, c)
 
 }
 

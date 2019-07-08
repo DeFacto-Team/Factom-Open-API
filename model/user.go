@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/liip/sheriff"
+	"math/rand"
 	"time"
 )
 
@@ -24,6 +25,8 @@ type Users struct {
 	Items []*User
 }
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+
 func (user *User) FilterStruct(groups []string) (interface{}, error) {
 
 	o := &sheriff.Options{
@@ -38,4 +41,13 @@ func (user *User) FilterStruct(groups []string) (interface{}, error) {
 
 	return data, nil
 
+}
+
+func (user *User) GenerateAccessToken(n int) string {
+	b := make([]rune, n)
+	rand.Seed(time.Now().UnixNano())
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

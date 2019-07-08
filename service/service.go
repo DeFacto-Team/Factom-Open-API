@@ -14,8 +14,9 @@ import (
 
 // Service is an interface with all core functions
 type Service interface {
+	GetUser(user *model.User) *model.User
 	GetUsers(user *model.User) []*model.User
-	CreateUser(user *model.User) error
+	CreateUser(user *model.User) (*model.User, error)
 	CheckUser(token string) *model.User
 	UpdateUser(user *model.User) error
 	DeleteUser(user *model.User) error
@@ -56,6 +57,13 @@ type Context struct {
 	wallet wallet.Wallet
 }
 
+// GetUser is generic function to get user from db
+func (c *Context) GetUser(user *model.User) *model.User {
+
+	return c.store.GetUser(user)
+
+}
+
 // GetUsers is generic function to get items from users db
 func (c *Context) GetUsers(user *model.User) []*model.User {
 
@@ -64,14 +72,14 @@ func (c *Context) GetUsers(user *model.User) []*model.User {
 }
 
 // CreateUser is generic function to create user into DB
-func (c *Context) CreateUser(user *model.User) error {
+func (c *Context) CreateUser(user *model.User) (*model.User, error) {
 
-	err := c.store.CreateUser(user)
+	resp, err := c.store.CreateUser(user)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return resp, nil
 }
 
 // CheckUser returns only enabled users by their access token
@@ -88,6 +96,7 @@ func (c *Context) UpdateUser(user *model.User) error {
 	}
 
 	return nil
+
 }
 
 // UpdateUser is generic function to delete user from DB

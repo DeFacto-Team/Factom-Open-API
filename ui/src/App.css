@@ -44,3 +44,7 @@
 .ant-message-notice:first-child {
   margin-top: 35px;
 }
+
+.pointer {
+  cursor: pointer;
+}
