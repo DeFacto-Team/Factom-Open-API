@@ -29,28 +29,8 @@ const Users = () => {
 
     const toggleUserStatus = (user) => {
 
-        setTableIsLoading(true);
-
-        const array = [...users];
-        const index = array.findIndex(v => v.id === user.id);
-        array[index].status = array[index].status === 0 ? 1 : 0;
-
-        axios.put("/admin/users/"+user.id, { status: array[index].status })
-        .then(function () {
-            setUsers(array);
-            setTableIsLoading(false);
-            const statusText = array[index].status === 1 ? "enabled" : "disabled";
-            message.success(`User '${user.name}' ${statusText}`);
-        })
-        .catch(function (error) {
-            setTableIsLoading(false);
-            if (error.response) {
-                message.error(error.response.data.error);
-            }
-            else {
-                NotifyNetworkError();
-            }
-        });
+        const status = user.status === 0 ? 1 : 0;
+        updateUser(user, "status", status);
 
     }
 
@@ -74,6 +54,31 @@ const Users = () => {
         })
         
     };
+
+    const updateUser = (user, field, value) => {
+
+        const array = [...users];
+        const index = array.findIndex(v => v.id === user.id);
+        array[index][field] = value;
+
+        var payload = {};
+        payload[field] = value;
+
+        axios.put("/admin/users/"+user.id, payload)
+        .then(function () {
+            setUsers(array);
+            message.success(`User '${user.name}' updated`);
+        })
+        .catch(function (error) {
+            if (error.response) {
+                message.error(error.response.data.error);
+            }
+            else {
+                NotifyNetworkError();
+            }
+        });
+
+    }
 
     const rotateToken = (user) => {
 
@@ -141,7 +146,7 @@ const Users = () => {
             defaultSortOrder: 'ascend',
             sortDirections: ['descend', 'ascend'],
             render: (text, user) => (
-                <EditableText text={user.name} placeholder="name" />
+                <EditableText text={user.name} placeholder="name" onSave={(value) => updateUser(user, "name", value)} />
             ),
         },
         {
@@ -155,14 +160,14 @@ const Users = () => {
             title: 'Usage',
             dataIndex: 'usage',
             render: (text, user) => (
-                <EditableText text={user.usage} placeholder="0" type="number" />
+                <EditableText text={user.usage} placeholder="0" type="number" onSave={(value) => updateUser(user, "usage", value)} />
             )
         },
         {
             title: 'Usage Limit',
             dataIndex: 'usageLimit',
             render: (text, user) => (
-                <EditableText text={user.usageLimit} placeholder="0" type="number" />
+                <EditableText text={user.usageLimit} placeholder="0" type="number" onSave={(value) => updateUser(user, "usageLimit", value)} />
             )
         },
         {

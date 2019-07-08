@@ -20,6 +20,7 @@ const EditableText = (props) => {
             value = Number(value);
         }
       }
+      props.onSave(value);
       setText(value);
       setIsEditing(false);
   }
