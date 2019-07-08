@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-import { Typography, Modal, Button, Icon, Table, Divider, Input, Popconfirm, Tooltip, message, Tag, Form } from 'antd';
+import { Typography, Button, Icon, Table, Divider, Input, Popconfirm, Tooltip, message, Tag, Form } from 'antd';
 import { NotifyNetworkError } from './../common/Notifications';
 import EditableText from './../common/EditableText';
 
