@@ -223,7 +223,7 @@ const Users = () => {
             </Title>
             <Form layout="inline" noValidate className="new-user-form" onSubmit={handleSubmit}>
                 <Form.Item>
-                    <Input addonBefore="Name" size="large" name="name" onChange={validateForm} suffix={
+                    <Input placeholder="New user name" size="large" name="name" onChange={validateForm} suffix={
                         <Tooltip title="Any name to identify client/project">
                             <Icon type="info-circle" style={{ color: 'rgba(0,0,0,.45)' }} />
                         </Tooltip>
