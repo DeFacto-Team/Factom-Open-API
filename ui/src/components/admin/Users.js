@@ -137,7 +137,11 @@ const Users = () => {
         setUsers(response.data.result);
       })
       .catch(function(error) {
-        console.log(error.message);
+        if (error.response) {
+          message.error(error.response.data.error);
+        } else {
+          NotifyNetworkError();
+        }
       });
   };
 
@@ -279,7 +283,6 @@ const Users = () => {
         columns={columns}
         rowKey="id"
         loading={tableIsLoading}
-        className="new-user"
       />
     </div>
   );
