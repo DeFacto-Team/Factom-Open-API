@@ -23,7 +23,7 @@ const Users = () => {
   const [formHasErrors, setFormHasErrors] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState([]);
-  const [tableIsLoading, setTableIsLoading] = useState(false);
+  const [tableIsLoading, setTableIsLoading] = useState(true);
 
   const validateForm = event => setFormHasErrors(event.target.value === '');
 
@@ -142,6 +142,9 @@ const Users = () => {
         } else {
           NotifyNetworkError();
         }
+      })
+      .finally(function() {
+        setTableIsLoading(false);
       });
   };
 

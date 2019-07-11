@@ -1,30 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Moment from 'react-moment';
 import axios from 'axios';
 
 import {
   Typography,
-  Button,
   Icon,
   Table,
-  Divider,
-  Input,
   Popconfirm,
   Tooltip,
   message,
-  Tag,
-  Form
+  Tag
 } from 'antd';
 import { NotifyNetworkError } from './../common/Notifications';
-import EditableText from './../common/EditableText';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 const Queue = () => {
-  const [formHasErrors, setFormHasErrors] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [queue, setQueue] = useState([]);
-  const [tableIsLoading, setTableIsLoading] = useState(false);
+  const [tableIsLoading, setTableIsLoading] = useState(true);
 
   const getQueue = () => {
     axios
@@ -38,6 +31,9 @@ const Queue = () => {
         } else {
           NotifyNetworkError();
         }
+      })
+      .finally(function() {
+        setTableIsLoading(false);
       });
   };
 
@@ -53,7 +49,6 @@ const Queue = () => {
         message.success(`Queue item #${item.id} deleted`);
       })
       .catch(function(error) {
-        console.log(error);
         setTableIsLoading(false);
         if (error.response) {
           message.error(error.response.data.error);
@@ -81,47 +76,109 @@ const Queue = () => {
       )
     },
     {
-      title: 'Processed (UTC+'+ -(new Date().getTimezoneOffset() / 60) + ')',
+      title: 'Status',
       dataIndex: 'processedAt',
-      sorter: (a, b) => new Date(a.processedAt) - new Date(b.processedAt),
-      sortDirections: ['descend', 'ascend'],
-      render: (text, queue) => (
-        <Moment date={queue.processedAt} format="YYYY-MM-DD HH:mm:ss" local />
-      )
+      render: (text, queue) => {
+        if (queue.processedAt) {
+          return (
+            <Tooltip placement="top" title={
+              <span><b>Processed:</b> <Moment date={queue.processedAt} format="YYYY-MM-DD HH:mm:ss" local /></span>
+            }>
+              <Tag color="green">PROCESSED</Tag>
+            </Tooltip>
+          )
+        } else {
+          if (queue.tryCount > 0) {
+            return (            
+              <Tooltip placement="top" title={
+                <span><b>Number of attempts:</b> {queue.tryCount}<br /><b>Next try:</b> <Moment date={queue.nextTryAt} format="YYYY-MM-DD HH:mm:ss" local /></span>
+              }>
+                <Tag color="red">FAILED</Tag>
+              </Tooltip>
+            )
+          } else {
+            return (            
+              <Icon type="loading" style={{ color: "#1890ff" }} />
+            )
+          }
+        }
+      }
     },
     {
-      title: 'Action',
+      title: 'EntryHash',
+      dataIndex: 'result',
+      render: (text, queue) => {
+        if (queue.result) {
+          return (
+            <Text copyable={{ text: queue.result }}>
+              {queue.result.substring(0, 6)}…
+            </Text>
+          )
+        }
+      }
+    },
+    {
+      title: 'Type',
       dataIndex: 'action',
-      render: (text, queue) => (
-        <span>{queue.action}</span>
-      )
+      render: (text, queue) => {
+        if (queue.action === "chain") {
+          return (
+            <Text type="secondary">
+              <Icon type="link" /> Chain
+            </Text>
+          )
+        }
+        else if (queue.action === "entry") {
+          return (
+            <Text type="secondary">
+              <Icon type="number" /> Entry
+            </Text>
+          )
+        }
+      }
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (text, queue) => (
-        <span>
-          <Popconfirm
-            title={`Delete queue item #${queue.id}?`}
-            onConfirm={() => deleteQueue(queue)}
-            okText="Delete"
-            cancelText="No"
-          >
-            <a href="javascript:;" style={{ color: '#f5222d' }}>
-              <Icon type="delete" theme="twoTone" twoToneColor="#f5222d" />
+      render: (queue) => {
+        if (queue.processedAt) {
+          return (
+            <Text disabled>
+              <Icon type="delete" theme="twoTone" twoToneColor="#BFBFBF" />
                Delete
-            </a>
-          </Popconfirm>
-        </span>
-      )
+            </Text>
+          )
+        } else {
+          return (
+            <span>
+              <Popconfirm
+                title={`Delete queue item #${queue.id}?`}
+                onConfirm={() => deleteQueue(queue)}
+                okText="Delete"
+                cancelText="No"
+              >
+                <a href="javascript:;" style={{ color: '#f5222d' }}>
+                  <Icon type="delete" theme="twoTone" twoToneColor="#f5222d" />
+                   Delete
+                </a>
+              </Popconfirm>
+            </span>
+          )
+        }
+      }
     }
   ];
 
   useEffect(() => getQueue(), []);
+  
+  useInterval(() => {
+    getQueue();
+  }, 1000);
 
   return (
     <div>
       <Title level={4}>Queue</Title>
+      <Paragraph type="secondary">Processed tasks automatically cleared every hour</Paragraph>
       <Table
         dataSource={queue}
         columns={columns}
@@ -131,5 +188,25 @@ const Queue = () => {
     </div>
   );
 };
+
+function useInterval(callback, delay) {
+  const savedCallback = useRef();
+
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // Set up the interval.
+  useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+}
 
 export default Queue;

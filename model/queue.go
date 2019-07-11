@@ -22,7 +22,7 @@ type Queue struct {
 	UserID      int        `json:"-" form:"-" query:"-"`
 	Action      string     `json:"action" form:"action" query:"action"`
 	Params      []byte     `json:"-" form:"-" query:"-"`
-	Error       string     `json:"error" form:"error" query:"error"`                   // factomd request error
+	Error       string     `json:"-" form:"-" query:"-"`                               // factomd request error
 	Result      string     `json:"result" form:"result" query:"result"`                // factomd request result
 	ProcessedAt *time.Time `json:"processedAt" form:"processedAt" query:"processedAt"` // time when sent to Factom without error, otherwise null
 	NextTryAt   *time.Time `json:"nextTryAt" form:"nextTryAt" query:"nextTryAt"`       // by default null, set when processing failed to postpone next attempt
