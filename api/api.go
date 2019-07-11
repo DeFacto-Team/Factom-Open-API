@@ -151,6 +151,7 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	// Admin endpoints
 	adminGroup.GET("", api.adminIndex)
+	adminGroup.GET("/queue", api.adminGetQueue)
 	adminGroup.GET("/users", api.adminGetUsers)
 	adminGroup.POST("/users", api.adminCreateUser)
 	adminGroup.DELETE("/users", api.adminDeleteUser)
@@ -250,6 +251,14 @@ func (api *API) adminLogout(c echo.Context) error {
 func (api *API) adminIndex(c echo.Context) error {
 
 	return api.SuccessResponse(api.GetAPIInfo(), c)
+
+}
+
+func (api *API) adminGetQueue(c echo.Context) error {
+
+	resp := api.service.GetQueueToProcess()
+
+	return api.SuccessResponse(resp, c)
 
 }
 
