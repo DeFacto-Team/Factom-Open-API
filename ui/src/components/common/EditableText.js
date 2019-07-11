@@ -25,11 +25,7 @@ const EditableText = props => {
   };
 
   const handleChange = event => {
-    if (event.target.value === '') {
-      setSaveDisabled(true);
-    } else {
-      setSaveDisabled(false);
-    }
+    setSaveDisabled(event.target.value === '');
     setNewText(event.target.value);
   };
 
