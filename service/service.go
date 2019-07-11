@@ -41,6 +41,7 @@ type Service interface {
 	GetQueueToClear() []*model.Queue
 	ProcessQueue(queue *model.Queue) error
 	ClearQueue(queue *model.Queue) error
+	DeleteQueue(queue *model.Queue) error
 
 	ParseAllChainEntries(chain *model.Chain, workerID int) error
 	ParseNewChainEntries(chain *model.Chain) error
@@ -771,6 +772,19 @@ func (c *Context) ClearQueue(queue *model.Queue) error {
 			log.Error(err)
 			return err
 		}
+	}
+
+	return nil
+
+}
+
+// Manual delete stucked queue items (accessible via Admin endpoint)
+func (c *Context) DeleteQueue(queue *model.Queue) error {
+
+	err := c.store.DeleteQueue(queue)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
 
 	return nil

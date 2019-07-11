@@ -209,8 +209,8 @@ const Users = () => {
       )
     },
     {
-      title: 'Action',
-      key: 'action',
+      title: 'Actions',
+      key: 'actions',
       render: (text, user) => (
         <span>
           <Popconfirm
