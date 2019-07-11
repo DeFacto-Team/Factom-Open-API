@@ -8,7 +8,6 @@ import './App.css';
 axios.defaults.baseURL = process.env.REACT_APP_API_PATH;
 
 const App = () => {
-  
   const [loggedIn, setLoggedIn] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -25,25 +24,21 @@ const App = () => {
   };
 
   const checkLogin = () => {
-
-    axios.get("/admin")
-      .then(function (response) {
+    axios
+      .get('/admin')
+      .then(function(response) {
         setLoggedIn(true);
       })
-      .finally(function () {
+      .finally(function() {
         setLoaded(true);
       });
-
   };
 
   useEffect(() => {
     checkLogin();
   }, []);
 
-  return (
-    <div>{renderApp()}</div>
-  );
-  
+  return <div>{renderApp()}</div>;
 };
 
 export default App;

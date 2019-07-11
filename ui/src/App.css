@@ -11,11 +11,13 @@
   color: #f5222d;
 }
 
-.ant-menu-item.ant-menu-item-active.menu-logout:hover, .ant-menu-item.ant-menu-item-selected.menu-logout:hover {
+.ant-menu-item.ant-menu-item-active.menu-logout:hover,
+.ant-menu-item.ant-menu-item-selected.menu-logout:hover {
   border-color: #f5222d;
 }
 
-.ant-menu-item.ant-menu-item-active.menu-logout:hover a, .ant-menu-item.ant-menu-item-selected.menu-logout:hover a {
+.ant-menu-item.ant-menu-item-active.menu-logout:hover a,
+.ant-menu-item.ant-menu-item-selected.menu-logout:hover a {
   color: #f5222d;
 }
 
