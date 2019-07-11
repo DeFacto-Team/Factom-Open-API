@@ -655,6 +655,11 @@ func (c *Context) GetQueueToClear() []*model.Queue {
 // ProcessQueue processes write task from queue: makes factomd commit+reveal request and update queue item according to response (success or error)
 func (c *Context) ProcessQueue(queue *model.Queue) error {
 
+	if c.wallet == nil {
+		err := fmt.Errorf("Unable to write data on the blockchain! Es address not set in config or invalid.")
+		return err
+	}
+
 	params := &model.QueueParams{}
 	err := json.Unmarshal(queue.Params, &params)
 	if err != nil {
