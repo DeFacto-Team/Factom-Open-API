@@ -49,23 +49,17 @@ require (
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/jinzhu/gorm v1.9.4
 	github.com/jinzhu/now v1.0.0 // indirect
-	github.com/labstack/echo/v4 v4.0.0
+	github.com/labstack/echo/v4 v4.1.6
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.1.0
 	github.com/liip/sheriff v0.0.0-20190308094614-91aa83a45a3d
 	github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983 // indirect
-	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mcuadros/go-defaults v1.1.0
 	github.com/rubenv/sql-migrate v0.0.0-20190327083759-54bad0a9b051
 	github.com/sirupsen/logrus v1.4.1
 	github.com/swaggo/echo-swagger v0.0.0-20190329130007-1219b460a043
 	github.com/swaggo/swag v1.5.0
-	github.com/valyala/fasttemplate v1.0.1 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	golang.org/x/crypto v0.0.0-20190418165655-df01cb2cc480 // indirect
-	golang.org/x/net v0.0.0-20190420063019-afa5a82059c6 // indirect
-	golang.org/x/sys v0.0.0-20190419153524-e8e3143a4f4a // indirect
-	golang.org/x/tools v0.0.0-20190420000508-685fecacd0a0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/gorp.v1 v1.7.2 // indirect
