@@ -173,7 +173,18 @@ const Users = () => {
       )
     },
     {
-      title: 'Usage',
+      title: () => (
+        <span>
+          Usage 
+          <Tooltip placement="top" title={
+            <span><b>+1</b> for entry creation<br /><b>+2</b> for chain creation</span>
+          }>
+            <Text type="secondary">
+              <Icon type="info-circle" />
+            </Text>
+          </Tooltip>
+        </span>
+      ),
       dataIndex: 'usage',
       render: (text, user) => (
         <EditableText
@@ -185,7 +196,18 @@ const Users = () => {
       )
     },
     {
-      title: 'Usage Limit',
+      title: () => (
+        <span>
+          Usage limit 
+          <Tooltip placement="top" title={
+            <span>Total usage limit <b>(not monthly)</b><br />Set <b>0</b> for no limit</span>
+          }>
+            <Text type="secondary">
+              <Icon type="info-circle" />
+            </Text>
+          </Tooltip>
+        </span>
+      ),
       dataIndex: 'usageLimit',
       render: (text, user) => (
         <EditableText
