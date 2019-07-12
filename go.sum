@@ -27,6 +27,8 @@ github.com/FactomProject/factoid v0.3.4 h1:uC0161wd2IHYFBTduUQvW4ivHLj+De12c/QsV
 github.com/FactomProject/factoid v0.3.4/go.mod h1:ExOuHMC672nR0h9b+jaTiW9ilQeWQOap4OXixzW359M=
 github.com/FactomProject/factom v0.0.0-20190321214556-fc1c06ae7272 h1:o1xCSJsl32X7SqdmMLqecaQXcrbCeGo/7hOzRFOlU/g=
 github.com/FactomProject/factom v0.0.0-20190321214556-fc1c06ae7272/go.mod h1:V1V8mWqOI72JBpGj/aPQZEmhDepdykxyhVRH5GxbP4E=
+github.com/FactomProject/factom v0.0.0-20190708192212-b398e7fb0919 h1:eP9WMXl3KDiFKL8aVjO9nAEO4qJY8QDppJUoyfO90qA=
+github.com/FactomProject/factom v0.0.0-20190708192212-b398e7fb0919/go.mod h1:V1V8mWqOI72JBpGj/aPQZEmhDepdykxyhVRH5GxbP4E=
 github.com/FactomProject/factomd v6.2.2+incompatible h1:rhFngSMwdYH/Pn4k0lSLlWDYZvtmcWdgiGyNiPeAauU=
 github.com/FactomProject/factomd v6.2.2+incompatible/go.mod h1:zeNvpIESaAp0bQSQ7U0c9tWzsklqMd5vGHLGCe3Bs3M=
 github.com/FactomProject/fastsha256 v0.2.1 h1:ICfr2Lw5Ucy785GfJSjLLG9X1mZA6dsy/xgARlZ+brs=

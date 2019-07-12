@@ -12,7 +12,7 @@ require (
 	github.com/FactomProject/dynrsrc v0.3.1 // indirect
 	github.com/FactomProject/ed25519 v0.0.0-20150814230546-38002c4fe7b6 // indirect
 	github.com/FactomProject/factoid v0.3.4 // indirect
-	github.com/FactomProject/factom v0.0.0-20190321214556-fc1c06ae7272
+	github.com/FactomProject/factom v0.0.0-20190708192212-b398e7fb0919
 	github.com/FactomProject/factomd v6.2.2+incompatible // indirect
 	github.com/FactomProject/fastsha256 v0.2.1 // indirect
 	github.com/FactomProject/fsnotify v0.9.0 // indirect

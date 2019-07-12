@@ -138,16 +138,16 @@ func (chain *Chain) Exists() bool {
 
 func (chain *Chain) GetStatusFromFactom() (string, string) {
 
-	status, err := factom.GetChainHeadAndStatus(chain.ChainID)
+	chainHead, _, err := factom.GetChainHead(chain.ChainID)
 	if err != nil {
 		return ChainQueue, ""
 	}
 
-	if status.ChainHead == "" {
+	if chainHead == "" {
 		return ChainProcessing, ""
 	}
 
-	return ChainCompleted, status.ChainHead
+	return ChainCompleted, chainHead
 
 }
 
