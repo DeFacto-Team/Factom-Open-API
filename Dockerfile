@@ -12,8 +12,7 @@ WORKDIR ${PKG_PATH}
 COPY . ${PKG_PATH}/
 
 RUN go mod download && \
-  go build -o /go/bin/factom-open-api main.go && \
-  go build -o /go/bin/user admin/user.go
+  go build -o /go/bin/factom-open-api main.go
 
 FROM alpine:3.7
 
@@ -24,7 +23,7 @@ RUN set -xe && \
 
 WORKDIR /home/app
 
-COPY --from=builder /go/bin/factom-open-api /go/bin/user ./
+COPY --from=builder /go/bin/factom-open-api ./
 COPY ./entrypoint.sh ./entrypoint.sh
 COPY ./migrations ./migrations
 COPY ./docs/swagger.json ./docs/swagger.json
