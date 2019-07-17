@@ -5,8 +5,8 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 ## Main features
 
 - **Instant start:** use Open API immediately after installation
-- **Write data** to the blockchain at a **fixed cost** (**\$1 for 1000 entries** of 1 KB)
-- **BaaS-ready:** user-based API access, counting usage, limits
+- **Write data** to the blockchain
+- **Users:** user-based API access, counting usage, limits
 - **Read all chain entries at once** using a single request (no need to read all entry blocks of chain one by one)
 - **Search chains & entries** by tags (external IDs)
 - **Pagination, sorting, filtering** results with query params
@@ -44,15 +44,12 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 - 🐳 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_DOCKER.md">Install with Docker</a>
 - 🛠 <a href="https://github.com/DeFacto-Team/Factom-Open-API/blob/master/guides/INSTALL_BINARY.md">Install with binaries</a>
 
-## Clients
+## Entry Credits
 
-- <a href="https://github.com/DeFacto-Team/Factom-Open-API-PHP" target="_blank">PHP</a>
-
-### Swagger auto-generated clients (beta)
-Factom Open API follows Swagger 2.0 specification.<br />
-Auto-generated clients:
-- <a href="https://github.com/DeFacto-Team/FOA-Swagger-python" target="_blank">Python</a>
-- <a href="https://github.com/DeFacto-Team/FOA-Swagger-nodejs" target="_blank">Node.js</a>
+Entry Credits (EC) purchase fixed amounts of data in the Factom network.<br />
+<b>You need EC address filled with Entry Credits to write data on the Factom.</b><br />
+- Generate EC address with Open API Admin UI<br />
+- <a href="https://ec.de-facto.pro" target="_blank">Buy Entry Credits in EC store</a>
 
 ## Design
 
