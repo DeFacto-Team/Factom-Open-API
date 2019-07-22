@@ -12,6 +12,7 @@ import (
 )
 
 type Store interface {
+	Ping() error
 	Close() error
 
 	CreateUser(user *model.User) (*model.User, error)
@@ -81,6 +82,13 @@ func NewStore(conf *config.Config, applyMigration bool) (Store, error) {
 	}
 
 	return &Context{db}, nil
+
+}
+
+// Ping DB
+func (c *Context) Ping() error {
+
+	return c.db.DB().Ping()
 
 }
 

@@ -123,6 +123,7 @@ func startAPI(configFile string) {
 
 		// Initialize single-thread background workers
 		die := make(chan bool)
+		go pingDB(store, die)
 		go fetchUnsyncedChains(s, collector, die)
 		go fetchChainUpdates(s, die)
 		go processQueue(s, die)
@@ -309,4 +310,19 @@ func getMinuteAndHeight() (int, int, error) {
 
 	return int(currentMinute), int(dBlockHeight), nil
 
+}
+
+func pingDB(s store.Store, die chan bool) {
+	for {
+		select {
+		default:
+			if err := s.Ping(); err != nil {
+				log.Error("Database connection FAILED")
+				log.Fatal(err)
+			}
+			time.Sleep(5 * time.Second)
+		case <-die:
+			return
+		}
+	}
 }
