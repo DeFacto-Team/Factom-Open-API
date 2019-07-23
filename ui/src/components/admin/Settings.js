@@ -165,7 +165,7 @@ const Settings = () => {
             <Input.Password required prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminPassword" defaultValue={settings.Admin.adminPassword} />
           </Form.Item>
 
-          <Title level={4}>Factomd Endpoint</Title>
+          <Title level={4}>Factomd Node</Title>
           <Divider />
 
           <Form.Item label="Factomd URL">
@@ -215,16 +215,10 @@ const Settings = () => {
               </div>
             ) : (
               <div>
-                {invalidAddress ? (
-                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  Invalid EC address</Text></div>} className="ec-block">
+                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  {invalidAddress ? "Invalid EC address" : "EC address not set"}</Text></div>} className="ec-block">
+                    <Paragraph type="secondary">You need EC address to write data on the Factom.</Paragraph>
                     <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
                   </Card>
-                ) : (
-                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  EC address not set</Text></div>} className="ec-block">
-                    <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
-                  </Card>
-                )
-                }
               </div>
             )
             }
