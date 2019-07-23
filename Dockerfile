@@ -14,6 +14,10 @@ COPY . ${PKG_PATH}/
 RUN go mod download && \
   go build -o /go/bin/factom-open-api main.go
 
+RUN npm install -g yarn && \
+  cd ui && \
+  yarn build
+
 FROM alpine:3.7
 
 RUN set -xe && \
@@ -26,6 +30,7 @@ WORKDIR /home/app
 COPY --from=builder /go/bin/factom-open-api ./
 COPY ./entrypoint.sh ./entrypoint.sh
 COPY ./migrations ./migrations
+COPY ./ui/build ./ui/build
 COPY ./docs/swagger.json ./docs/swagger.json
 
 RUN \
