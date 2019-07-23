@@ -54,3 +54,28 @@
 .new-user-form {
   margin: 15px 0;
 }
+
+.settings-form {
+  max-width: 600px;
+}
+
+.settings-form .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.settings-form .ant-divider {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.settings-form h4 {
+  margin-top: 1em;
+}
+
+.settings-form .ant-switch {
+  margin-right: 6px;
+}
+
+.settings-form .ec-block {
+  margin-top: 8px;
+}
