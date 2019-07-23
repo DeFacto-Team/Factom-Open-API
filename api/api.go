@@ -149,7 +149,9 @@ func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 	// Admin UI
 	api.HTTP.File("/", "ui/build/index.html")
 	api.HTTP.File("/manifest.json", "ui/build/manifest.json")
-	api.HTTP.File("/favicon.ico", "ui/build/favicon.ico")
+	api.HTTP.File("/favicon16x16.png", "ui/build/favicon16x16.png")
+	api.HTTP.File("/favicon32x32.png", "ui/build/favicon32x32.png")
+	api.HTTP.File("/favicon96x96.png", "ui/build/favicon96x96.png")
 	api.HTTP.Static("/static", "ui/build/static")
 
 	// Admin endpoints

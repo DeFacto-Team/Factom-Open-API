@@ -1,10 +1,9 @@
 FROM node:12.4-alpine as uibuilder
 
-WORKDIR /openapi
-COPY . .
+WORKDIR /ui
+COPY ./ui .
 
 RUN npm install -g yarn && \
-  cd ui && \
   yarn build
 
 FROM golang:1.12 AS builder
@@ -33,7 +32,7 @@ RUN set -xe && \
 WORKDIR /home/app
 
 COPY --from=builder /go/bin/factom-open-api ./
-COPY --from=uibuilder ./openapi/ui/build ./ui/build
+COPY --from=uibuilder /ui/build ./ui/build
 COPY ./entrypoint.sh ./entrypoint.sh
 COPY ./migrations ./migrations
 COPY ./docs/swagger.json ./docs/swagger.json
