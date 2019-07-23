@@ -83,6 +83,7 @@ const Settings = () => {
       .then(function(response) {
         setSettings(response.data);
         if (response.data.Factom.factomEsAddress) {
+          setEsAddress(response.data.Factom.factomEsAddress);
           getECBalance(response.data.Factom.factomEsAddress);
         }
         if (response.data.Factom.factomUser || response.data.Factom.factomPassword) {
