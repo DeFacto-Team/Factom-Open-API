@@ -165,6 +165,8 @@ func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 	adminGroup.GET("/settings", api.adminGetSettings)
 	adminGroup.POST("/settings", api.adminUpdateSettings)
 	adminGroup.GET("/restart", api.adminRestartAPI)
+	adminGroup.GET("/ec/random", api.adminRandomEC)
+	adminGroup.GET("/ec/:esaddress", api.adminGetEC)
 
 	// Status
 	api.HTTP.GET("/v1", api.index)
@@ -289,6 +291,32 @@ func (api *API) adminRestartAPI(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
 	})
+
+}
+
+func (api *API) adminGetEC(c echo.Context) error {
+
+	ecAddress := model.GetEC(c.Param("esaddress"))
+	if ecAddress == nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, fmt.Errorf("Invalid Es address")), c)
+	}
+
+	ecAddress.GetBalanceFromFactom()
+
+	return api.SuccessResponse(ecAddress, c)
+
+}
+
+func (api *API) adminRandomEC(c echo.Context) error {
+
+	ecAddress := model.GenerateEC()
+	if ecAddress == nil {
+		return api.ErrorResponse(errors.New(errors.ServiceError, fmt.Errorf("EC keypair generation error")), c)
+	}
+
+	ecAddress.GetBalanceFromFactom()
+
+	return api.SuccessResponse(ecAddress, c)
 
 }
 
