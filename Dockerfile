@@ -3,8 +3,8 @@ FROM node:12.4-alpine as uibuilder
 WORKDIR /ui
 COPY ./ui .
 
-RUN npm install -g yarn && \
-  yarn build
+RUN npm install -g yarn
+RUN yarn install && yarn build
 
 FROM golang:1.12 AS builder
 
