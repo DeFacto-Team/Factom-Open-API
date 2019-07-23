@@ -14,6 +14,9 @@ COPY . ${PKG_PATH}/
 RUN go mod download && \
   go build -o /go/bin/factom-open-api main.go
 
+RUN apt install nodejs
+RUN apt install npm
+
 RUN npm install -g yarn && \
   cd ui && \
   yarn build
