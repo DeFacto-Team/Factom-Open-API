@@ -205,6 +205,8 @@ func (api *API) Start() error {
 
 // Stop API server
 func (api *API) Stop() error {
+	log.Warn("Gracefully restarting API in 5 seconds")
+	time.Sleep(5 * time.Second)
 	return api.HTTP.Close()
 }
 
@@ -282,7 +284,7 @@ func (api *API) adminUpdateSettings(c echo.Context) error {
 
 func (api *API) adminRestartAPI(c echo.Context) error {
 
-	api.Stop()
+	go api.Stop()
 
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
