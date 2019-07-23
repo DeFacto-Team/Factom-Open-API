@@ -48,8 +48,8 @@ Factom Open API is a lightweight REST API for the Factom blockchain. It connects
 
 Entry Credits (EC) purchase fixed amounts of data in the Factom network.<br />
 <b>You need EC address filled with Entry Credits to write data on the Factom.</b><br />
-- Generate EC address with Open API Admin UI<br />
-- <a href="https://ec.de-facto.pro" target="_blank">Buy Entry Credits in EC store</a>
+- EC address may be imported or generated via Open API Admin UI<br />
+- <a href="https://ec.de-facto.pro" target="_blank">Fund your EC address in the EC store</a>
 
 ## Design
 

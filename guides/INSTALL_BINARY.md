@@ -17,11 +17,15 @@ curl -o ~/.foa/config.yaml https://raw.githubusercontent.com/DeFacto-Team/Factom
 
 ### Introduction to config
 There are few sections into config file:
+* `admin` (Admin params)
 * `api` (API params)
 * `store` (DB params)
 * `factom` (Factom params)
 
 You may use custom config params: uncomment the line and put your value to override the default value.
+
+#### Admin params
+Login & password for Admin UI. Leave empty to disable Admin UI.
 
 #### API params
 By default Open API uses HTTP port 8081.<br />
@@ -31,7 +35,11 @@ Log levels: `3` — Warn, `4` — Info, `5` – Debug, `6` – Debug+DB
 Specify connection to your internal/external Postgres DB.
 
 #### Factom params
-❗️ You need to fill `factom`.`esaddress` in order to use Factom Open API.<br />
+Entry Credits (EC) purchase fixed amounts of data in the Factom network.<br />
+<b>You need EC address filled with Entry Credits to write data on the Factom.</b><br />
+- EC address may be imported or generated via Open API Admin UI<br />
+- <a href="https://ec.de-facto.pro" target="_blank">Fund your EC address in the EC store</a>
+<br /><br />
 By default Open API is connected to <a href="https://factomd.net" target="_blank">Factom Open Node</a>, that means you don't need to setup your own node on the Factom blockchain to work with blockchain. But if you want to use your own node, you may specify it into the config.<br />
 
 ### Fill the config
