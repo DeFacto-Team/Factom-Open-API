@@ -130,7 +130,7 @@ func startAPI(configFile string) {
 		go clearQueue(s, die)
 
 		// Init REST API
-		api := api.NewAPI(conf, s)
+		api := api.NewAPI(conf, s, configFile)
 
 		// Start REST API
 		log.WithField("port", api.GetAPIInfo().Port).

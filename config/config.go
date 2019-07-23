@@ -5,31 +5,32 @@ import (
 	"github.com/jinzhu/configor"
 	"github.com/mcuadros/go-defaults"
 	"io/ioutil"
+	"os"
 )
 
 // App config struct
 type Config struct {
 	Admin struct {
-		User     string `default:""`
-		Password string `default:""`
+		User     string `default:"" json:"adminUser" form:"adminUser" query:"adminUser"`
+		Password string `default:"" json:"adminPassword" form:"adminPassword" query:"adminPassword"`
 	}
 	API struct {
-		HTTPPort int  `required:"true" default:"8081"`
-		Logging  bool `required:"true" default:"true"`
-		LogLevel int  `required:"true" default:"4"`
+		HTTPPort int  `required:"true" default:"8081" json:"apiHTTPPort" form:"apiHTTPPort" query:"apiHTTPPort"`
+		Logging  bool `required:"true" default:"true" json:"apiLogging" form:"apiLogging" query:"apiLogging"`
+		LogLevel int  `required:"true" default:"4" json:"apiLogLevel" form:"apiLogLevel" query:"apiLogLevel"`
 	}
 	Store struct {
-		Host     string `required:"true" default:"foa-db"`
-		Port     int    `required:"true" default:"5432"`
-		User     string `required:"true" default:"postgres"`
-		Password string `required:"true" default:"postgres"`
-		DBName   string `required:"true" default:"postgres"`
+		Host     string `required:"true" default:"foa-db" json:"storeHost" form:"storeHost" query:"storeHost"`
+		Port     int    `required:"true" default:"5432" json:"storePort" form:"storePort" query:"storePort"`
+		User     string `required:"true" default:"postgres" json:"storeUser" form:"storeUser" query:"storeUser"`
+		Password string `required:"true" default:"postgres" json:"storePassword" form:"storePassword" query:"storePassword"`
+		DBName   string `required:"true" default:"postgres" json:"storeDBName" form:"storeDBName" query:"storeDBName"`
 	}
 	Factom struct {
-		URL       string `default:"https://api.factomd.net"`
-		User      string `default:""`
-		Password  string `default:""`
-		EsAddress string `default:""`
+		URL       string `default:"https://api.factomd.net" json:"factomURL" form:"factomURL" query:"factomURL"`
+		User      string `default:"" json:"factomUser" form:"factomUser" query:"factomUser"`
+		Password  string `default:"" json:"factomPassword" form:"factomPassword" query:"factomPassword"`
+		EsAddress string `default:"" json:"factomEsAddress" form:"factomEsAddress" query:"factomEsAddress"`
 	}
 }
 
@@ -51,4 +52,28 @@ func NewConfig(configFile string) (*Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func UpdateConfig(configFile string, newConf *Config) error {
+
+	newYaml, err := yaml.Marshal(&newConf)
+	if err != nil {
+		return err
+	}
+
+	// write to file
+	f, err := os.Create("/tmp/newconfig")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(configFile, newYaml, 0644)
+	if err != nil {
+		return err
+	}
+
+	f.Close()
+
+	return nil
+
 }

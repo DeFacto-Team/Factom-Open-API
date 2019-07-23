@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/jinzhu/copier"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -26,13 +27,14 @@ import (
 )
 
 type API struct {
-	HTTP      *echo.Echo
-	conf      *config.Config
-	service   service.Service
-	apiInfo   APIInfo
-	validate  *validator.Validate
-	user      *model.User
-	jwtSecret []byte
+	HTTP       *echo.Echo
+	conf       *config.Config
+	service    service.Service
+	configFile string
+	apiInfo    APIInfo
+	validate   *validator.Validate
+	user       *model.User
+	jwtSecret  []byte
 }
 
 type APIInfo struct {
@@ -93,7 +95,7 @@ func (d ViewData) Webpack(file string) string {
 	return d.assetsMapper(file)
 }
 
-func NewAPI(conf *config.Config, s service.Service) *API {
+func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 
 	api := &API{}
 
@@ -101,6 +103,7 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 
 	api.conf = conf
 	api.service = s
+	api.configFile = configFile
 
 	api.HTTP = echo.New()
 	api.HTTP.HideBanner = true
@@ -159,6 +162,9 @@ func NewAPI(conf *config.Config, s service.Service) *API {
 	adminGroup.PUT("/users/:id", api.adminUpdateUser)
 	adminGroup.POST("/users/rotate", api.adminRotateUserToken)
 	adminGroup.GET("/logout", api.adminLogout)
+	adminGroup.GET("/settings", api.adminGetSettings)
+	adminGroup.POST("/settings", api.adminUpdateSettings)
+	adminGroup.GET("/restart", api.adminRestartAPI)
 
 	// Status
 	api.HTTP.GET("/v1", api.index)
@@ -242,6 +248,41 @@ func (api *API) login(c echo.Context) error {
 func (api *API) adminLogout(c echo.Context) error {
 
 	deleteCookie(c)
+
+	return c.JSON(http.StatusOK, map[string]bool{
+		"ok": true,
+	})
+
+}
+
+func (api *API) adminGetSettings(c echo.Context) error {
+
+	return c.JSON(http.StatusOK, api.conf)
+
+}
+
+func (api *API) adminUpdateSettings(c echo.Context) error {
+
+	newConf := &config.Config{}
+	copier.Copy(newConf, api.conf)
+
+	if err := c.Bind(newConf); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	if err := config.UpdateConfig(api.configFile, newConf); err != nil {
+		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	}
+
+	return c.JSON(http.StatusOK, map[string]bool{
+		"ok": true,
+	})
+
+}
+
+func (api *API) adminRestartAPI(c echo.Context) error {
+
+	api.Stop()
 
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
