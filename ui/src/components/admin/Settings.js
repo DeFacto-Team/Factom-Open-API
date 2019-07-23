@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 import {
@@ -17,10 +17,11 @@ import { NotifyNetworkError } from './../common/Notifications';
 const { Title, Paragraph, Text } = Typography;
 
 const Settings = () => {
-  const [formHasErrors, setFormHasErrors] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [settings, setSettings] = useState({});
   const [address, setAddress] = useState({});
+  const [esAddress, setEsAddress] = useState("");
+  const [invalidAddress, setInvalidAddress] = useState(false);
   const [factomPassword, setFactomPassword] = useState(0);
 
   const toggleFactomPassword = () => {
@@ -31,6 +32,10 @@ const Settings = () => {
   const handleSubmit = event => {
     event.preventDefault();
     setIsSubmitting(true);
+    if (!event.target.checkValidity()) {
+      setIsSubmitting(false);
+      return;
+    }
 
     const form = event.target;
     const data = new FormData(form);
@@ -80,6 +85,9 @@ const Settings = () => {
         if (response.data.Factom.factomEsAddress) {
           getECBalance(response.data.Factom.factomEsAddress);
         }
+        if (response.data.Factom.factomUser || response.data.Factom.factomPassword) {
+          setFactomPassword(1);
+        }
       })
       .catch(function(error) {
         if (error.response) {
@@ -98,16 +106,31 @@ const Settings = () => {
         setAddress(response.data.result);
       })
       .catch(function(error) {
+        setInvalidAddress(true);
         setAddress({});
       });    
   }
 
-  const getRandomAddress = settings => {
+  const changeEsAddress = (newAddress) => {
+
+    setEsAddress(newAddress);
+
+    if (newAddress === '') {
+      setInvalidAddress(false);
+      setAddress({});
+    } else {
+      getECBalance(newAddress);
+    }
+
+  }
+
+  const getRandomAddress = () => {
     
     axios
       .get('/admin/ec/random')
       .then(function(response) {
         setAddress(response.data.result);
+        setEsAddress(response.data.result.esAddress);
       })
       .catch(function(error) {
         if (error.response) {
@@ -134,11 +157,11 @@ const Settings = () => {
           <Divider />
 
           <Form.Item label="User">
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminUser" defaultValue={settings.Admin.adminUser} />
+            <Input required prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminUser" defaultValue={settings.Admin.adminUser} />
           </Form.Item>
 
           <Form.Item label="Password">
-            <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminPassword" defaultValue={settings.Admin.adminPassword} />
+            <Input.Password required prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminPassword" defaultValue={settings.Admin.adminPassword} />
           </Form.Item>
 
           <Title level={4}>Factomd Endpoint</Title>
@@ -160,7 +183,7 @@ const Settings = () => {
               </Form.Item>
 
               <Form.Item label="Password">
-                <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="factomPassword" defaultValue={settings.Factom.factomPassword} />
+                <Input.Password prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="factomPassword" defaultValue={settings.Factom.factomPassword} />
               </Form.Item>
             </div>
           ) :
@@ -170,10 +193,10 @@ const Settings = () => {
           <Divider />
 
           <Form.Item label="Private Es address">
-            <Input placeholder="Es…" prefix={<Icon type="wallet" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="factomEsAddress" defaultValue={settings.Factom.factomEsAddress} onChange={(event) => getECBalance(event.target.value)} />
+            <Input allowClear placeholder="Es…" prefix={<Icon type="wallet" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="factomEsAddress" defaultValue={settings.Factom.factomEsAddress} value={esAddress} onChange={(event) => changeEsAddress(event.target.value)} />
             {address.ecAddress ? (
               <div>
-                <Card size="small" title={<div><Icon type="check-circle" theme="twoTone" twoToneColor="#52c41a" /><Text>  EC address is valid!</Text></div>} className="ec-block">
+                <Card size="small" title={<div><Icon type="check-circle" theme="twoTone" twoToneColor="#52c41a" /><Text>  Valid EC address</Text></div>} className="ec-block">
                   <Paragraph copyable={{ text: address.ecAddress }}>
                     <strong>EC address:</strong><br />
                     {address.ecAddress}
@@ -182,7 +205,7 @@ const Settings = () => {
                     <strong>Balance:</strong><br />
                     {address.balance} EC
                   </Paragraph>
-                  <Button type="primary" icon="credit-card" href="https://ec.de-facto.pro" target="_blank" style={{marginBottom: "6px"}}>
+                  <Button type="primary" icon="credit-card" href={"https://ec.de-facto.pro/?ec="+address.ecAddress} target="_blank" style={{marginBottom: "6px"}}>
                     Buy Entry Credits
                   </Button>
                   <br />
@@ -191,8 +214,10 @@ const Settings = () => {
               </div>
             ) : (
               <div>
-                <Button type="primary" style={{marginTop: "6px"}} onClick={getRandomAddress}>Generate random address</Button>
-                <Paragraph class="ec-block"><Text type="danger"><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" />{' '}Invalid EC address</Text></Paragraph>
+                <Button icon="sync" type="primary" style={{marginTop: "8px"}} onClick={getRandomAddress}>Generate random address</Button>
+                {invalidAddress ? (
+                  <Paragraph class="ec-block"><Text type="danger"><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" />{' '}Invalid EC address</Text></Paragraph>
+                ) : null }
               </div>
             )
             }
