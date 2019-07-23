@@ -177,7 +177,7 @@ const Queue = () => {
 
   return (
     <div>
-      <Title level={4}>Queue</Title>
+      <Title level={3}>Queue</Title>
       <Paragraph type="secondary"><Icon type="info-circle" theme="twoTone" /> Processed tasks are automatically cleared every hour</Paragraph>
       <Table
         dataSource={queue}

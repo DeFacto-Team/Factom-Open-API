@@ -270,7 +270,7 @@ const Users = () => {
 
   return (
     <div>
-      <Title level={4}>Users</Title>
+      <Title level={3}>Users</Title>
       <Form
         layout="inline"
         noValidate
