@@ -108,7 +108,7 @@ const Settings = () => {
       .catch(function(error) {
         setInvalidAddress(true);
         setAddress({});
-      });    
+      });
   }
 
   const changeEsAddress = (newAddress) => {
@@ -214,10 +214,16 @@ const Settings = () => {
               </div>
             ) : (
               <div>
-                <Button icon="sync" type="primary" style={{marginTop: "8px"}} onClick={getRandomAddress}>Generate random address</Button>
                 {invalidAddress ? (
-                  <Paragraph class="ec-block"><Text type="danger"><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" />{' '}Invalid EC address</Text></Paragraph>
-                ) : null }
+                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  Invalid EC address</Text></div>} className="ec-block">
+                    <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
+                  </Card>
+                ) : (
+                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  EC address not set</Text></div>} className="ec-block">
+                    <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
+                  </Card>
+                )
+                }
               </div>
             )
             }
