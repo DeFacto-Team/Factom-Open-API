@@ -210,7 +210,7 @@ func (api *API) Start() error {
 // Stop API server
 func (api *API) Stop() error {
 	log.Warn("Gracefully restarting API in 5 seconds")
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 	return api.HTTP.Close()
 }
 
