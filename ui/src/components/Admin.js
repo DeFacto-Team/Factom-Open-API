@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -15,8 +15,7 @@ import Settings from './admin/Settings';
 const { Header, Content, Footer } = Layout;
 
 const Admin = props => {
-  const currentLocation = window.location.pathname;
-  const [currentMenu, setCurrentMenu] = useState([currentLocation]);
+  const [currentMenu, setCurrentMenu] = useState([window.location.hash]);
 
   const handleMenuClick = e => {
     setCurrentMenu([e.key]);
@@ -32,6 +31,10 @@ const Admin = props => {
         NotifyNetworkError();
       });
   };
+    
+  useEffect(() => {
+    setCurrentMenu([window.location.hash]);
+  }, []);
 
   return (
     <Router>
@@ -45,31 +48,31 @@ const Admin = props => {
             mode="horizontal"
           >
             <Logo />
-            <Menu.Item key="/">
+            <Menu.Item key="#/">
               <Link to="/">
                 <Icon type="appstore" />
                 Dashboard
               </Link>
             </Menu.Item>
-            <Menu.Item key="/users">
+            <Menu.Item key="#/users">
               <Link to="/users">
                 <Icon type="team" />
                 Users
               </Link>
             </Menu.Item>
-            <Menu.Item key="/queue">
+            <Menu.Item key="#/queue">
               <Link to="/queue">
                 <Icon type="inbox" />
                 Queue
               </Link>
             </Menu.Item>
-            <Menu.Item key="/settings">
+            <Menu.Item key="#/settings">
               <Link to="/settings">
                 <Icon type="setting" />
                 Settings
               </Link>
             </Menu.Item>
-            <Menu.Item key="/logout" onClick={logout} className="menu-logout">
+            <Menu.Item key="#/logout" onClick={logout} className="menu-logout">
               <Link to="/">
                 <Icon type="logout" />
                 Logout
