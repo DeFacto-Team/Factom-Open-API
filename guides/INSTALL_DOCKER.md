@@ -49,7 +49,7 @@ Entry Credits (EC) purchase fixed amounts of data in the Factom network.<br />
 <b>You need EC address filled with Entry Credits to write data on the Factom.</b><br />
 - EC address may be imported or generated via Open API Admin UI<br />
 - <a href="https://ec.de-facto.pro" target="_blank">Fund your EC address in the EC store</a>
-<br /><br />
+
 By default Open API is connected to <a href="https://factomd.net" target="_blank">Factom Open Node</a>, that means you don't need to setup your own node on the Factom blockchain to work with blockchain. But if you want to use your own node, you may specify it into the config.<br />
 
 ### Fill the config
