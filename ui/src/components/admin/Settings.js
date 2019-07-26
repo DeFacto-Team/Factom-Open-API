@@ -23,6 +23,7 @@ const Settings = () => {
   const [esAddress, setEsAddress] = useState("");
   const [invalidAddress, setInvalidAddress] = useState(false);
   const [factomPassword, setFactomPassword] = useState(0);
+  const [cardIsLoading, setCardIsLoading] = useState(true);
 
   const toggleFactomPassword = () => {
     const current = factomPassword === 0 ? 1 : 0;
@@ -101,6 +102,8 @@ const Settings = () => {
 
   const getECBalance = (esaddress) => {
 
+    setCardIsLoading(true);
+
     axios
       .get('/admin/ec/'+esaddress)
       .then(function(response) {
@@ -109,6 +112,9 @@ const Settings = () => {
       .catch(function(error) {
         setInvalidAddress(true);
         setAddress({});
+      })
+      .finally(function () {
+        setCardIsLoading(false);
       });
   }
 
@@ -195,31 +201,38 @@ const Settings = () => {
 
           <Form.Item label="Private Es address">
             <Input allowClear placeholder="Es…" prefix={<Icon type="wallet" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="factomEsAddress" defaultValue={settings.Factom.factomEsAddress} value={esAddress} onChange={(event) => changeEsAddress(event.target.value)} />
-            {address.ecAddress ? (
+            {!cardIsLoading ? (
               <div>
-                <Card size="small" title={<div><Icon type="check-circle" theme="twoTone" twoToneColor="#52c41a" /><Text>  Valid EC address</Text></div>} className="ec-block">
-                  <Paragraph copyable={{ text: address.ecAddress }}>
-                    <strong>EC address:</strong><br />
-                    {address.ecAddress}
-                  </Paragraph>
-                  <Paragraph>
-                    <strong>Balance:</strong><br />
-                    {address.balance} EC
-                  </Paragraph>
-                  <Button type="primary" icon="credit-card" href={"https://ec.de-facto.pro/?ec="+address.ecAddress} target="_blank" style={{marginBottom: "6px"}}>
-                    Buy Entry Credits
-                  </Button>
-                  <br />
-                  <Text type="secondary">You need EC address filled with Entry Credits to write data on the Factom.</Text>
-                </Card>
+              {address.ecAddress ? (
+                <div>
+                  <Card size="small" title={<div><Icon type="check-circle" theme="twoTone" twoToneColor="#52c41a" /><Text>  Valid EC address</Text></div>} className="ec-block">
+                    <Paragraph copyable={{ text: address.ecAddress }}>
+                      <strong>EC address:</strong><br />
+                      {address.ecAddress}
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Balance:</strong><br />
+                      {address.balance} EC
+                    </Paragraph>
+                    <Button type="primary" icon="credit-card" href={"https://ec.de-facto.pro/?ec="+address.ecAddress} target="_blank" style={{marginBottom: "6px"}}>
+                      Buy Entry Credits
+                    </Button>
+                    <br />
+                    <Text type="secondary">You need EC address filled with Entry Credits to write data on the Factom.</Text>
+                  </Card>
+                </div>
+              ) : (
+                <div>
+                    <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  {invalidAddress ? "Invalid EC address" : "EC address not set"}</Text></div>} className="ec-block">
+                      <Paragraph type="secondary">You need EC address to write data on the Factom.</Paragraph>
+                      <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
+                    </Card>
+                </div>
+              )
+              }
               </div>
             ) : (
-              <div>
-                  <Card size="small" title={<div><Icon type="warning" theme="twoTone" twoToneColor="#f5222d" /><Text>  {invalidAddress ? "Invalid EC address" : "EC address not set"}</Text></div>} className="ec-block">
-                    <Paragraph type="secondary">You need EC address to write data on the Factom.</Paragraph>
-                    <Button icon="sync" type="primary" onClick={getRandomAddress}>Generate random address</Button>
-                  </Card>
-              </div>
+                <Card size="small" title={<div><Text style={{ color: '#1890ff' }}><Icon type="loading" />  Checking address…</Text></div>} className="ec-block" />
             )
             }
           </Form.Item>
@@ -240,7 +253,7 @@ const Settings = () => {
         </Form>
       ) :
         <div style={{ color: '#1890ff' }}>
-          <Icon type="loading" />
+          <Icon type="loading" style={{ color: '#1890ff' }} />
         </div>
       }
 
