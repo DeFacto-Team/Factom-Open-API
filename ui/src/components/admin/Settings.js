@@ -160,7 +160,7 @@ const Settings = () => {
       {settings.Admin ? (
         <Form layout="vertical" onSubmit={handleSubmit}>
 
-          <Title level={4}>Admin Credentials</Title>
+          <Title level={4}><Icon type="idcard" theme="twoTone" />  Admin Credentials</Title>
           <Divider />
 
           <Form.Item label="User">
@@ -171,7 +171,7 @@ const Settings = () => {
             <Input.Password required prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} size="large" name="adminPassword" defaultValue={settings.Admin.adminPassword} />
           </Form.Item>
 
-          <Title level={4}>Factomd Node</Title>
+          <Title level={4}><Icon type="database" theme="twoTone" />  Factomd Node</Title>
           <Divider />
 
           <Form.Item label="Factomd URL">
@@ -196,7 +196,7 @@ const Settings = () => {
           ) :
             null
           }
-          <Title level={4}>Factom EC address</Title>
+          <Title level={4}><Icon type="wallet" theme="twoTone" />  Factom EC address</Title>
           <Divider />
 
           <Form.Item label="Private Es address">
