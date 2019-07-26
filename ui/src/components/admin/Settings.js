@@ -66,7 +66,7 @@ const Settings = () => {
       .then(function() {
         message.loading('Restarting API…', 0);
         setTimeout(function() {
-          window.location.href = "/";
+          window.location.reload(true);
         }, 5000);
       })
       .catch(function(error) {
