@@ -212,7 +212,7 @@ const Settings = () => {
                     </Paragraph>
                     <Paragraph>
                       <strong>Balance:</strong><br />
-                      {address.balance} EC
+                      {address.balance.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')} EC
                     </Paragraph>
                     <Button type="primary" icon="credit-card" href={"https://ec.de-facto.pro/?ec="+address.ecAddress} target="_blank" style={{marginBottom: "6px"}}>
                       Buy Entry Credits
