@@ -50,7 +50,7 @@ nano ~/.foa/config.yaml
 ## Step 3: Download Factom Open API binary and run them
 Download with cURL:
 ```bash
-curl -o foa https://github.com/DeFacto-Team/Factom-Open-API/releases/download/1.0.0/foa
+curl -o foa https://github.com/DeFacto-Team/Factom-Open-API/releases/download/1.1.0/foa
 ```
 
 Run Factom Open API with default config location:
