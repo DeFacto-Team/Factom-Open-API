@@ -15,11 +15,6 @@ const Dashboard = () => {
     <div>
       <Title level={3}>Dashboard</Title>
       <Paragraph type="secondary"><Icon type="info-circle" theme="twoTone" /> Dashboard is in development</Paragraph>
-      <Row gutter={16}>
-        <Col span={12}>
-          <Statistic title="EC balance" value={0} />
-        </Col>
-      </Row>
     </div>
   );
 };
