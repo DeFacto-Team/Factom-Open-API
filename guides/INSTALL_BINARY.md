@@ -47,11 +47,10 @@ By default Open API is connected to <a href="https://factomd.net" target="_blank
 nano ~/.foa/config.yaml
 ```
 
-## Step 3: Download Factom Open API binaries and run them
+## Step 3: Download Factom Open API binary and run them
 Download with cURL:
 ```bash
-curl -o foa https://github.com/DeFacto-Team/Factom-Open-API/releases/download/1.0.0/foa
-curl -o user https://github.com/DeFacto-Team/Factom-Open-API/releases/download/1.0.0/user
+curl -o foa https://github.com/DeFacto-Team/Factom-Open-API/releases/download/1.1.0/foa
 ```
 
 Run Factom Open API with default config location:
@@ -59,12 +58,7 @@ Run Factom Open API with default config location:
 ./foa
 ```
 
-Run user management app with default config location:
-```bash
-./user
-```
-
-*By default all binaries uses the config located at `<USER_FOLDER>/.foa/config.yaml`. If you use custom location for config file, please don't forget to provide it with `-c` flag while running binaries.*
+*By default the binary uses the config located at `<USER_FOLDER>/.foa/config.yaml`. If you use custom location for config file, please don't forget to provide it with `-c` flag while running binaries.*
 ```bash
 ./foa -c=/somewhere/placed/config.yaml
 ```
