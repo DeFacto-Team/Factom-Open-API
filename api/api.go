@@ -70,7 +70,7 @@ type ViewData struct {
 }
 
 const (
-	Version                = "1.1.0"
+	Version                = "1.1.1"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
@@ -161,6 +161,7 @@ func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 	adminGroup.GET("/users", api.adminGetUsers)
 	adminGroup.POST("/users", api.adminCreateUser)
 	adminGroup.DELETE("/users", api.adminDeleteUser)
+	adminGroup.GET("/users/:id", api.adminGetUser)
 	adminGroup.PUT("/users/:id", api.adminUpdateUser)
 	adminGroup.POST("/users/rotate", api.adminRotateUserToken)
 	adminGroup.GET("/logout", api.adminLogout)
@@ -387,6 +388,19 @@ func (api *API) adminCreateUser(c echo.Context) error {
 	}
 
 	return api.SuccessResponse(resp, c)
+
+}
+
+func (api *API) adminGetUser(c echo.Context) error {
+
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+	}
+
+	user := api.service.GetUser(&model.User{ID: userID})
+
+	return api.SuccessResponse(user, c)
 
 }
 
