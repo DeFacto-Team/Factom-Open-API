@@ -70,7 +70,7 @@ type ViewData struct {
 }
 
 const (
-	Version                = "1.1.1"
+	Version                = "1.1.2"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
@@ -163,7 +163,7 @@ func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 	adminGroup.DELETE("/users", api.adminDeleteUser)
 	adminGroup.GET("/users/:id", api.adminGetUser)
 	adminGroup.PUT("/users/:id", api.adminUpdateUser)
-	adminGroup.POST("/users/rotate", api.adminRotateUserToken)
+	adminGroup.GET("/users/:id/rotate", api.adminRotateUserToken)
 	adminGroup.GET("/logout", api.adminLogout)
 	adminGroup.GET("/settings", api.adminGetSettings)
 	adminGroup.POST("/settings", api.adminUpdateSettings)
@@ -176,7 +176,7 @@ func NewAPI(conf *config.Config, s service.Service, configFile string) *API {
 
 	// Documentation
 	url := echoSwagger.URL("swagger.json")
-	api.HTTP.Static("/docs/swagger.json", "./docs/swagger.json")
+	api.HTTP.File("/docs/swagger.json", "docs/swagger.json")
 	api.HTTP.GET("/docs/*", echoSwagger.EchoWrapHandler(url))
 
 	// Chains
@@ -428,20 +428,20 @@ func (api *API) adminUpdateUser(c echo.Context) error {
 
 func (api *API) adminRotateUserToken(c echo.Context) error {
 
-	req := &model.User{}
-
-	// bind input data
-	if err := c.Bind(req); err != nil {
-		return api.ErrorResponse(errors.New(errors.BindDataError, err), c)
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
-	req.AccessToken = req.GenerateAccessToken(AccessTokenLength)
+	user := api.service.GetUser(&model.User{ID: userID})
 
-	if err := api.service.UpdateUser(req); err != nil {
+	user.AccessToken = user.GenerateAccessToken(AccessTokenLength)
+
+	if err := api.service.UpdateUser(user); err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 
-	return api.SuccessResponse(req, c)
+	return api.SuccessResponse(user, c)
 
 }
 

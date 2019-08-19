@@ -92,7 +92,7 @@ const Users = () => {
 
   const rotateToken = user => {
     axios
-      .post('/admin/users/rotate', { id: user.id })
+      .get('/admin/users/' + user.id + '/rotate')
       .then(function(response) {
         const array = [...users];
         const index = array.findIndex(v => v.id === user.id);
@@ -245,7 +245,7 @@ const Users = () => {
             cancelText="No"
           >
             <a href="javascript:;">
-              <Icon type="switcher" theme="twoTone" />
+              <Icon type="interaction" theme="twoTone" />
                Rotate token
             </a>
           </Popconfirm>
