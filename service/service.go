@@ -1004,9 +1004,6 @@ func (c *Context) CreateCallback(entryHash string, url string, user *model.User)
 
 	localCallback := c.store.GetCallback(callback)
 
-	log.Warn("Callback: ", callback)
-	log.Warn("localCallback: ", localCallback)
-
 	if localCallback == nil {
 		err := c.store.CreateCallback(callback)
 		if err != nil {
