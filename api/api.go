@@ -70,7 +70,7 @@ type ViewData struct {
 }
 
 const (
-	Version                = "1.1.2"
+	Version                = "1.2.0"
 	DefaultPaginationStart = 0
 	DefaultPaginationLimit = 30
 	DefaultSort            = "desc"
@@ -595,8 +595,9 @@ func (api *API) createChain(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.LimitationError, err), c)
 	}
 
-	// Open API Chain struct
+	// Open API Chain & Callback structs
 	req := &model.Chain{}
+	callback := &model.Callback{}
 
 	// if JSON request, parse Content from it
 	body, err := bodyToJSON(c)
@@ -618,10 +619,32 @@ func (api *API) createChain(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
+	// if received callback_url, then validate it
+	if c.QueryParam("callback_url") != "" {
+
+		callback.URL = c.QueryParam("callback_url")
+
+		log.Debug("Validating callback URL ", callback.URL)
+
+		// validate Callback URL
+		if err := api.validate.StructPartial(callback, "URL"); err != nil {
+			return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+		}
+
+	}
+
 	chain, err := api.service.CreateChain(req, api.user)
 
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	// if callback needed, create it
+	if callback.URL != "" {
+		err = api.service.CreateCallback(chain.Base64Decode().FirstEntryHash(), callback.URL, api.user)
+		if err != nil {
+			log.Error("Error while creating callback")
+		}
 	}
 
 	resp := &model.ChainWithLinks{Chain: chain}
@@ -718,8 +741,9 @@ func (api *API) createEntry(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.LimitationError, err), c)
 	}
 
-	// Open API Entry struct
+	// Open API Entry & Callback structs
 	req := &model.Entry{}
+	callback := &model.Callback{}
 
 	// bind input data
 	if err := c.Bind(req); err != nil {
@@ -733,10 +757,32 @@ func (api *API) createEntry(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
 	}
 
+	// if received callback_url, then validate it
+	if c.QueryParam("callback_url") != "" {
+
+		callback.URL = c.QueryParam("callback_url")
+
+		log.Debug("Validating callback URL ", callback.URL)
+
+		// validate Callback URL
+		if err := api.validate.StructPartial(callback, "URL"); err != nil {
+			return api.ErrorResponse(errors.New(errors.ValidationError, err), c)
+		}
+
+	}
+
 	// Create entry
 	resp, err := api.service.CreateEntry(req, api.user)
 	if err != nil {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
+	}
+
+	// if callback needed, create it
+	if callback.URL != "" {
+		err = api.service.CreateCallback(resp.EntryHash, callback.URL, api.user)
+		if err != nil {
+			log.Error("Error while creating callback")
+		}
 	}
 
 	return api.SuccessResponse(resp, c)
@@ -792,7 +838,7 @@ func (api *API) getChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 	if err == nil && resp == nil {
-		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' to request to get partial data.", c)
+		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' as query param to get partial data.", c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)
@@ -841,7 +887,7 @@ func (api *API) searchChainEntries(c echo.Context) error {
 		return api.ErrorResponse(errors.New(errors.ServiceError, err), c)
 	}
 	if err == nil && resp == nil {
-		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' to request to get partial data.", c)
+		return api.AcceptedResponse(resp, "Chain is syncing. Please wait for a while and try again. Or add 'force=true' as query param to get partial data.", c)
 	}
 
 	return api.SuccessResponsePagination(resp, total, c)

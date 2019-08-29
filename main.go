@@ -128,6 +128,7 @@ func startAPI(configFile string) {
 		go fetchChainUpdates(s, die)
 		go processQueue(s, die)
 		go clearQueue(s, die)
+		go completedCallbacks(s, die)
 
 		// Init REST API
 		api := api.NewAPI(conf, s, configFile)
@@ -279,6 +280,25 @@ func clearQueue(s service.Service, die chan bool) {
 				s.ClearQueue(q)
 			}
 			time.Sleep(60 * time.Second)
+		case <-die:
+			return
+		}
+	}
+}
+
+func completedCallbacks(s service.Service, die chan bool) {
+	for {
+		select {
+		default:
+			log.Info("Completed callbacks: iteration started")
+			callbacks := s.GetCallbacks(&model.Callback{})
+			for _, c := range callbacks {
+				log.Debug("Completed callbacks: Entry ", c.EntryHash, " ", c.Entry.Status)
+				if c.Entry.Status == model.EntryCompleted {
+					s.SendCallback(c)
+				}
+			}
+			time.Sleep(30 * time.Second)
 		case <-die:
 			return
 		}

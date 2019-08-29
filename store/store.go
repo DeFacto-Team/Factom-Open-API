@@ -44,6 +44,12 @@ type Store interface {
 	CreateQueue(queue *model.Queue) error
 	UpdateQueue(queue *model.Queue) error
 	DeleteQueue(queue *model.Queue) error
+
+	GetCallback(callback *model.Callback) *model.Callback
+	GetCallbacks(callback *model.Callback) []*model.Callback
+	CreateCallback(callback *model.Callback) error
+	UpdateCallback(callback *model.Callback) error
+	DeleteCallback(callback *model.Callback) error
 }
 
 // Контекст стореджа
@@ -397,5 +403,52 @@ func (c *Context) DeleteQueue(queue *model.Queue) error {
 		return nil
 	}
 	return fmt.Errorf("DB: Deletion queue failed")
+
+}
+
+func (c *Context) GetCallback(callback *model.Callback) *model.Callback {
+
+	res := &model.Callback{}
+	if c.db.First(&res, callback).RecordNotFound() {
+		return nil
+	}
+	return res
+
+}
+
+func (c *Context) GetCallbacks(callback *model.Callback) []*model.Callback {
+
+	res := []*model.Callback{}
+	c.db.Where(callback).Preload("Entry").Find(&res)
+
+	return res
+
+}
+
+func (c *Context) CreateCallback(callback *model.Callback) error {
+
+	if c.db.Create(&callback).RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("Creating callback failed")
+
+}
+
+func (c *Context) UpdateCallback(callback *model.Callback) error {
+
+	if c.db.Model(&callback).Updates(callback).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Updating callback failed")
+
+}
+
+func (c *Context) DeleteCallback(callback *model.Callback) error {
+
+	if c.db.Delete(&callback).RowsAffected > 0 {
+		return nil
+	}
+	return fmt.Errorf("DB: Deletion callback failed")
 
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/DeFacto-Team/Factom-Open-API/model"
@@ -9,6 +10,7 @@ import (
 	"github.com/FactomProject/factom"
 	"github.com/jinzhu/copier"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"time"
 )
 
@@ -45,6 +47,11 @@ type Service interface {
 
 	ParseAllChainEntries(chain *model.Chain, workerID int) error
 	ParseNewChainEntries(chain *model.Chain) error
+
+	GetCallback(callback *model.Callback) *model.Callback
+	GetCallbacks(callback *model.Callback) []*model.Callback
+	CreateCallback(entryHash string, url string, user *model.User) error
+	SendCallback(callback *model.Callback) error
 }
 
 // NewService initializes service with store & wallet as ServiceContext
@@ -639,7 +646,7 @@ func (c *Context) GetQueue(queue *model.Queue) []*model.Queue {
 
 }
 
-// GetQueueToProcess gets unprocessed and failed (while previous processing) tasks from queue
+// GetQueueToProcess gets unprocessed or failed (while previous processing) tasks from queue
 func (c *Context) GetQueueToProcess() []*model.Queue {
 
 	return c.store.GetQueueWhere("processed_at IS NULL AND (next_try_at IS NULL OR next_try_at<NOW())")
@@ -715,6 +722,12 @@ func (c *Context) ProcessQueue(queue *model.Queue) error {
 		queue.Result = resp
 		processedAt := time.Now()
 		queue.ProcessedAt = &processedAt
+
+		// check if callback exists for this entryhash
+		callback := c.store.GetCallback(&model.Callback{EntryHash: resp})
+		if callback != nil {
+			c.SendCallback(callback)
+		}
 	} else {
 		log.Error("Queue processing: create " + queue.Action + " FAILED")
 		queue.TryCount++
@@ -962,5 +975,81 @@ func (c *Context) parseEntryBlock(ebhash string, updateEarliestEntryBlock bool) 
 	}
 
 	return eb.Header.PrevKeyMR, nil
+
+}
+
+// GetCallback is generic function to get the callback
+func (c *Context) GetCallback(callback *model.Callback) *model.Callback {
+
+	return c.store.GetCallback(callback)
+
+}
+
+// GetCallback is generic function to get the callback
+func (c *Context) GetCallbacks(callback *model.Callback) []*model.Callback {
+
+	return c.store.GetCallbacks(callback)
+
+}
+
+// createCallback checks if callback already exists into callbacks db and if not, then adds the callback into callbacks db
+func (c *Context) CreateCallback(entryHash string, url string, user *model.User) error {
+
+	log.Debug("Creating callback for: " + entryHash)
+
+	callback := &model.Callback{}
+	callback.EntryHash = entryHash
+	callback.URL = url
+	callback.UserID = user.ID
+
+	localCallback := c.store.GetCallback(callback)
+
+	log.Warn("Callback: ", callback)
+	log.Warn("localCallback: ", localCallback)
+
+	if localCallback == nil {
+		err := c.store.CreateCallback(callback)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
+// sendCallback sends JSONP request to callback.URL
+func (c *Context) SendCallback(callback *model.Callback) error {
+
+	log.Debug("Sending callback for: " + callback.EntryHash)
+
+	entry := c.store.GetEntry(&model.Entry{EntryHash: callback.EntryHash}, "")
+
+	b, err := json.Marshal(entry)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", callback.URL, bytes.NewBuffer(b))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err)
+		// 408 – HTTP code for Time Out — update callbacks DB with this field
+		callback.Result = 408
+	} else {
+		callback.Result = resp.StatusCode
+	}
+
+	c.store.UpdateCallback(callback)
+
+	// if Entry Completed, then delete callback
+	if entry.Status == model.EntryCompleted {
+		c.store.DeleteCallback(callback)
+	}
+
+	return nil
 
 }
