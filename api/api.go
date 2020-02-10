@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/copier"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/DeFacto-Team/Factom-Open-API/config"
 	"github.com/DeFacto-Team/Factom-Open-API/errors"
@@ -21,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
-	"github.com/swaggo/echo-swagger"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	_ "github.com/swaggo/echo-swagger/example/docs"
 	"gopkg.in/go-playground/validator.v9"
 )

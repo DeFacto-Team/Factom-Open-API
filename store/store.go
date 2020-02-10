@@ -7,7 +7,7 @@ import (
 	"github.com/DeFacto-Team/Factom-Open-API/model"
 
 	"github.com/jinzhu/gorm"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 	log "github.com/sirupsen/logrus"
 )
 

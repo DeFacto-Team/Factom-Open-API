@@ -57,6 +57,7 @@ require (
 	github.com/mcuadros/go-defaults v1.1.0
 	github.com/rubenv/sql-migrate v0.0.0-20190327083759-54bad0a9b051
 	github.com/sirupsen/logrus v1.4.1
+	github.com/stretchr/testify v1.3.0
 	github.com/swaggo/echo-swagger v0.0.0-20190329130007-1219b460a043
 	github.com/swaggo/swag v1.5.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
