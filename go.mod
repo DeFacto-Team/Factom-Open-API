@@ -49,7 +49,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/jinzhu/gorm v1.9.4
 	github.com/jinzhu/now v1.0.0 // indirect
-	github.com/labstack/echo/v4 v4.1.6
+	github.com/labstack/echo/v4 v4.9.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.1.0
 	github.com/liip/sheriff v0.0.0-20190308094614-91aa83a45a3d
@@ -57,12 +57,14 @@ require (
 	github.com/mcuadros/go-defaults v1.1.0
 	github.com/rubenv/sql-migrate v0.0.0-20190327083759-54bad0a9b051
 	github.com/sirupsen/logrus v1.4.1
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.7.0
 	github.com/swaggo/echo-swagger v0.0.0-20190329130007-1219b460a043
 	github.com/swaggo/swag v1.5.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
+	golang.org/x/tools v0.0.0-20190608022120-eacb66d2a7c3 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
